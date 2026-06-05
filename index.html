@@ -270,7 +270,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;backg
 
 <!-- Splash -->
 <div id="splash">
-  <div class="splash-logo"><img src="isotipo.png" alt="Minecore"></div>
+  <div class="splash-logo"><img src="https://estebanfch-cell.github.io/minecore/isotipo.png" alt="Minecore" style="width:96px;height:96px;object-fit:contain;border-radius:16px"></div>
   <div class="splash-title">MINECORE</div>
   <div class="splash-sub">App interna</div>
 </div>
@@ -278,7 +278,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;backg
 <!-- User select -->
 <div id="user-screen">
   <div class="user-header">
-    <div class="user-header-logo"><img src="isotipo.png" alt="M"><span class="user-header-logo-text">MINECORE</span></div>
+    <div class="user-header-logo"><img src="https://estebanfch-cell.github.io/minecore/isotipo.png" alt="M" style="width:28px;height:28px;object-fit:contain"><span class="user-header-logo-text">MINECORE</span></div>
     <div class="user-header-title">¿Quién eres?</div>
     <div class="user-header-sub">Toca tu perfil para ingresar</div>
   </div>
@@ -309,7 +309,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;backg
 <!-- Home -->
 <div id="home-screen">
   <div class="home-topbar">
-    <div class="home-brand"><img src="isotipo.png" alt="M"><span class="home-brand-text">MINECORE</span></div>
+    <div class="home-brand"><img src="https://estebanfch-cell.github.io/minecore/isotipo.png" alt="M" style="width:28px;height:28px;object-fit:contain"><span class="home-brand-text">MINECORE</span></div>
     <div class="home-user-row">
       <div class="home-avatar" id="home-avatar"></div>
       <div class="home-name" id="home-name"></div>
@@ -374,16 +374,46 @@ function saveFavs(){localStorage.setItem('mcFavs',JSON.stringify(favs));}
 
 window.onload=()=>{
   const saved=sessionStorage.getItem('mcSession');
-  if(saved){session=JSON.parse(saved);setTimeout(bootHome,700);}
-  else{setTimeout(async()=>{
-    document.getElementById('splash').classList.add('hide');
-    setTimeout(async()=>{document.getElementById('splash').style.display='none';await loadUsers();showEl('user-screen');},400);
-  },1400);}
+  if(saved){
+    try{
+      session=JSON.parse(saved);
+      if(session&&session.usuario){
+        document.getElementById('splash').style.display='none';
+        bootHome();
+        return;
+      }
+    }catch(e){sessionStorage.removeItem('mcSession');}
+  }
+  // Set default users immediately so we never get stuck
+  allUsers=[
+    {usuario:'EFCH',nombre:'Esteban Ferlito',rol:'admin',activo:'SI'},
+    {usuario:'MPL',nombre:'Martín',rol:'admin',activo:'SI'},
+    {usuario:'OPM',nombre:'Oswaldo',rol:'chofer',activo:'SI'},
+    {usuario:'AG',nombre:'Ángel',rol:'chofer',activo:'SI'}
+  ];
+  // Show user screen after 1.5s NO MATTER WHAT
+  setTimeout(()=>{
+    document.getElementById('splash').style.display='none';
+    renderUserGrid();
+    document.getElementById('user-screen').style.display='flex';
+    // Try to refresh from server in background
+    api({action:'getUsuarios'}).then(r=>{
+      if(r&&r.ok&&r.usuarios&&r.usuarios.length>0){
+        allUsers=r.usuarios;
+        renderUserGrid();
+      }
+    }).catch(()=>{});
+  },1500);
 };
 
 async function loadUsers(){
-  try{const r=await api({action:'getUsuarios'});if(r.ok)allUsers=r.usuarios;}
-  catch(e){allUsers=[{usuario:'EFCH',nombre:'Esteban Ferlito',rol:'admin',activo:'SI'},{usuario:'MPL',nombre:'Martín',rol:'admin',activo:'SI'},{usuario:'OPM',nombre:'Oswaldo',rol:'chofer',activo:'SI'},{usuario:'AG',nombre:'Ángel',rol:'chofer',activo:'SI'}];}
+  try{
+    const r=await api({action:'getUsuarios'});
+    if(r.ok&&r.usuarios&&r.usuarios.length>0){allUsers=r.usuarios;}
+    else{throw new Error('No users');}
+  }catch(e){
+    allUsers=[{usuario:'EFCH',nombre:'Esteban Ferlito',rol:'admin',activo:'SI'},{usuario:'MPL',nombre:'Martín',rol:'admin',activo:'SI'},{usuario:'OPM',nombre:'Oswaldo',rol:'chofer',activo:'SI'},{usuario:'AG',nombre:'Ángel',rol:'chofer',activo:'SI'}];
+  }
   renderUserGrid();
 }
 
@@ -418,7 +448,12 @@ async function submitPin(){
   else{document.querySelectorAll('.pin-dot').forEach(d=>{d.classList.remove('filled');d.classList.add('error');});document.getElementById('pin-error').textContent='PIN incorrecto';setTimeout(()=>{pinBuffer='';updatePinDots();document.getElementById('pin-error').textContent='';},900);}
   }catch(e){document.getElementById('pin-error').textContent='Error de conexión';pinBuffer='';updatePinDots();}
 }
-function logout(){sessionStorage.removeItem('mcSession');session=null;pinBuffer='';hideAll();loadUsers().then(()=>showEl('user-screen'));}
+function logout(){
+  sessionStorage.removeItem('mcSession');session=null;pinBuffer='';
+  ['pin-screen','home-screen','app'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  document.getElementById('user-screen').style.display='flex';
+  loadUsers();
+}).catch(()=>{renderUserGrid();hideAll();showEl('user-screen');});}
 function bootHome(){
   document.getElementById('splash').style.display='none';loadConfig();
   const c=ac(session.usuario);
