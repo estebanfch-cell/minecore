@@ -3,724 +3,858 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Minecore Rutas</title>
+<title>Minecore App</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
   --brand:#1D9E75;--brand-dark:#085041;--brand-light:#E1F5EE;
+  --gold:#BA7517;--gold-light:#FAEEDA;
   --bg:#F5F5F0;--surface:#fff;--surface2:#F1EFE8;
   --text:#1a1a18;--text2:#5F5E5A;--text3:#888780;
   --border:#D3D1C7;--border2:#B4B2A9;
   --success-bg:#EAF3DE;--success-text:#3B6D11;
   --warn-bg:#FAEEDA;--warn-text:#854F0B;
   --danger-bg:#FCEBEB;--danger-text:#A32D2D;
-  --info-bg:#E6F1FB;--info-text:#185FA5;
   --radius:10px;--radius-lg:14px;
-  --shadow:0 1px 3px rgba(0,0,0,0.08);
 }
 @media(prefers-color-scheme:dark){:root{
   --bg:#1a1a18;--surface:#2C2C2A;--surface2:#444441;
   --text:#F1EFE8;--text2:#B4B2A9;--text3:#888780;
   --border:#444441;--border2:#5F5E5A;
 }}
-body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;overflow-x:hidden}
 
-/* ── Splash / Login ── */
-#splash{position:fixed;inset:0;background:var(--brand);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;transition:opacity 0.4s}
+/* ── Splash ── */
+#splash{position:fixed;inset:0;background:var(--brand);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;transition:opacity 0.4s}
 #splash.hide{opacity:0;pointer-events:none}
-.splash-logo{width:64px;height:64px;background:rgba(255,255,255,0.2);border-radius:18px;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
-.splash-logo svg{width:36px;height:36px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round}
-.splash-title{color:#fff;font-size:22px;font-weight:600;letter-spacing:-0.3px}
-.splash-sub{color:rgba(255,255,255,0.7);font-size:13px;margin-top:4px}
+.splash-icon{width:80px;height:80px;background:rgba(255,255,255,0.15);border-radius:22px;display:flex;align-items:center;justify-content:center;margin-bottom:18px}
+.splash-icon svg{width:44px;height:44px;fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round}
+.splash-title{color:#fff;font-size:28px;font-weight:800;letter-spacing:-0.5px}
+.splash-sub{color:rgba(255,255,255,0.65);font-size:13px;margin-top:5px;letter-spacing:0.5px;text-transform:uppercase}
 
-#login-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;z-index:90;display:none}
-.login-card{background:var(--surface);border-radius:var(--radius-lg);padding:28px 24px;width:100%;max-width:360px;box-shadow:var(--shadow)}
-.login-logo{display:flex;align-items:center;gap:10px;margin-bottom:24px}
-.login-logo-icon{width:40px;height:40px;background:var(--brand);border-radius:10px;display:flex;align-items:center;justify-content:center}
-.login-logo-icon svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round}
-.login-logo-text{font-size:17px;font-weight:600;color:var(--text)}
-.login-logo-sub{font-size:12px;color:var(--text2)}
-.form-label{font-size:12px;color:var(--text2);font-weight:500;margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:0.05em}
-.form-input{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius);font-size:15px;background:var(--bg);color:var(--text);margin-bottom:14px;outline:none;-webkit-appearance:none}
-.form-input:focus{border-color:var(--brand)}
-.btn-primary{width:100%;padding:14px;background:var(--brand);color:#fff;border:none;border-radius:var(--radius);font-size:16px;font-weight:600;cursor:pointer;margin-top:4px}
-.btn-primary:active{background:var(--brand-dark)}
-.login-error{background:var(--danger-bg);color:var(--danger-text);padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-top:12px;display:none;text-align:center}
+/* ── User Select ── */
+#user-screen{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;z-index:90;overflow-y:auto}
+.user-header{padding:48px 24px 16px;text-align:center}
+.user-header-logo{font-size:13px;font-weight:700;color:var(--brand);text-transform:uppercase;letter-spacing:2px;margin-bottom:12px}
+.user-header-title{font-size:26px;font-weight:800;color:var(--text);letter-spacing:-0.5px}
+.user-header-sub{font-size:14px;color:var(--text2);margin-top:4px}
+.user-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px 20px 40px;max-width:420px;margin:0 auto;width:100%}
+.user-card{background:var(--surface);border-radius:var(--radius-lg);padding:22px 14px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;border:2px solid transparent;transition:border-color 0.15s,transform 0.1s;position:relative;overflow:hidden}
+.user-card:active{transform:scale(0.95);border-color:var(--brand)}
+.user-avatar{width:68px;height:68px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;letter-spacing:-0.5px}
+.user-full-name{font-size:13px;font-weight:600;color:var(--text);text-align:center;line-height:1.3}
+.user-card-admin-dot{width:8px;height:8px;border-radius:50%;background:var(--brand);position:absolute;top:12px;right:12px}
 
-/* ── App shell ── */
-#app{display:none;flex-direction:column;min-height:100vh}
-.topbar{background:var(--surface);border-bottom:0.5px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
-.topbar-left{display:flex;align-items:center;gap:8px}
-.topbar-icon{width:30px;height:30px;background:var(--brand);border-radius:8px;display:flex;align-items:center;justify-content:center}
-.topbar-icon svg{width:17px;height:17px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round}
-.topbar-title{font-size:15px;font-weight:600;color:var(--text)}
-.topbar-role{font-size:11px;color:var(--text2)}
+/* ── PIN ── */
+#pin-screen{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:95;padding:24px}
+.pin-back{position:absolute;top:20px;left:20px;background:none;border:none;font-size:26px;color:var(--text2);cursor:pointer;padding:8px}
+.pin-avatar-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:28px}
+.pin-avatar{width:76px;height:76px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800}
+.pin-name{font-size:19px;font-weight:700;color:var(--text)}
+.pin-hint{font-size:13px;color:var(--text2)}
+.pin-dots{display:flex;gap:18px;margin-bottom:36px}
+.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border2);background:transparent;transition:all 0.12s}
+.pin-dot.filled{background:var(--brand);border-color:var(--brand);transform:scale(1.1)}
+.pin-dot.error{background:var(--danger-text);border-color:var(--danger-text)}
+.pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:280px;width:100%}
+.pin-key{height:66px;border-radius:var(--radius-lg);background:var(--surface);border:0.5px solid var(--border);font-size:24px;font-weight:500;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.08s,background 0.08s}
+.pin-key:active{background:var(--surface2);transform:scale(0.93)}
+.pin-key.del{font-size:18px}
+.pin-key.empty{background:transparent;border:none;cursor:default}
+.pin-error-msg{color:var(--danger-text);font-size:13px;margin-top:14px;min-height:18px;text-align:center}
+
+/* ── Home (módulos) ── */
+#home-screen{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;z-index:85}
+.home-topbar{padding:16px 20px 12px;display:flex;align-items:center;justify-content:space-between;background:var(--surface);border-bottom:0.5px solid var(--border)}
+.home-brand{font-size:16px;font-weight:800;color:var(--text);letter-spacing:-0.3px}
+.home-user{display:flex;align-items:center;gap:8px}
+.home-avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800}
+.home-name{font-size:13px;font-weight:600;color:var(--text2)}
 .btn-logout{background:none;border:none;color:var(--text3);font-size:13px;padding:6px 10px;border-radius:8px;cursor:pointer}
-.btn-logout:active{background:var(--surface2)}
+.home-content{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:16px}
+.home-greeting{text-align:center;margin-bottom:8px}
+.home-greeting-name{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-0.3px}
+.home-greeting-sub{font-size:14px;color:var(--text2);margin-top:2px}
+.module-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:380px}
+.module-btn{background:var(--surface);border-radius:var(--radius-lg);padding:24px 16px;display:flex;flex-direction:column;align-items:center;gap:12px;cursor:pointer;border:0.5px solid var(--border);transition:transform 0.1s,border-color 0.15s}
+.module-btn:active{transform:scale(0.95)}
+.module-btn.rutas{border-top:3px solid var(--brand)}
+.module-btn.caja{border-top:3px solid var(--gold)}
+.module-icon{width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center}
+.module-icon.rutas{background:var(--brand-light)}
+.module-icon.caja{background:var(--gold-light)}
+.module-icon svg{width:28px;height:28px;fill:none;stroke-width:1.8;stroke-linecap:round}
+.module-icon.rutas svg{stroke:var(--brand-dark)}
+.module-icon.caja svg{stroke:var(--gold)}
+.module-label{font-size:15px;font-weight:700;color:var(--text)}
+.module-sub{font-size:11px;color:var(--text2);text-align:center;line-height:1.4}
 
+/* ── App Shell ── */
+#app{display:none;flex-direction:column;min-height:100vh}
+.topbar{background:var(--surface);border-bottom:0.5px solid var(--border);padding:11px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50}
+.topbar-back{background:none;border:none;font-size:22px;color:var(--text2);cursor:pointer;padding:2px 6px;margin-right:2px}
+.topbar-module-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.topbar-module-dot.rutas{background:var(--brand)}
+.topbar-module-dot.caja{background:var(--gold)}
+.topbar-title{font-size:15px;font-weight:700;color:var(--text);flex:1}
+.topbar-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0}
 .content-area{flex:1;padding:16px;max-width:500px;margin:0 auto;width:100%;padding-bottom:90px}
-
-.page-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:-0.3px}
-.page-sub{font-size:13px;color:var(--text2);margin-bottom:20px}
-
-/* ── Bottom nav ── */
+.page-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:3px;letter-spacing:-0.3px}
+.page-sub{font-size:13px;color:var(--text2);margin-bottom:18px}
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:0.5px solid var(--border);display:flex;padding-bottom:env(safe-area-inset-bottom)}
-.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 0 8px;cursor:pointer;border:none;background:none;color:var(--text3);gap:3px;transition:color 0.15s}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:9px 0 7px;cursor:pointer;border:none;background:none;color:var(--text3);gap:3px;transition:color 0.12s}
 .nav-btn.active{color:var(--brand)}
-.nav-btn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
-.nav-btn span{font-size:10px;font-weight:500}
+.nav-btn.active.caja-nav{color:var(--gold)}
+.nav-btn svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.nav-btn span{font-size:10px;font-weight:600}
 
-/* ── Cards & components ── */
-.card{background:var(--surface);border-radius:var(--radius-lg);padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
-.card-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:6px}
-.card-title svg{width:16px;height:16px;fill:none;stroke:var(--brand);stroke-width:2;stroke-linecap:round}
-
-.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
-.metric-card{background:var(--surface2);border-radius:var(--radius);padding:14px}
-.metric-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px}
-.metric-value{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-0.5px}
-.metric-sub{font-size:11px;color:var(--text2);margin-top:2px}
-.metric-card.full{grid-column:1/-1}
-.metric-card.accent{background:var(--brand);padding:16px}
-.metric-card.accent .metric-label{color:rgba(255,255,255,0.7)}
-.metric-card.accent .metric-value{color:#fff;font-size:28px}
-.metric-card.accent .metric-sub{color:rgba(255,255,255,0.7)}
-
-.badge{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+/* ── Cards ── */
+.card{background:var(--surface);border-radius:var(--radius-lg);padding:16px;margin-bottom:12px;border:0.5px solid var(--border)}
+.card-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
 .badge.pending{background:var(--warn-bg);color:var(--warn-text)}
-.badge.approved{background:var(--success-bg);color:var(--success-text)}
-.badge.rejected{background:var(--danger-bg);color:var(--danger-text)}
+.badge.approved,.badge.aprobado{background:var(--success-bg);color:var(--success-text)}
+.badge.rejected,.badge.rechazado{background:var(--danger-bg);color:var(--danger-text)}
 
-.route-item{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
-.route-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+/* ── Route items ── */
+.route-item{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px;margin-bottom:10px}
+.route-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:7px}
 .route-dest{font-size:14px;font-weight:600;color:var(--text);flex:1;margin-right:8px;line-height:1.3}
-.route-meta{font-size:12px;color:var(--text2);margin-bottom:6px}
+.route-meta{font-size:12px;color:var(--text2);margin-bottom:5px}
 .route-footer{display:flex;align-items:center;justify-content:space-between}
 .route-valor{font-size:16px;font-weight:700;color:var(--text)}
 .route-tipo{font-size:11px;color:var(--text3)}
-.route-dots{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.route-dots{display:flex;align-items:center;gap:6px;margin-bottom:7px}
 .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.dot.o{background:var(--brand)}
-.dot.d{background:#E24B4A}
+.dot.o{background:var(--brand)}.dot.d{background:#E24B4A}
 .dot-line{flex:1;height:1px;background:var(--border2)}
-.dot-label{font-size:11px;color:var(--text2);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-
-/* ── Approval actions ── */
 .action-row{display:flex;gap:8px;margin-top:10px}
 .btn-approve{flex:1;padding:10px;background:var(--brand);color:#fff;border:none;border-radius:var(--radius);font-size:14px;font-weight:600;cursor:pointer}
-.btn-approve:active{background:var(--brand-dark)}
 .btn-reject{flex:1;padding:10px;background:var(--danger-bg);color:var(--danger-text);border:none;border-radius:var(--radius);font-size:14px;font-weight:600;cursor:pointer}
-.btn-reject:active{opacity:0.8}
+.reject-input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;background:var(--bg);color:var(--text);margin-top:8px;display:none}
 
-/* ── Form elements ── */
-.field-group{margin-bottom:14px}
-.field-label{font-size:12px;color:var(--text2);font-weight:500;margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:0.04em}
-.field-input{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius);font-size:15px;background:var(--bg);color:var(--text);outline:none;-webkit-appearance:none}
+/* ── Forms ── */
+.field-group{margin-bottom:13px}
+.field-label{font-size:11px;color:var(--text2);font-weight:600;margin-bottom:5px;display:block;text-transform:uppercase;letter-spacing:0.05em}
+.field-input{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:var(--radius);font-size:15px;background:var(--bg);color:var(--text);outline:none;-webkit-appearance:none}
 .field-input:focus{border-color:var(--brand)}
-.field-select{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius);font-size:15px;background:var(--bg);color:var(--text);outline:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+.field-select{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:var(--radius);font-size:15px;background:var(--bg);color:var(--text);outline:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+.btn-submit{width:100%;padding:14px;background:var(--brand);color:#fff;border:none;border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;margin-top:4px;letter-spacing:-0.2px}
+.btn-submit:active{background:var(--brand-dark)}
+.btn-submit:disabled{opacity:0.5;cursor:default}
+.btn-submit.gold{background:var(--gold)}
+.btn-submit.gold:active{background:#633806}
 
-.km-preview{background:var(--brand-light);border-radius:var(--radius);padding:12px 14px;display:none;margin-bottom:14px}
+/* ── Mapa ── */
+.map-container{border-radius:var(--radius);overflow:hidden;margin-bottom:12px;position:relative;border:1px solid var(--border)}
+#map{width:100%;height:210px;background:var(--surface2)}
+.map-instructions{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.65);color:#fff;font-size:11px;padding:5px 12px;border-radius:20px;white-space:nowrap;pointer-events:none;transition:opacity 0.3s}
+.map-step-btns{display:flex;gap:8px;margin-bottom:10px}
+.map-step-btn{flex:1;padding:9px 8px;border-radius:var(--radius);font-size:13px;font-weight:600;border:2px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;text-align:center;transition:all 0.12s}
+.map-step-btn.active{border-color:var(--brand);background:var(--brand-light);color:var(--brand-dark)}
+.map-step-btn.done{border-color:var(--success-text);background:var(--success-bg);color:var(--success-text)}
+.km-preview{background:var(--brand-light);border-radius:var(--radius);padding:12px 14px;display:none;margin-bottom:12px}
 .km-preview-row{display:flex;align-items:center;justify-content:space-between}
 .km-preview-label{font-size:13px;color:var(--brand-dark)}
 .km-preview-val{font-size:20px;font-weight:700;color:var(--brand)}
 .km-preview-sub{font-size:12px;color:var(--brand-dark);opacity:0.7;margin-top:2px}
 
-.btn-submit{width:100%;padding:15px;background:var(--brand);color:#fff;border:none;border-radius:var(--radius);font-size:16px;font-weight:600;cursor:pointer;margin-top:4px;letter-spacing:-0.2px}
-.btn-submit:active{background:var(--brand-dark)}
-.btn-submit:disabled{opacity:0.5;cursor:default}
+/* ── Foto upload ── */
+.photo-upload{border:2px dashed var(--border2);border-radius:var(--radius);padding:16px;text-align:center;cursor:pointer;margin-bottom:13px;transition:border-color 0.15s}
+.photo-upload:active{border-color:var(--brand)}
+.photo-upload input{display:none}
+.photo-upload-icon{font-size:28px;margin-bottom:6px}
+.photo-upload-label{font-size:13px;color:var(--text2)}
+.photo-preview{width:100%;border-radius:var(--radius);margin-top:8px;display:none;max-height:160px;object-fit:cover}
+.photo-uploading{font-size:12px;color:var(--brand);margin-top:6px;display:none}
 
-/* ── Toast ── */
-.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--surface);padding:10px 20px;border-radius:20px;font-size:13px;font-weight:500;opacity:0;transition:all 0.25s;z-index:200;white-space:nowrap;pointer-events:none}
+/* ── Caja items ── */
+.caja-item{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px;margin-bottom:10px}
+.caja-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px}
+.caja-desc{font-size:14px;font-weight:600;color:var(--text);flex:1;margin-right:8px}
+.caja-monto{font-size:18px;font-weight:700;color:var(--text)}
+.caja-meta{font-size:12px;color:var(--text2);margin-bottom:6px}
+.caja-foto-link{font-size:12px;color:var(--brand);text-decoration:none;display:inline-flex;align-items:center;gap:4px;margin-top:4px}
+
+/* ── Balance ── */
+.balance-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px;margin-bottom:10px}
+.balance-user-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.balance-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0}
+.balance-name{font-size:14px;font-weight:600;color:var(--text)}
+.balance-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.balance-stat{text-align:center;background:var(--surface2);border-radius:var(--radius);padding:8px 4px}
+.balance-stat-val{font-size:15px;font-weight:700;color:var(--text)}
+.balance-stat-val.positive{color:var(--success-text)}
+.balance-stat-val.negative{color:var(--danger-text)}
+.balance-stat-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;margin-top:2px}
+
+/* ── Usuarios ── */
+.user-list-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:0.5px solid var(--border)}
+.user-list-item:last-child{border-bottom:none}
+.user-list-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0}
+.user-list-info{flex:1}
+.user-list-name{font-size:14px;font-weight:600;color:var(--text)}
+.user-list-meta{font-size:12px;color:var(--text2);margin-top:1px}
+.user-actions{display:flex;gap:4px}
+.btn-icon{background:none;border:none;font-size:18px;cursor:pointer;padding:4px 6px;border-radius:6px}
+.btn-icon:active{background:var(--surface2)}
+.btn-add-user{width:100%;padding:12px;background:var(--brand-light);color:var(--brand-dark);border:1.5px dashed var(--brand);border-radius:var(--radius);font-size:14px;font-weight:600;cursor:pointer;margin-top:8px}
+
+/* ── Tabs ── */
+.tab-row{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px}
+.tab-row::-webkit-scrollbar{display:none}
+.tab{padding:6px 13px;border-radius:20px;font-size:13px;cursor:pointer;border:1px solid var(--border);color:var(--text2);background:var(--surface);white-space:nowrap;font-weight:500}
+.tab.active{background:var(--brand-light);color:var(--brand-dark);border-color:var(--brand);font-weight:700}
+.tab.active.gold-tab{background:var(--gold-light);color:var(--gold);border-color:var(--gold)}
+
+/* ── Corte ── */
+.corte-total{background:var(--brand);border-radius:var(--radius-lg);padding:20px;margin-bottom:12px;text-align:center}
+.corte-total-label{font-size:11px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px}
+.corte-total-amount{font-size:36px;font-weight:800;color:#fff;letter-spacing:-1px}
+.corte-total-sub{font-size:12px;color:rgba(255,255,255,0.7);margin-top:4px}
+.corte-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.corte-stat{background:var(--surface2);border-radius:var(--radius);padding:10px 6px;text-align:center}
+.corte-stat-val{font-size:17px;font-weight:700;color:var(--text)}
+.corte-stat-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;margin-top:2px}
+.btn-export{width:100%;padding:13px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);font-size:14px;font-weight:600;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center;gap:8px}
+.config-row{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:0.5px solid var(--border)}
+.config-row:last-child{border-bottom:none}
+.config-label{font-size:14px;color:var(--text);font-weight:600}
+.config-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.config-val{font-size:15px;font-weight:700;color:var(--brand)}
+
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--surface);padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;opacity:0;transition:all 0.25s;z-index:300;white-space:nowrap;pointer-events:none}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-/* ── Empty state ── */
-.empty{text-align:center;padding:40px 20px;color:var(--text3)}
-.empty svg{width:48px;height:48px;stroke:var(--text3);opacity:0.4;margin-bottom:12px}
-.empty p{font-size:14px}
-
-/* ── Loading ── */
 .loading{text-align:center;padding:40px;color:var(--text2);font-size:14px}
 .spinner{width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--brand);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 12px}
 @keyframes spin{to{transform:rotate(360deg)}}
-
-/* ── Corte card ── */
-.corte-total{background:var(--brand);border-radius:var(--radius-lg);padding:20px;margin-bottom:12px;text-align:center}
-.corte-total-label{font-size:12px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px}
-.corte-total-amount{font-size:36px;font-weight:700;color:#fff;letter-spacing:-1px}
-.corte-total-sub{font-size:12px;color:rgba(255,255,255,0.7);margin-top:4px}
-.corte-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
-.corte-stat{background:var(--surface2);border-radius:var(--radius);padding:12px 8px;text-align:center}
-.corte-stat-val{font-size:18px;font-weight:700;color:var(--text)}
-.corte-stat-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;margin-top:2px}
-.btn-export{width:100%;padding:14px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);font-size:15px;font-weight:600;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center;gap:8px}
-.btn-export:active{background:var(--surface2)}
-
-/* ── Config ── */
-.config-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:0.5px solid var(--border)}
-.config-row:last-child{border-bottom:none}
-.config-label{font-size:14px;color:var(--text);font-weight:500}
-.config-sub{font-size:12px;color:var(--text2);margin-top:2px}
-.config-val{font-size:16px;font-weight:700;color:var(--brand)}
-
-/* ── Tabs ── */
-.tab-row{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px}
-.tab-row::-webkit-scrollbar{display:none}
-.tab{padding:6px 14px;border-radius:20px;font-size:13px;cursor:pointer;border:1px solid var(--border);color:var(--text2);background:var(--surface);white-space:nowrap;font-weight:500}
-.tab.active{background:var(--brand-light);color:var(--brand-dark);border-color:var(--brand);font-weight:600}
-
-.periodo-label{font-size:12px;color:var(--text2);background:var(--surface2);padding:8px 14px;border-radius:var(--radius);margin-bottom:16px;text-align:center}
-
-.reject-input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;background:var(--bg);color:var(--text);margin-top:8px;display:none}
+.empty{text-align:center;padding:40px 20px;color:var(--text3)}
+.empty svg{width:44px;height:44px;stroke:var(--text3);opacity:0.35;margin-bottom:12px}
+.empty p{font-size:14px}
+.pac-container{z-index:9999!important}
 </style>
 </head>
 <body>
 
 <!-- Splash -->
 <div id="splash">
-  <div class="splash-logo">
-    <svg viewBox="0 0 24 24"><path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3"/><rect x="9" y="11" width="14" height="10" rx="2"/><circle cx="12" cy="16" r="1"/></svg>
+  <div class="splash-icon">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
   </div>
-  <div class="splash-title">Minecore Rutas</div>
-  <div class="splash-sub">Cargando...</div>
+  <div class="splash-title">MINECORE</div>
+  <div class="splash-sub">App interna</div>
 </div>
 
-<!-- Login -->
-<div id="login-screen">
-  <div class="login-card">
-    <div class="login-logo">
-      <div class="login-logo-icon">
-        <svg viewBox="0 0 24 24"><path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3"/><rect x="9" y="11" width="14" height="10" rx="2"/><circle cx="12" cy="16" r="1"/></svg>
+<!-- Selección de usuario -->
+<div id="user-screen">
+  <div class="user-header">
+    <div class="user-header-logo">Minecore App</div>
+    <div class="user-header-title">¿Quién eres?</div>
+    <div class="user-header-sub">Toca tu perfil para ingresar</div>
+  </div>
+  <div class="user-grid" id="user-grid"></div>
+</div>
+
+<!-- PIN -->
+<div id="pin-screen">
+  <button class="pin-back" onclick="backToUsers()">‹</button>
+  <div class="pin-avatar-wrap">
+    <div class="pin-avatar" id="pin-avatar"></div>
+    <div class="pin-name" id="pin-name"></div>
+    <div class="pin-hint">Ingresa tu PIN</div>
+  </div>
+  <div class="pin-dots" id="pin-dots">
+    <div class="pin-dot"></div><div class="pin-dot"></div>
+    <div class="pin-dot"></div><div class="pin-dot"></div>
+  </div>
+  <div class="pin-keypad">
+    <button class="pin-key" onclick="pinKey('1')">1</button>
+    <button class="pin-key" onclick="pinKey('2')">2</button>
+    <button class="pin-key" onclick="pinKey('3')">3</button>
+    <button class="pin-key" onclick="pinKey('4')">4</button>
+    <button class="pin-key" onclick="pinKey('5')">5</button>
+    <button class="pin-key" onclick="pinKey('6')">6</button>
+    <button class="pin-key" onclick="pinKey('7')">7</button>
+    <button class="pin-key" onclick="pinKey('8')">8</button>
+    <button class="pin-key" onclick="pinKey('9')">9</button>
+    <div class="pin-key empty"></div>
+    <button class="pin-key" onclick="pinKey('0')">0</button>
+    <button class="pin-key del" onclick="pinDel()">⌫</button>
+  </div>
+  <div class="pin-error-msg" id="pin-error"></div>
+</div>
+
+<!-- Home (módulos) -->
+<div id="home-screen">
+  <div class="home-topbar">
+    <div class="home-brand">MINECORE APP</div>
+    <div class="home-user">
+      <div class="home-avatar" id="home-avatar"></div>
+      <div class="home-name" id="home-name"></div>
+      <button class="btn-logout" onclick="logout()">Salir</button>
+    </div>
+  </div>
+  <div class="home-content">
+    <div class="home-greeting">
+      <div class="home-greeting-name" id="greeting-name"></div>
+      <div class="home-greeting-sub">¿Qué vas a gestionar hoy?</div>
+    </div>
+    <div class="module-grid">
+      <div class="module-btn rutas" onclick="openModule('rutas')">
+        <div class="module-icon rutas">
+          <svg viewBox="0 0 24 24"><path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3"/><rect x="9" y="11" width="14" height="10" rx="2"/><circle cx="12" cy="16" r="1"/></svg>
+        </div>
+        <div class="module-label">Rutas</div>
+        <div class="module-sub">Control de entregas y transporte</div>
       </div>
-      <div>
-        <div class="login-logo-text">Minecore Rutas</div>
-        <div class="login-logo-sub">Control de transporte</div>
+      <div class="module-btn caja" onclick="openModule('caja')">
+        <div class="module-icon caja">
+          <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        </div>
+        <div class="module-label">Caja Chica</div>
+        <div class="module-sub">Gastos, entregas y balances</div>
       </div>
     </div>
-    <label class="form-label">Usuario</label>
-    <input class="form-input" type="text" id="login-user" placeholder="Ej: oswaldo" autocomplete="username" autocapitalize="none">
-    <label class="form-label">PIN</label>
-    <input class="form-input" type="password" id="login-pin" placeholder="••••" inputmode="numeric" autocomplete="current-password">
-    <button class="btn-primary" onclick="doLogin()">Entrar</button>
-    <div class="login-error" id="login-error">Usuario o PIN incorrecto</div>
   </div>
 </div>
 
-<!-- App -->
+<!-- App (módulos internos) -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-left">
-      <div class="topbar-icon">
-        <svg viewBox="0 0 24 24"><path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3"/><rect x="9" y="11" width="14" height="10" rx="2"/><circle cx="12" cy="16" r="1"/></svg>
-      </div>
-      <div>
-        <div class="topbar-title">Minecore Rutas</div>
-        <div class="topbar-role" id="topbar-role">—</div>
-      </div>
-    </div>
-    <button class="btn-logout" onclick="logout()">Salir</button>
+    <button class="topbar-back" onclick="goHome()">‹</button>
+    <div class="topbar-module-dot" id="topbar-dot"></div>
+    <div class="topbar-title" id="topbar-title">—</div>
+    <div class="topbar-avatar" id="topbar-avatar"></div>
   </div>
-
   <div class="content-area" id="content-area"></div>
-
   <nav class="bottom-nav" id="bottom-nav"></nav>
 </div>
 
 <div class="toast" id="toast"></div>
 
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD89tboX5JzwLTm7EcdAI1I_Xeq3vZy0kE&libraries=places,geometry&callback=onMapsReady" async defer></script>
+
 <script>
-// ── CONFIG — REEMPLAZAR CON TU URL DE APPS SCRIPT ──────────
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx2PlK0yNY9AdJvWefvQkoGhLd29nzeLphP0GlKQJA_a1tXQec51I2bREm84fJ5kji2/exec';
-// ───────────────────────────────────────────────────────────
+const MAPS_CENTER = {lat:-0.1807,lng:-78.4678};
+const AVATAR_COLORS = {
+  'E':{bg:'#E6F1FB',text:'#185FA5'},'M':{bg:'#E1F5EE',text:'#085041'},
+  'O':{bg:'#FAEEDA',text:'#854F0B'},'A':{bg:'#FBEAF0',text:'#993556'},
+  default:{bg:'#F1EFE8',text:'#5F5E5A'}
+};
+function ac(initials){ const k=(initials||'?')[0].toUpperCase(); return AVATAR_COLORS[k]||AVATAR_COLORS.default; }
 
-let session = null;
-let config = { precio_km: 0.35 };
+let session=null, config={precio_km:0.35}, currentModule='', allUsers=[];
+let mapsReady=false,map,directionsService,directionsRenderer,geocoder;
+let originMarker=null,destMarker=null,mapStep='dest';
+let originLatLng=null,destLatLng=null,originAddr='',destAddr='',routeKm=0;
+let pinBuffer='',selectedUser=null;
+let uploadedPhotoUrl='';
 
-const TIPO_ICON = { Entrega:'📦', Despacho:'🔄', Diligencia:'📋' };
+function onMapsReady(){ mapsReady=true; }
 
 // ── Boot ───────────────────────────────────────────────────
-window.onload = () => {
-  const saved = sessionStorage.getItem('mcSession');
-  if (saved) {
-    session = JSON.parse(saved);
-    setTimeout(() => bootApp(), 600);
-  } else {
-    setTimeout(() => {
-      document.getElementById('splash').classList.add('hide');
-      setTimeout(() => {
-        document.getElementById('splash').style.display = 'none';
-        document.getElementById('login-screen').style.display = 'flex';
-      }, 400);
-    }, 1200);
+window.onload=()=>{
+  const saved=sessionStorage.getItem('mcSession');
+  if(saved){ session=JSON.parse(saved); setTimeout(bootHome,700); }
+  else{ setTimeout(async()=>{ document.getElementById('splash').classList.add('hide'); setTimeout(async()=>{ document.getElementById('splash').style.display='none'; await loadUsers(); showEl('user-screen'); },400); },1400); }
+};
+
+async function loadUsers(){
+  try{ const r=await api({action:'getUsuarios'}); if(r.ok) allUsers=r.usuarios; }
+  catch(e){ allUsers=[{usuario:'EFCH',nombre:'Esteban Ferlito',rol:'admin',activo:'SI'},{usuario:'MPL',nombre:'Martín',rol:'admin',activo:'SI'},{usuario:'OPM',nombre:'Oswaldo',rol:'chofer',activo:'SI'},{usuario:'AG',nombre:'Ángel',rol:'chofer',activo:'SI'}]; }
+  renderUserGrid();
+}
+
+function renderUserGrid(){
+  const active=allUsers.filter(u=>u.activo==='SI');
+  document.getElementById('user-grid').innerHTML=active.map(u=>{
+    const c=ac(u.usuario);
+    return `<div class="user-card" onclick="selectUser('${u.usuario}')">
+      ${u.rol==='admin'?'<div class="user-card-admin-dot"></div>':''}
+      <div class="user-avatar" style="background:${c.bg};color:${c.text}">${u.usuario}</div>
+      <div class="user-full-name">${u.nombre}</div>
+    </div>`;
+  }).join('');
+}
+
+function selectUser(usuario){
+  selectedUser=allUsers.find(u=>u.usuario===usuario);
+  if(!selectedUser) return;
+  pinBuffer='';
+  const c=ac(selectedUser.usuario);
+  const av=document.getElementById('pin-avatar');
+  av.style.background=c.bg; av.style.color=c.text; av.textContent=selectedUser.usuario;
+  document.getElementById('pin-name').textContent=selectedUser.nombre;
+  document.getElementById('pin-error').textContent='';
+  updatePinDots();
+  hideAll(); showEl('pin-screen');
+}
+
+function backToUsers(){ pinBuffer=''; hideAll(); showEl('user-screen'); }
+
+function pinKey(d){ if(pinBuffer.length>=4)return; pinBuffer+=d; updatePinDots(); if(pinBuffer.length===4)setTimeout(submitPin,120); }
+function pinDel(){ pinBuffer=pinBuffer.slice(0,-1); updatePinDots(); document.getElementById('pin-error').textContent=''; }
+function updatePinDots(){ document.querySelectorAll('.pin-dot').forEach((d,i)=>{ d.classList.remove('filled','error'); if(i<pinBuffer.length)d.classList.add('filled'); }); }
+
+async function submitPin(){
+  try{
+    const r=await api({action:'login',usuario:selectedUser.usuario,pin:pinBuffer});
+    if(r.ok){ session=r; sessionStorage.setItem('mcSession',JSON.stringify(session)); hideAll(); bootHome(); }
+    else{ document.querySelectorAll('.pin-dot').forEach(d=>{d.classList.remove('filled');d.classList.add('error');}); document.getElementById('pin-error').textContent='PIN incorrecto'; setTimeout(()=>{ pinBuffer=''; updatePinDots(); document.getElementById('pin-error').textContent=''; },900); }
+  } catch(e){ document.getElementById('pin-error').textContent='Error de conexión'; pinBuffer=''; updatePinDots(); }
+}
+
+function bootHome(){
+  document.getElementById('splash').style.display='none';
+  loadConfig();
+  const c=ac(session.usuario);
+  const ha=document.getElementById('home-avatar');
+  ha.style.background=c.bg; ha.style.color=c.text; ha.textContent=session.usuario;
+  document.getElementById('home-name').textContent=session.nombre.split(' ')[0];
+  document.getElementById('greeting-name').textContent='Hola, '+session.nombre.split(' ')[0]+'!';
+  hideAll(); showEl('home-screen');
+}
+
+async function loadConfig(){ try{ const r=await api({action:'getConfig'}); if(r.ok) config=r.config; }catch(e){} }
+
+function openModule(mod){
+  currentModule=mod;
+  hideAll(); showEl('app');
+  const dot=document.getElementById('topbar-dot');
+  dot.className='topbar-module-dot '+mod;
+  document.getElementById('topbar-title').textContent=mod==='rutas'?'Rutas':'Caja Chica';
+  const c=ac(session.usuario);
+  const av=document.getElementById('topbar-avatar');
+  av.style.background=c.bg; av.style.color=c.text; av.textContent=session.usuario;
+  renderNav();
+  if(mod==='rutas') showView(session.rol==='chofer'?'nueva':'aprobar');
+  else showView(session.rol==='chofer'?'mis-gastos':'balance');
+}
+
+function goHome(){ hideAll(); showEl('home-screen'); }
+
+function logout(){
+  sessionStorage.removeItem('mcSession'); session=null; pinBuffer='';
+  hideAll();
+  loadUsers().then(()=>showEl('user-screen'));
+}
+
+// ── Nav ────────────────────────────────────────────────────
+const NAV={
+  rutas:{
+    chofer:[{id:'nueva',label:'Nueva',icon:'M12 5v14M5 12h14'},{id:'mis-rutas',label:'Mis rutas',icon:'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'},{id:'cuenta',label:'Mi cuenta',icon:'M12 2a10 10 0 110 20 10 10 0 010-20zm0 6v4l3 3'}],
+    admin:[{id:'aprobar',label:'Aprobar',icon:'M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11'},{id:'historial',label:'Historial',icon:'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'},{id:'corte',label:'Corte',icon:'M8 7V3m8 4V3M3 11h18M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'},{id:'usuarios',label:'Usuarios',icon:'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75'},{id:'config',label:'Config',icon:'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0'}]
+  },
+  caja:{
+    chofer:[{id:'mis-gastos',label:'Mis gastos',icon:'M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z'},{id:'nuevo-gasto',label:'Nuevo gasto',icon:'M12 5v14M5 12h14'},{id:'mis-entregas',label:'Entregas',icon:'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z'}],
+    admin:[{id:'balance',label:'Balance',icon:'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'},{id:'nueva-entrega',label:'Entregar',icon:'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z'},{id:'aprobar-gastos',label:'Gastos',icon:'M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11'},{id:'historial-caja',label:'Historial',icon:'M4 6h16M4 10h16M4 14h16M4 18h16'}]
   }
 };
 
-async function doLogin() {
-  const usuario = document.getElementById('login-user').value.trim().toLowerCase();
-  const pin = document.getElementById('login-pin').value.trim();
-  if (!usuario || !pin) return;
-  document.querySelector('.btn-primary').textContent = 'Entrando...';
-  document.querySelector('.btn-primary').disabled = true;
-  try {
-    const res = await api({ action: 'login', usuario, pin });
-    if (res.ok) {
-      session = res;
-      sessionStorage.setItem('mcSession', JSON.stringify(session));
-      document.getElementById('login-screen').style.display = 'none';
-      bootApp();
-    } else {
-      document.getElementById('login-error').style.display = 'block';
-    }
-  } catch(e) {
-    document.getElementById('login-error').style.display = 'block';
-    document.getElementById('login-error').textContent = 'Error de conexión';
-  }
-  document.querySelector('.btn-primary').textContent = 'Entrar';
-  document.querySelector('.btn-primary').disabled = false;
-}
-
-function logout() {
-  sessionStorage.removeItem('mcSession');
-  session = null;
-  location.reload();
-}
-
-function bootApp() {
-  document.getElementById('splash').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'none';
-  const app = document.getElementById('app');
-  app.style.display = 'flex';
-  document.getElementById('topbar-role').textContent = session.nombre + ' · ' + (session.rol === 'admin' ? 'Administrador' : 'Chofer');
-  loadConfig();
-  renderNav();
-  if (session.rol === 'chofer') showView('nueva');
-  else showView('aprobar');
-}
-
-async function loadConfig() {
-  try {
-    const res = await api({ action: 'getConfig' });
-    if (res.ok) config = res.config;
-  } catch(e) {}
-}
-
-// ── Navigation ─────────────────────────────────────────────
-const NAV_CHOFER = [
-  { id:'nueva', label:'Nueva', icon:'M12 5v14M5 12h14' },
-  { id:'mis-rutas', label:'Mis rutas', icon:'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
-  { id:'cuenta', label:'Mi cuenta', icon:'M12 2a10 10 0 110 20 10 10 0 010-20zm0 6v4l3 3' },
-];
-const NAV_ADMIN = [
-  { id:'aprobar', label:'Aprobar', icon:'M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11' },
-  { id:'historial', label:'Historial', icon:'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
-  { id:'corte', label:'Corte', icon:'M8 7V3m8 4V3M3 11h18M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
-  { id:'config', label:'Config', icon:'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0' },
-];
-
-let activeView = '';
-function renderNav() {
-  const nav = session.rol === 'chofer' ? NAV_CHOFER : NAV_ADMIN;
-  document.getElementById('bottom-nav').innerHTML = nav.map(n => `
-    <button class="nav-btn${activeView===n.id?' active':''}" onclick="showView('${n.id}')">
+let activeView='';
+function renderNav(){
+  const navList=NAV[currentModule][session.rol]||[];
+  const isGold=currentModule==='caja';
+  document.getElementById('bottom-nav').innerHTML=navList.map(n=>`
+    <button class="nav-btn${activeView===n.id?' active':''}${isGold&&activeView===n.id?' caja-nav':''}" onclick="showView('${n.id}')">
       <svg viewBox="0 0 24 24"><path d="${n.icon}" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span>${n.label}</span>
     </button>`).join('');
 }
 
-function showView(v) {
-  activeView = v;
-  renderNav();
-  const c = document.getElementById('content-area');
-  if (v === 'nueva') renderNuevaRuta(c);
-  else if (v === 'mis-rutas') renderMisRutas(c);
-  else if (v === 'cuenta') renderCuenta(c);
-  else if (v === 'aprobar') renderAprobar(c);
-  else if (v === 'historial') renderHistorial(c);
-  else if (v === 'corte') renderCorte(c);
-  else if (v === 'config') renderConfig(c);
-  window.scrollTo(0, 0);
+function showView(v){
+  activeView=v; renderNav();
+  const c=document.getElementById('content-area');
+  if(v==='nueva') renderNuevaRuta(c);
+  else if(v==='mis-rutas') renderMisRutas(c);
+  else if(v==='cuenta') renderCuenta(c);
+  else if(v==='aprobar') renderAprobar(c);
+  else if(v==='historial') renderHistorial(c);
+  else if(v==='corte') renderCorte(c);
+  else if(v==='usuarios') renderUsuarios(c);
+  else if(v==='config') renderConfig(c);
+  else if(v==='balance') renderBalance(c);
+  else if(v==='nueva-entrega') renderNuevaEntrega(c);
+  else if(v==='aprobar-gastos') renderAprobarGastos(c);
+  else if(v==='historial-caja') renderHistorialCaja(c);
+  else if(v==='mis-gastos') renderMisGastos(c);
+  else if(v==='nuevo-gasto') renderNuevoGasto(c);
+  else if(v==='mis-entregas') renderMisEntregas(c);
+  window.scrollTo(0,0);
 }
 
-// ── Views: Chofer ──────────────────────────────────────────
-function renderNuevaRuta(c) {
-  c.innerHTML = `
-  <div class="page-title">Nueva ruta</div>
-  <div class="page-sub">La distancia se calcula automáticamente</div>
-  <div class="card">
-    <div class="field-group">
-      <label class="field-label">Origen</label>
-      <input class="field-input" id="f-origen" value="Minecore (Av. Eloy Alfaro, Quito)">
+// ══════════════════════════════════════════════════════════
+// RUTAS
+// ══════════════════════════════════════════════════════════
+function renderNuevaRuta(c){
+  originLatLng=null;destLatLng=null;originAddr='Minecore (Av. Eloy Alfaro, Quito)';destAddr='';routeKm=0;mapStep='dest';
+  c.innerHTML=`<div class="page-title">Nueva ruta</div><div class="page-sub">Selecciona origen y destino en el mapa</div>
+  <div class="card" style="padding:12px">
+    <div class="map-step-btns">
+      <div class="map-step-btn done" id="btn-step-origin" onclick="setMapStep('origin')">📍 Origen</div>
+      <div class="map-step-btn active" id="btn-step-dest" onclick="setMapStep('dest')">🏁 Destino</div>
     </div>
-    <div class="field-group">
-      <label class="field-label">Destino</label>
-      <input class="field-input" id="f-destino" placeholder="Dirección o referencia del destino" oninput="calcularKm()">
-    </div>
-    <div class="field-group">
-      <label class="field-label">KM estimados</label>
-      <input class="field-input" type="number" id="f-km" placeholder="Ej: 12.5" step="0.1" min="0.1" oninput="actualizarPreview()">
-      <div style="font-size:11px;color:var(--text3);margin-top:4px">Abre Google Maps, traza la ruta y registra los KM aquí</div>
-    </div>
+    <div class="field-group" style="margin-bottom:8px"><input class="field-input" id="input-origin" value="${originAddr}" style="font-size:13px;padding:9px 12px"></div>
+    <div class="field-group" style="margin-bottom:10px"><input class="field-input" id="input-dest" placeholder="Buscar destino o toca el mapa..." style="font-size:13px;padding:9px 12px"></div>
+    <div class="map-container"><div id="map"></div><div class="map-instructions" id="map-instructions">Toca el mapa para marcar el destino</div></div>
     <div class="km-preview" id="km-preview">
-      <div class="km-preview-row">
-        <div class="km-preview-label">Total a cobrar</div>
-        <div class="km-preview-val" id="preview-val">$0.00</div>
-      </div>
-      <div class="km-preview-sub" id="preview-sub">— km × $${parseFloat(config.precio_km||0.35).toFixed(2)}/km</div>
+      <div class="km-preview-row"><div class="km-preview-label">Total a cobrar</div><div class="km-preview-val" id="preview-val">$0.00</div></div>
+      <div class="km-preview-sub" id="preview-sub"></div>
     </div>
-    <div class="field-group">
-      <label class="field-label">Tipo de servicio</label>
-      <select class="field-select" id="f-tipo">
-        <option value="Entrega">📦 Entrega</option>
-        <option value="Despacho">🔄 Despacho / Retiro</option>
-        <option value="Diligencia">📋 Diligencia</option>
-      </select>
-    </div>
-    <div class="field-group">
-      <label class="field-label">Fecha del servicio</label>
-      <input class="field-input" type="date" id="f-fecha" value="${todayStr()}">
-    </div>
-    <div class="field-group">
-      <label class="field-label">Motivo / descripción</label>
-      <input class="field-input" id="f-motivo" placeholder="Ej: Entrega de brocas de perforación">
-    </div>
+  </div>
+  <div class="card">
+    <div class="field-group"><label class="field-label">Tipo de servicio</label>
+      <select class="field-select" id="f-tipo"><option value="Entrega">📦 Entrega</option><option value="Despacho">🔄 Despacho / Retiro</option><option value="Diligencia">📋 Diligencia</option></select></div>
+    <div class="field-group"><label class="field-label">Fecha del servicio</label><input class="field-input" type="date" id="f-fecha" value="${todayStr()}"></div>
+    <div class="field-group"><label class="field-label">Motivo</label><input class="field-input" id="f-motivo" placeholder="Ej: Entrega de brocas de perforación"></div>
     <button class="btn-submit" onclick="enviarRuta()" id="btn-enviar">Enviar solicitud</button>
   </div>`;
+  initMap();
 }
 
-function calcularKm() {
-  const dest = document.getElementById('f-destino').value.trim();
-  if (dest.length > 5) {
-    const fakeKm = ((dest.length % 20) + 5 + Math.random()).toFixed(1);
-    document.getElementById('f-km').value = fakeKm;
-    actualizarPreview();
-  }
+function initMap(){
+  if(!mapsReady||!window.google){setTimeout(initMap,300);return;}
+  map=new google.maps.Map(document.getElementById('map'),{center:MAPS_CENTER,zoom:13,disableDefaultUI:true,zoomControl:true,styles:[{featureType:'poi',elementType:'labels',stylers:[{visibility:'off'}]}]});
+  directionsService=new google.maps.DirectionsService();
+  directionsRenderer=new google.maps.DirectionsRenderer({suppressMarkers:true,polylineOptions:{strokeColor:'#1D9E75',strokeWeight:4}});
+  directionsRenderer.setMap(map);
+  geocoder=new google.maps.Geocoder();
+  originLatLng=MAPS_CENTER;
+  originMarker=new google.maps.Marker({position:MAPS_CENTER,map,icon:{path:google.maps.SymbolPath.CIRCLE,scale:8,fillColor:'#1D9E75',fillOpacity:1,strokeColor:'#fff',strokeWeight:2}});
+  const acOpts={componentRestrictions:{country:'ec'},fields:['geometry','formatted_address']};
+  const inO=document.getElementById('input-origin');
+  const inD=document.getElementById('input-dest');
+  if(!inO||!inD)return;
+  const acO=new google.maps.places.Autocomplete(inO,acOpts);
+  acO.addListener('place_changed',()=>{const p=acO.getPlace();if(!p.geometry)return;originLatLng={lat:p.geometry.location.lat(),lng:p.geometry.location.lng()};originAddr=p.formatted_address;originMarker.setPosition(originLatLng);map.panTo(originLatLng);if(destLatLng)calcRoute();updateStepUI();});
+  const acD=new google.maps.places.Autocomplete(inD,acOpts);
+  acD.addListener('place_changed',()=>{const p=acD.getPlace();if(!p.geometry)return;destLatLng={lat:p.geometry.location.lat(),lng:p.geometry.location.lng()};destAddr=p.formatted_address;placeDestMarker(new google.maps.LatLng(destLatLng.lat,destLatLng.lng));calcRoute();updateStepUI();});
+  map.addListener('click',(e)=>{const ll=e.latLng;if(mapStep==='origin'){originLatLng={lat:ll.lat(),lng:ll.lng()};originMarker.setPosition(ll);geocoder.geocode({location:ll},(res,st)=>{if(st==='OK'&&res[0]){originAddr=res[0].formatted_address;const i=document.getElementById('input-origin');if(i)i.value=originAddr;}});}else{destLatLng={lat:ll.lat(),lng:ll.lng()};placeDestMarker(ll);geocoder.geocode({location:ll},(res,st)=>{if(st==='OK'&&res[0]){destAddr=res[0].formatted_address;const i=document.getElementById('input-dest');if(i)i.value=destAddr;}});}if(originLatLng&&destLatLng)calcRoute();updateStepUI();});
+  updateStepUI();
+}
+function placeDestMarker(ll){if(destMarker)destMarker.setMap(null);destMarker=new google.maps.Marker({position:ll,map,icon:{path:google.maps.SymbolPath.CIRCLE,scale:8,fillColor:'#E24B4A',fillOpacity:1,strokeColor:'#fff',strokeWeight:2}});}
+function setMapStep(step){mapStep=step;updateStepUI();const i=document.getElementById('map-instructions');if(i)i.textContent=step==='origin'?'Toca el mapa para cambiar el origen':'Toca el mapa para marcar el destino';}
+function updateStepUI(){const bO=document.getElementById('btn-step-origin');const bD=document.getElementById('btn-step-dest');if(!bO||!bD)return;bO.className='map-step-btn'+(mapStep==='origin'?' active':originLatLng?' done':'');bD.className='map-step-btn'+(mapStep==='dest'?' active':destLatLng?' done':'');}
+function calcRoute(){if(!originLatLng||!destLatLng)return;directionsService.route({origin:originLatLng,destination:destLatLng,travelMode:google.maps.TravelMode.DRIVING},(result,status)=>{if(status==='OK'){directionsRenderer.setDirections(result);const leg=result.routes[0].legs[0];routeKm=Math.round(leg.distance.value/100)/10;const precio=parseFloat(config.precio_km||0.35);const valor=(routeKm*precio).toFixed(2);const prev=document.getElementById('km-preview');if(prev){prev.style.display='block';document.getElementById('preview-val').textContent='$'+valor;document.getElementById('preview-sub').textContent=`${routeKm} km × $${precio.toFixed(2)}/km · ${leg.duration.text}`;}const bounds=new google.maps.LatLngBounds();bounds.extend(originLatLng);bounds.extend(destLatLng);map.fitBounds(bounds,{top:20,right:20,bottom:20,left:20});const instr=document.getElementById('map-instructions');if(instr)instr.style.opacity='0';}});}
+
+async function enviarRuta(){
+  if(!destLatLng){toast('Selecciona el destino en el mapa');return;}
+  if(!routeKm||routeKm<=0){toast('La ruta no pudo calcularse');return;}
+  const btn=document.getElementById('btn-enviar');btn.textContent='Enviando...';btn.disabled=true;
+  try{const r=await api({action:'crearRuta',usuario:session.usuario,origen:originAddr||'Minecore',destino:destAddr||document.getElementById('input-dest').value,km:routeKm,tipo:document.getElementById('f-tipo').value,fechaServicio:document.getElementById('f-fecha').value,motivo:document.getElementById('f-motivo').value||'Sin descripción'});if(r.ok){toast('✓ Solicitud enviada');showView('mis-rutas');}else toast('Error: '+(r.error||'Intenta de nuevo'));}catch(e){toast('Error de conexión');}
+  btn.textContent='Enviar solicitud';btn.disabled=false;
 }
 
-function actualizarPreview() {
-  const km = parseFloat(document.getElementById('f-km').value);
-  const preview = document.getElementById('km-preview');
-  const precio = parseFloat(config.precio_km || 0.35);
-  if (km > 0) {
-    const val = (km * precio).toFixed(2);
-    document.getElementById('preview-val').textContent = '$' + val;
-    document.getElementById('preview-sub').textContent = `${km} km × $${precio.toFixed(2)}/km`;
-    preview.style.display = 'block';
-  } else { preview.style.display = 'none'; }
+async function renderMisRutas(c){
+  c.innerHTML=loading();
+  try{const r=await api({action:'getRutas',rol:'chofer',usuario:session.usuario});const rutas=r.rutas||[];
+  c.innerHTML=`<div class="page-title">Mis rutas</div><div class="tab-row"><div class="tab active" onclick="filtrarRutas('',this)">Todas</div><div class="tab" onclick="filtrarRutas('Pendiente',this)">Pendientes</div><div class="tab" onclick="filtrarRutas('Aprobada',this)">Aprobadas</div><div class="tab" onclick="filtrarRutas('Rechazada',this)">Rechazadas</div></div><div id="rutas-list">${rutasHtml(rutas,false)}</div>`;
+  window._rutasData=rutas;}catch(e){c.innerHTML=errorHtml();}
 }
+function filtrarRutas(estado,el){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');const f=estado?window._rutasData.filter(r=>r['Estado']===estado):window._rutasData;document.getElementById('rutas-list').innerHTML=rutasHtml(f,false);}
 
-async function enviarRuta() {
-  const destino = document.getElementById('f-destino').value.trim();
-  const km = parseFloat(document.getElementById('f-km').value);
-  const motivo = document.getElementById('f-motivo').value.trim();
-  if (!destino) { toast('Ingresa el destino'); return; }
-  if (!km || km <= 0) { toast('Ingresa los kilómetros'); return; }
-
-  const btn = document.getElementById('btn-enviar');
-  btn.textContent = 'Enviando...'; btn.disabled = true;
-  try {
-    const res = await api({
-      action: 'crearRuta',
-      usuario: session.usuario,
-      origen: document.getElementById('f-origen').value,
-      destino,
-      km,
-      tipo: document.getElementById('f-tipo').value,
-      fechaServicio: document.getElementById('f-fecha').value,
-      motivo: motivo || 'Sin descripción'
-    });
-    if (res.ok) {
-      toast('✓ Solicitud enviada — pendiente de aprobación');
-      showView('mis-rutas');
-    } else { toast('Error: ' + (res.error || 'Intenta de nuevo')); }
-  } catch(e) { toast('Error de conexión'); }
-  btn.textContent = 'Enviar solicitud'; btn.disabled = false;
-}
-
-async function renderMisRutas(c) {
-  c.innerHTML = loading();
-  try {
-    const res = await api({ action: 'getRutas', rol: 'chofer', usuario: session.usuario });
-    const rutas = res.rutas || [];
-    c.innerHTML = `
-    <div class="page-title">Mis rutas</div>
-    <div class="tab-row">
-      <div class="tab active" onclick="filtrarMisRutas(event,'')">Todas</div>
-      <div class="tab" onclick="filtrarMisRutas(event,'Pendiente')">Pendientes</div>
-      <div class="tab" onclick="filtrarMisRutas(event,'Aprobada')">Aprobadas</div>
-      <div class="tab" onclick="filtrarMisRutas(event,'Rechazada')">Rechazadas</div>
-    </div>
-    <div id="rutas-list">${rutasHtml(rutas, false)}</div>`;
-    window._misRutas = rutas;
-  } catch(e) { c.innerHTML = errorHtml(); }
-}
-
-function filtrarMisRutas(ev, estado) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  ev.target.classList.add('active');
-  const filtradas = estado ? window._misRutas.filter(r => r['Estado'] === estado) : window._misRutas;
-  document.getElementById('rutas-list').innerHTML = rutasHtml(filtradas, false);
-}
-
-function rutasHtml(rutas, isAdmin) {
-  if (!rutas.length) return emptyHtml('No hay rutas en esta categoría');
-  return rutas.map(r => {
-    const km = parseFloat(r['KM'] || 0);
-    const val = parseFloat(r['Valor ($)'] || 0).toFixed(2);
-    const estado = r['Estado'] || 'Pendiente';
-    const badgeClass = estado === 'Aprobada' ? 'approved' : estado === 'Rechazada' ? 'rejected' : 'pending';
-    const acciones = isAdmin && estado === 'Pendiente' ? `
-      <input class="reject-input" id="note-${r['ID']}" placeholder="Motivo del rechazo (opcional)">
-      <div class="action-row">
-        <button class="btn-reject" onclick="toggleRejectNote('${r['ID']}')">Rechazar</button>
-        <button class="btn-approve" onclick="aprobar('${r['ID']}')">✓ Aprobar</button>
-      </div>` : '';
-    return `<div class="route-item">
-      <div class="route-header">
-        <div class="route-dest">${r['Destino'] || '—'}</div>
-        <span class="badge ${badgeClass}">${estado}</span>
-      </div>
-      <div class="route-dots">
-        <div class="dot o"></div>
-        <div class="dot-label" style="font-size:10px">${r['Origen'] || ''}</div>
-        <div class="dot-line"></div>
-        <div class="dot d"></div>
-      </div>
-      <div class="route-meta">${r['Motivo'] || ''}</div>
-      <div class="route-footer">
-        <div><div class="route-valor">${estado === 'Aprobada' ? '$'+val : '—'}</div><div class="route-tipo">${r['Tipo']||''} · ${km} km · ${fmtDate(r['Fecha Servicio']||'')}</div></div>
-      </div>
-      ${acciones}
-    </div>`;
+function rutasHtml(rutas,isAdmin){
+  if(!rutas.length)return emptyHtml('No hay rutas en esta categoría');
+  return rutas.map(r=>{
+    const km=parseFloat(r['KM']||0),val=parseFloat(r['Valor ($)']||0).toFixed(2),estado=r['Estado']||'Pendiente';
+    const bc=estado==='Aprobada'?'approved':estado==='Rechazada'?'rejected':'pending';
+    const acc=isAdmin&&estado==='Pendiente'?`<input class="reject-input" id="note-${r['ID']}" placeholder="Motivo del rechazo (opcional)"><div class="action-row"><button class="btn-reject" onclick="toggleReject('${r['ID']}',this)">Rechazar</button><button class="btn-approve" onclick="aprobarRuta('${r['ID']}')">✓ Aprobar</button></div>`:'';
+    return `<div class="route-item"><div class="route-header"><div class="route-dest">${r['Destino']||'—'}</div><span class="badge ${bc}">${estado}</span></div>
+    <div class="route-dots"><div class="dot o"></div><div style="font-size:10px;color:var(--text2);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r['Origen']||''}</div><div class="dot-line"></div><div class="dot d"></div></div>
+    <div class="route-meta">${r['Motivo']||''}</div>
+    <div class="route-footer"><div><div class="route-valor">${estado==='Aprobada'?'$'+val:'—'}</div><div class="route-tipo">${r['Tipo']||''} · ${km} km · ${fmtDate(r['Fecha Servicio']||'')}${isAdmin?' · '+r['Usuario']:''}</div></div></div>${acc}</div>`;
   }).join('');
 }
 
-function toggleRejectNote(id) {
-  const input = document.getElementById('note-'+id);
-  if (input.style.display === 'block') {
-    rechazar(id, input.value);
-  } else {
-    input.style.display = 'block';
-    input.focus();
-    input.closest('.route-item').querySelector('.btn-reject').textContent = 'Confirmar rechazo';
-  }
+function toggleReject(id,btn){const i=document.getElementById('note-'+id);if(i.style.display==='block')rechazarRuta(id,i.value);else{i.style.display='block';i.focus();btn.textContent='Confirmar rechazo';}}
+async function aprobarRuta(id){try{const r=await api({action:'aprobarRuta',id,admin:session.usuario});if(r.ok){toast('✓ Ruta aprobada');showView('aprobar');}else toast('Error');}catch(e){toast('Error de conexión');}}
+async function rechazarRuta(id,notas){try{const r=await api({action:'rechazarRuta',id,admin:session.usuario,notas:notas||''});if(r.ok){toast('Ruta rechazada');showView('aprobar');}else toast('Error');}catch(e){toast('Error de conexión');}}
+
+async function renderCuenta(c){
+  c.innerHTML=loading();
+  try{const r=await api({action:'getCorte',usuario:session.usuario});const ap=r.rutas||[];
+  c.innerHTML=`<div class="page-title">Mi cuenta</div><div class="page-sub">Período: ${r.periodo||'—'}</div>
+  <div class="corte-total"><div class="corte-total-label">Total a cobrar</div><div class="corte-total-amount">$${(r.totalUsd||0).toFixed(2)}</div><div class="corte-total-sub">${r.totalKm||0} km × $${parseFloat(config.precio_km||0.35).toFixed(2)}/km</div></div>
+  <div class="corte-stats"><div class="corte-stat"><div class="corte-stat-val">${ap.length}</div><div class="corte-stat-lbl">Rutas</div></div><div class="corte-stat"><div class="corte-stat-val">${r.totalKm||0}</div><div class="corte-stat-lbl">KM</div></div><div class="corte-stat"><div class="corte-stat-val">$${ap.length?(r.totalUsd/ap.length).toFixed(2):'0.00'}</div><div class="corte-stat-lbl">Promedio</div></div></div>
+  <div class="card"><div class="card-title">Detalle</div>${ap.length?ap.map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:0.5px solid var(--border)"><div><div style="font-size:13px;font-weight:600">${r['Destino']}</div><div style="font-size:11px;color:var(--text2)">${fmtDate(r['Fecha Servicio']||'')} · ${r['KM']} km</div></div><div style="font-size:14px;font-weight:700">$${parseFloat(r['Valor ($)']).toFixed(2)}</div></div>`).join(''):'<div style="color:var(--text3);font-size:13px;text-align:center;padding:16px">Sin rutas aprobadas</div>'}</div>`;}catch(e){c.innerHTML=errorHtml();}
 }
 
-async function aprobar(id) {
-  try {
-    const res = await api({ action: 'aprobarRuta', id, admin: session.usuario });
-    if (res.ok) { toast('✓ Ruta aprobada'); showView('aprobar'); }
-    else toast('Error al aprobar');
-  } catch(e) { toast('Error de conexión'); }
+async function renderAprobar(c){
+  c.innerHTML=loading();
+  try{const r=await api({action:'getRutas',rol:'admin',estado:'Pendiente'});const rutas=r.rutas||[];
+  c.innerHTML=`<div class="page-title">Por aprobar</div><div class="page-sub">${rutas.length} pendiente${rutas.length!==1?'s':''}</div>${rutas.length?rutasHtml(rutas,true):emptyHtml('Sin solicitudes pendientes ✓')}`;}catch(e){c.innerHTML=errorHtml();}
 }
 
-async function rechazar(id, notas) {
-  try {
-    const res = await api({ action: 'rechazarRuta', id, admin: session.usuario, notas });
-    if (res.ok) { toast('Ruta rechazada'); showView('aprobar'); }
-    else toast('Error al rechazar');
-  } catch(e) { toast('Error de conexión'); }
+async function renderHistorial(c){
+  c.innerHTML=loading();
+  try{const r=await api({action:'getRutas',rol:'admin'});const rutas=r.rutas||[];
+  c.innerHTML=`<div class="page-title">Historial</div><div class="tab-row"><div class="tab active" onclick="filtrarHist('',this)">Todas</div><div class="tab" onclick="filtrarHist('Aprobada',this)">Aprobadas</div><div class="tab" onclick="filtrarHist('Rechazada',this)">Rechazadas</div><div class="tab" onclick="filtrarHist('Pendiente',this)">Pendientes</div></div><div id="hist-list">${rutasHtml(rutas,false)}</div>`;
+  window._histData=rutas;}catch(e){c.innerHTML=errorHtml();}
+}
+function filtrarHist(estado,el){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');const f=estado?window._histData.filter(r=>r['Estado']===estado):window._histData;document.getElementById('hist-list').innerHTML=rutasHtml(f,false);}
+
+async function renderCorte(c){
+  c.innerHTML=loading();
+  try{const r=await api({action:'getCorte'});const{periodo,totalKm,totalUsd,cantidadRutas,rutas,precioKm}=r;
+  c.innerHTML=`<div class="page-title">Corte mensual</div><div class="page-sub">Período: 26 al 25 de cada mes</div>
+  <div class="corte-total"><div class="corte-total-label">Total a pagar</div><div class="corte-total-amount">$${(totalUsd||0).toFixed(2)}</div><div class="corte-total-sub">${periodo}</div></div>
+  <div class="corte-stats"><div class="corte-stat"><div class="corte-stat-val">${cantidadRutas||0}</div><div class="corte-stat-lbl">Rutas</div></div><div class="corte-stat"><div class="corte-stat-val">${totalKm||0}</div><div class="corte-stat-lbl">KM</div></div><div class="corte-stat"><div class="corte-stat-val">$${precioKm||0.35}</div><div class="corte-stat-lbl">$/km</div></div></div>
+  <button class="btn-export" onclick="cerrarCorte('${periodo}')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>Cerrar corte y guardar en Sheets</button>
+  <div style="height:12px"></div>
+  <div class="card"><div class="card-title">Rutas incluidas</div>${(rutas||[]).length?(rutas||[]).map(r=>`<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:0.5px solid var(--border)"><div><div style="font-size:13px;font-weight:600">${r['Destino']}</div><div style="font-size:11px;color:var(--text2)">${fmtDate(r['Fecha Servicio']||'')} · ${r['KM']} km · ${r['Usuario']}</div></div><div style="font-size:14px;font-weight:700">$${parseFloat(r['Valor ($)']).toFixed(2)}</div></div>`).join(''):'<div style="color:var(--text3);font-size:13px;text-align:center;padding:16px">Sin rutas</div>'}</div>`;}catch(e){c.innerHTML=errorHtml();}
+}
+async function cerrarCorte(periodo){if(!confirm(`¿Cerrar el corte del período ${periodo}?`))return;try{const r=await api({action:'cerrarCorte',periodo,admin:session.usuario});if(r.ok)toast(`✓ Corte cerrado — $${r.totalUsd.toFixed(2)}`);else toast('Error');}catch(e){toast('Error de conexión');}}
+
+// ══════════════════════════════════════════════════════════
+// USUARIOS
+// ══════════════════════════════════════════════════════════
+async function renderUsuarios(c){
+  c.innerHTML=loading();
+  try{const r=await api({action:'getUsuarios'});const us=r.usuarios||[];allUsers=us;
+  c.innerHTML=`<div class="page-title">Usuarios</div><div class="page-sub">Gestión de accesos</div>
+  <div class="card">${us.map(u=>{const col=ac(u.usuario);return `<div class="user-list-item">
+    <div class="user-list-avatar" style="background:${col.bg};color:${col.text}">${u.usuario}</div>
+    <div class="user-list-info"><div class="user-list-name">${u.nombre}</div><div class="user-list-meta">${u.rol==='admin'?'Administrador':'Chofer'}</div></div>
+    <div class="user-actions">
+      <button class="btn-icon" onclick="editarUsuario('${u.usuario}','${u.nombre}','${u.rol}')" title="Editar">✏️</button>
+      ${u.usuario!==session.usuario?`<button class="btn-icon" onclick="eliminarUsuario('${u.usuario}','${u.nombre}')" title="Eliminar">🗑️</button>`:''}
+    </div></div>`;}).join('')}
+  <button class="btn-add-user" onclick="agregarUsuario()">+ Agregar usuario</button></div>`;}catch(e){c.innerHTML=errorHtml();}
 }
 
-async function renderCuenta(c) {
-  c.innerHTML = loading();
-  try {
-    const corteData = await api({ action: 'getCorte', usuario: session.usuario });
-    const aprobadas = (corteData.rutas || []);
-    const totalKm = corteData.totalKm || 0;
-    const totalUsd = corteData.totalUsd || 0;
-    c.innerHTML = `
-    <div class="page-title">Mi cuenta</div>
-    <div class="page-sub">Período: ${corteData.periodo || '—'}</div>
-    <div class="corte-total">
-      <div class="corte-total-label">Total a cobrar</div>
-      <div class="corte-total-amount">$${totalUsd.toFixed(2)}</div>
-      <div class="corte-total-sub">${totalKm} km × $${parseFloat(config.precio_km||0.35).toFixed(2)}/km</div>
+async function editarUsuario(usuario, nombre, rol){
+  const nuevoNombre=prompt('Nombre completo:',nombre);
+  if(!nuevoNombre)return;
+  const nuevoRol=confirm('¿Es Administrador?\n(Cancelar = Chofer)')?'admin':'chofer';
+  const nuevoPin=prompt('Nuevo PIN de 4 dígitos:\n(Dejar vacío para no cambiar)');
+  const payload={action:'editarUsuario',usuario,nombre:nuevoNombre,rol:nuevoRol};
+  if(nuevoPin&&nuevoPin.length===4&&!isNaN(nuevoPin)) payload.pin=nuevoPin;
+  try{const r=await api(payload);if(r.ok){toast('✓ Usuario actualizado');renderUsuarios(document.getElementById('content-area'));}else toast('Error: '+(r.error||''));}catch(e){toast('Error de conexión');}
+}
+
+async function eliminarUsuario(usuario,nombre){
+  if(!confirm(`¿Eliminar a ${nombre}?`))return;
+  try{const r=await api({action:'eliminarUsuario',usuario});if(r.ok){toast(`${nombre} eliminado`);renderUsuarios(document.getElementById('content-area'));}else toast('Error: '+(r.error||''));}catch(e){toast('Error de conexión');}
+}
+
+async function agregarUsuario(){
+  const usuario=prompt('Iniciales (ej: JML):');if(!usuario?.trim())return;
+  const nombre=prompt('Nombre completo:');if(!nombre?.trim())return;
+  const rol=confirm('¿Es Administrador?\n(Cancelar = Chofer)')?'admin':'chofer';
+  const pin=prompt('PIN de 4 dígitos:');if(!pin||pin.length!==4||isNaN(pin)){toast('PIN inválido');return;}
+  try{const r=await api({action:'crearUsuario',usuario:usuario.trim().toUpperCase(),nombre:nombre.trim(),rol,pin});if(r.ok){toast('✓ '+nombre+' agregado');renderUsuarios(document.getElementById('content-area'));}else toast('Error: '+(r.error||''));}catch(e){toast('Error de conexión');}
+}
+
+// ══════════════════════════════════════════════════════════
+// CAJA CHICA
+// ══════════════════════════════════════════════════════════
+
+// ── Balance (Admin) ────────────────────────────────────────
+async function renderBalance(c){
+  c.innerHTML=loading();
+  try{const r=await api({action:'getBalanceCaja'});const balances=r.balances||[];
+  const total=balances.reduce((s,b)=>s+b.entregado,0);
+  c.innerHTML=`<div class="page-title">Balance Caja Chica</div><div class="page-sub">Entregado vs justificado por usuario</div>
+  <div class="card" style="margin-bottom:12px;background:var(--gold-light);border-color:var(--gold)">
+    <div style="font-size:11px;color:var(--gold);text-transform:uppercase;font-weight:700;letter-spacing:0.05em;margin-bottom:4px">Total entregado (período)</div>
+    <div style="font-size:28px;font-weight:800;color:var(--gold)">$${total.toFixed(2)}</div>
+  </div>
+  ${balances.filter(b=>b.entregado>0||b.aprobado>0).map(b=>{const col=ac(b.usuario);return `<div class="balance-card">
+    <div class="balance-user-row"><div class="balance-avatar" style="background:${col.bg};color:${col.text}">${b.usuario}</div><div class="balance-name">${b.nombre}</div></div>
+    <div class="balance-grid">
+      <div class="balance-stat"><div class="balance-stat-val">$${b.entregado.toFixed(2)}</div><div class="balance-stat-lbl">Entregado</div></div>
+      <div class="balance-stat"><div class="balance-stat-val">$${b.aprobado.toFixed(2)}</div><div class="balance-stat-lbl">Justificado</div></div>
+      <div class="balance-stat"><div class="balance-stat-val ${b.disponible>=0?'positive':'negative'}">$${b.disponible.toFixed(2)}</div><div class="balance-stat-lbl">Disponible</div></div>
     </div>
-    <div class="corte-stats">
-      <div class="corte-stat"><div class="corte-stat-val">${aprobadas.length}</div><div class="corte-stat-lbl">Rutas</div></div>
-      <div class="corte-stat"><div class="corte-stat-val">${totalKm}</div><div class="corte-stat-lbl">KM</div></div>
-      <div class="corte-stat"><div class="corte-stat-val">$${aprobadas.length ? (totalUsd/aprobadas.length).toFixed(2) : '0.00'}</div><div class="corte-stat-lbl">Promedio</div></div>
+    ${b.pendiente>0?`<div style="font-size:11px;color:var(--warn-text);margin-top:6px">⏳ $${b.pendiente.toFixed(2)} pendiente de aprobación</div>`:''}
+  </div>`;}).join('')||emptyHtml('Sin movimientos este período')}`;}catch(e){c.innerHTML=errorHtml();}
+}
+
+// ── Nueva Entrega (Admin) ──────────────────────────────────
+function renderNuevaEntrega(c){
+  uploadedPhotoUrl='';
+  const us=allUsers.filter(u=>u.activo==='SI');
+  c.innerHTML=`<div class="page-title">Registrar entrega</div><div class="page-sub">Dinero entregado a un colaborador</div>
+  <div class="card">
+    <div class="field-group"><label class="field-label">Para quién</label>
+      <select class="field-select" id="e-usuario">${us.map(u=>`<option value="${u.usuario}">${u.usuario} — ${u.nombre}</option>`).join('')}</select></div>
+    <div class="field-group"><label class="field-label">Monto ($)</label><input class="field-input" type="number" id="e-monto" placeholder="0.00" step="0.01" min="0.01"></div>
+    <div class="field-group"><label class="field-label">Forma de entrega</label>
+      <select class="field-select" id="e-forma"><option value="Transferencia">💳 Transferencia</option><option value="Efectivo">💵 Efectivo</option><option value="Cheque">📄 Cheque</option></select></div>
+    <div class="field-group"><label class="field-label">Descripción</label><input class="field-input" id="e-desc" placeholder="Ej: Anticipo caja chica junio"></div>
+    <label class="field-label">Foto del comprobante (opcional)</label>
+    <div class="photo-upload" onclick="document.getElementById('e-foto-input').click()">
+      <input type="file" id="e-foto-input" accept="image/*" capture="environment" onchange="handlePhoto(this,'e-foto-preview','e-foto-uploading','e-photo-url')">
+      <div class="photo-upload-icon">📷</div>
+      <div class="photo-upload-label">Tomar foto o subir imagen</div>
+      <img id="e-foto-preview" class="photo-preview">
+      <div class="photo-uploading" id="e-foto-uploading">Subiendo foto...</div>
     </div>
-    <div class="card">
-      <div class="card-title">Detalle del período</div>
-      ${aprobadas.length ? aprobadas.map(r => `
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--border)">
-          <div>
-            <div style="font-size:13px;font-weight:600;color:var(--text)">${r['Destino']}</div>
-            <div style="font-size:11px;color:var(--text2)">${fmtDate(r['Fecha Servicio']||'')} · ${r['KM']} km</div>
-          </div>
-          <div style="font-size:14px;font-weight:700;color:var(--text)">$${parseFloat(r['Valor ($)']).toFixed(2)}</div>
-        </div>`).join('') : '<div style="color:var(--text3);font-size:13px;text-align:center;padding:16px">Sin rutas aprobadas en este período</div>'}
-    </div>`;
-  } catch(e) { c.innerHTML = errorHtml(); }
+    <input type="hidden" id="e-photo-url">
+    <button class="btn-submit gold" onclick="enviarEntrega()" id="btn-entrega">Registrar entrega</button>
+  </div>`;
 }
 
-// ── Views: Admin ───────────────────────────────────────────
-async function renderAprobar(c) {
-  c.innerHTML = loading();
-  try {
-    const res = await api({ action: 'getRutas', rol: 'admin', estado: 'Pendiente' });
-    const rutas = res.rutas || [];
-    c.innerHTML = `
-    <div class="page-title">Por aprobar</div>
-    <div class="page-sub">${rutas.length} solicitud${rutas.length !== 1 ? 'es' : ''} pendiente${rutas.length !== 1 ? 's' : ''}</div>
-    ${rutas.length ? rutasHtml(rutas, true) : emptyHtml('Sin solicitudes pendientes — todo al día ✓')}`;
-  } catch(e) { c.innerHTML = errorHtml(); }
+async function enviarEntrega(){
+  const monto=parseFloat(document.getElementById('e-monto').value);
+  if(!monto||monto<=0){toast('Ingresa el monto');return;}
+  const btn=document.getElementById('btn-entrega');btn.textContent='Guardando...';btn.disabled=true;
+  try{const r=await api({action:'crearEntrega',admin:session.usuario,usuarioDestino:document.getElementById('e-usuario').value,monto,forma:document.getElementById('e-forma').value,descripcion:document.getElementById('e-desc').value||'Sin descripción',fotoUrl:document.getElementById('e-photo-url').value||''});
+  if(r.ok){toast('✓ Entrega registrada');showView('balance');}else toast('Error: '+(r.error||''));}catch(e){toast('Error de conexión');}
+  btn.textContent='Registrar entrega';btn.disabled=false;
 }
 
-async function renderHistorial(c) {
-  c.innerHTML = loading();
-  try {
-    const res = await api({ action: 'getRutas', rol: 'admin' });
-    const rutas = res.rutas || [];
-    c.innerHTML = `
-    <div class="page-title">Historial</div>
+// ── Aprobar Gastos (Admin) ─────────────────────────────────
+async function renderAprobarGastos(c){
+  c.innerHTML=loading();
+  try{const r=await api({action:'getGastos',rol:'admin',estado:'Pendiente'});const gastos=r.gastos||[];
+  c.innerHTML=`<div class="page-title">Gastos por aprobar</div><div class="page-sub">${gastos.length} pendiente${gastos.length!==1?'s':''}</div>
+  ${gastos.length?gastos.map(g=>gastoItemHtml(g,true)).join(''):emptyHtml('Sin gastos pendientes ✓')}`;}catch(e){c.innerHTML=errorHtml();}
+}
+
+// ── Historial Caja (Admin) ─────────────────────────────────
+async function renderHistorialCaja(c){
+  c.innerHTML=loading();
+  try{
+    const [re,rg]=await Promise.all([api({action:'getEntregas',rol:'admin'}),api({action:'getGastos',rol:'admin'})]);
+    const entregas=re.entregas||[];const gastos=rg.gastos||[];
+    c.innerHTML=`<div class="page-title">Historial Caja</div>
     <div class="tab-row">
-      <div class="tab active" onclick="filtrarHistorial(event,'')">Todas</div>
-      <div class="tab" onclick="filtrarHistorial(event,'Aprobada')">Aprobadas</div>
-      <div class="tab" onclick="filtrarHistorial(event,'Rechazada')">Rechazadas</div>
-      <div class="tab" onclick="filtrarHistorial(event,'Pendiente')">Pendientes</div>
+      <div class="tab active gold-tab" onclick="showCajaTab('entregas',this)">Entregas</div>
+      <div class="tab" onclick="showCajaTab('gastos',this)">Gastos</div>
     </div>
-    <div id="hist-list">${rutasHtml(rutas, false)}</div>`;
-    window._histRutas = rutas;
-  } catch(e) { c.innerHTML = errorHtml(); }
+    <div id="caja-entregas-list">${entregasHtml(entregas)}</div>
+    <div id="caja-gastos-list" style="display:none">${gastos.map(g=>gastoItemHtml(g,false)).join('')||emptyHtml('Sin gastos')}</div>`;
+    window._cajaeEntregas=entregas;window._cajaGastos=gastos;
+  }catch(e){c.innerHTML=errorHtml();}
+}
+function showCajaTab(tab,el){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active','gold-tab'));el.classList.add('active','gold-tab');document.getElementById('caja-entregas-list').style.display=tab==='entregas'?'':'none';document.getElementById('caja-gastos-list').style.display=tab==='gastos'?'':'none';}
+
+function entregasHtml(entregas){
+  if(!entregas.length)return emptyHtml('Sin entregas registradas');
+  return entregas.map(e=>`<div class="caja-item">
+    <div class="caja-header"><div class="caja-desc">${e['Descripción']||'Sin descripción'}</div><div class="caja-monto" style="color:var(--gold)">$${parseFloat(e['Monto ($)']||0).toFixed(2)}</div></div>
+    <div class="caja-meta">Para: ${e['Usuario Destino']} · ${e['Forma de Entrega']} · ${fmtDate((e['Fecha']||'').split(' ')[0])}</div>
+    ${e['Foto URL']?`<a href="${e['Foto URL']}" target="_blank" class="caja-foto-link">📎 Ver comprobante</a>`:''}
+  </div>`).join('');
 }
 
-function filtrarHistorial(ev, estado) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  ev.target.classList.add('active');
-  const filtradas = estado ? window._histRutas.filter(r => r['Estado'] === estado) : window._histRutas;
-  document.getElementById('hist-list').innerHTML = rutasHtml(filtradas, false);
+function gastoItemHtml(g,isAdmin){
+  const estado=g['Estado']||'Pendiente';
+  const bc=estado==='Aprobado'?'approved':estado==='Rechazado'?'rejected':'pending';
+  const acc=isAdmin&&estado==='Pendiente'?`<div class="action-row"><button class="btn-reject" onclick="rechazarGasto('${g['ID']}')">Rechazar</button><button class="btn-approve" onclick="aprobarGasto('${g['ID']}')">✓ Aprobar</button></div>`:'';
+  return `<div class="caja-item">
+    <div class="caja-header"><div class="caja-desc">${g['Descripción']||'Sin descripción'}</div><span class="badge ${bc}">${estado}</span></div>
+    <div class="caja-monto" style="color:var(--text);font-size:16px;margin-bottom:4px">$${parseFloat(g['Monto ($)']||0).toFixed(2)}</div>
+    <div class="caja-meta">${g['Categoría']||''} · ${g['Usuario']} · ${fmtDate((g['Fecha']||'').split(' ')[0])}</div>
+    ${g['Foto Factura URL']?`<a href="${g['Foto Factura URL']}" target="_blank" class="caja-foto-link">📎 Ver factura</a>`:''}
+    ${acc}
+  </div>`;
 }
 
-async function renderCorte(c) {
-  c.innerHTML = loading();
-  try {
-    const res = await api({ action: 'getCorte' });
-    const { periodo, totalKm, totalUsd, cantidadRutas, rutas, precioKm } = res;
-    c.innerHTML = `
-    <div class="page-title">Corte mensual</div>
-    <div class="page-sub">Período: 26 al 25 de cada mes</div>
-    <div class="corte-total">
-      <div class="corte-total-label">Total a pagar a Oswaldo</div>
-      <div class="corte-total-amount">$${(totalUsd||0).toFixed(2)}</div>
-      <div class="corte-total-sub">${periodo}</div>
+async function aprobarGasto(id){try{const r=await api({action:'aprobarGasto',id,admin:session.usuario});if(r.ok){toast('✓ Gasto aprobado');showView('aprobar-gastos');}else toast('Error');}catch(e){toast('Error de conexión');}}
+async function rechazarGasto(id){try{const r=await api({action:'rechazarGasto',id,admin:session.usuario});if(r.ok){toast('Gasto rechazado');showView('aprobar-gastos');}else toast('Error');}catch(e){toast('Error de conexión');}}
+
+// ── Mis Gastos (Chofer) ────────────────────────────────────
+async function renderMisGastos(c){
+  c.innerHTML=loading();
+  try{const r=await api({action:'getGastos',rol:'chofer',usuario:session.usuario});const gastos=r.gastos||[];
+  c.innerHTML=`<div class="page-title">Mis gastos</div><div class="page-sub">Facturas y justificaciones</div>
+  <div class="tab-row"><div class="tab active gold-tab" onclick="filtrarGastos('',this)">Todos</div><div class="tab" onclick="filtrarGastos('Pendiente',this)">Pendientes</div><div class="tab" onclick="filtrarGastos('Aprobado',this)">Aprobados</div></div>
+  <div id="gastos-list">${gastos.length?gastos.map(g=>gastoItemHtml(g,false)).join(''):emptyHtml('Sin gastos registrados')}</div>`;
+  window._misGastos=gastos;}catch(e){c.innerHTML=errorHtml();}
+}
+function filtrarGastos(estado,el){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active','gold-tab'));el.classList.add('active','gold-tab');const f=estado?window._misGastos.filter(g=>g['Estado']===estado):window._misGastos;document.getElementById('gastos-list').innerHTML=f.length?f.map(g=>gastoItemHtml(g,false)).join(''):emptyHtml('Sin gastos en esta categoría');}
+
+// ── Nuevo Gasto (Chofer) ───────────────────────────────────
+function renderNuevoGasto(c){
+  uploadedPhotoUrl='';
+  c.innerHTML=`<div class="page-title">Registrar gasto</div><div class="page-sub">Sube la factura para aprobación</div>
+  <div class="card">
+    <div class="field-group"><label class="field-label">Monto ($)</label><input class="field-input" type="number" id="g-monto" placeholder="0.00" step="0.01" min="0.01"></div>
+    <div class="field-group"><label class="field-label">Categoría</label>
+      <select class="field-select" id="g-cat"><option value="Alimentación">🍽 Alimentación</option><option value="Combustible">⛽ Combustible</option><option value="Materiales">🔧 Materiales</option><option value="Transporte">🚌 Transporte</option><option value="Otros">📦 Otros</option></select></div>
+    <div class="field-group"><label class="field-label">Descripción</label><input class="field-input" id="g-desc" placeholder="Ej: Almuerzo en cliente norte"></div>
+    <label class="field-label">Foto de la factura</label>
+    <div class="photo-upload" onclick="document.getElementById('g-foto-input').click()">
+      <input type="file" id="g-foto-input" accept="image/*" capture="environment" onchange="handlePhoto(this,'g-foto-preview','g-foto-uploading','g-photo-url')">
+      <div class="photo-upload-icon">🧾</div>
+      <div class="photo-upload-label">Tomar foto de la factura</div>
+      <img id="g-foto-preview" class="photo-preview">
+      <div class="photo-uploading" id="g-foto-uploading">Subiendo foto...</div>
     </div>
-    <div class="corte-stats">
-      <div class="corte-stat"><div class="corte-stat-val">${cantidadRutas||0}</div><div class="corte-stat-lbl">Rutas</div></div>
-      <div class="corte-stat"><div class="corte-stat-val">${totalKm||0}</div><div class="corte-stat-lbl">KM</div></div>
-      <div class="corte-stat"><div class="corte-stat-val">$${precioKm||0.35}</div><div class="corte-stat-lbl">$/km</div></div>
-    </div>
-    <button class="btn-export" onclick="cerrarCorte('${periodo}')">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-      Cerrar corte y guardar en Sheets
-    </button>
-    <div style="height:16px"></div>
-    <div class="card">
-      <div class="card-title">Rutas incluidas</div>
-      ${(rutas||[]).length ? (rutas||[]).map(r => `
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--border)">
-          <div>
-            <div style="font-size:13px;font-weight:600;color:var(--text)">${r['Destino']}</div>
-            <div style="font-size:11px;color:var(--text2)">${fmtDate(r['Fecha Servicio']||'')} · ${r['KM']} km · ${r['Tipo']}</div>
-          </div>
-          <div style="font-size:14px;font-weight:700;color:var(--text)">$${parseFloat(r['Valor ($)']).toFixed(2)}</div>
-        </div>`).join('') : '<div style="color:var(--text3);font-size:13px;text-align:center;padding:16px">Sin rutas aprobadas en este período</div>'}
-    </div>`;
-  } catch(e) { c.innerHTML = errorHtml(); }
+    <input type="hidden" id="g-photo-url">
+    <button class="btn-submit gold" onclick="enviarGasto()" id="btn-gasto">Enviar para aprobación</button>
+  </div>`;
 }
 
-async function cerrarCorte(periodo) {
-  if (!confirm(`¿Cerrar el corte del período ${periodo}?\nEsto registrará el pago en Google Sheets.`)) return;
-  try {
-    const res = await api({ action: 'cerrarCorte', periodo, admin: session.usuario });
-    if (res.ok) toast(`✓ Corte cerrado — $${res.totalUsd.toFixed(2)} registrado en Sheets`);
-    else toast('Error al cerrar el corte');
-  } catch(e) { toast('Error de conexión'); }
+async function enviarGasto(){
+  const monto=parseFloat(document.getElementById('g-monto').value);
+  if(!monto||monto<=0){toast('Ingresa el monto');return;}
+  const btn=document.getElementById('btn-gasto');btn.textContent='Enviando...';btn.disabled=true;
+  try{const r=await api({action:'crearGasto',usuario:session.usuario,monto,categoria:document.getElementById('g-cat').value,descripcion:document.getElementById('g-desc').value||'Sin descripción',fotoUrl:document.getElementById('g-photo-url').value||''});
+  if(r.ok){toast('✓ Gasto enviado para aprobación');showView('mis-gastos');}else toast('Error: '+(r.error||''));}catch(e){toast('Error de conexión');}
+  btn.textContent='Enviar para aprobación';btn.disabled=false;
 }
 
-async function renderConfig(c) {
-  c.innerHTML = loading();
-  try {
-    const res = await api({ action: 'getConfig' });
-    const cfg = res.config || {};
-    c.innerHTML = `
-    <div class="page-title">Configuración</div>
-    <div class="page-sub">Parámetros del sistema</div>
-    <div class="card">
-      <div class="config-row">
-        <div><div class="config-label">Precio por KM</div><div class="config-sub">Se aplica a todas las rutas aprobadas</div></div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <div class="config-val">$${parseFloat(cfg.precio_km||0.35).toFixed(2)}</div>
-          <button onclick="editarPrecio()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;color:var(--text)">Editar</button>
-        </div>
-      </div>
-      <div class="config-row">
-        <div><div class="config-label">Período de corte</div><div class="config-sub">Rango de días del ciclo de pago</div></div>
-        <div class="config-val">26 → 25</div>
-      </div>
-      <div class="config-row">
-        <div><div class="config-label">Admins</div><div class="config-sub">Pueden aprobar y cerrar cortes</div></div>
-        <div style="font-size:13px;font-weight:600;color:var(--text)">Esteban · Martín</div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="config-label" style="margin-bottom:8px">Usuarios y PINs</div>
-      <div style="font-size:13px;color:var(--text2);line-height:1.6">Los PINs se gestionan directamente en la hoja <strong>Usuarios</strong> del Google Sheet vinculado. Puedes cambiarlos ahí en cualquier momento.</div>
-    </div>`;
-  } catch(e) { c.innerHTML = errorHtml(); }
+// ── Mis Entregas recibidas (Chofer) ────────────────────────
+async function renderMisEntregas(c){
+  c.innerHTML=loading();
+  try{const r=await api({action:'getEntregas',rol:'chofer',usuario:session.usuario});const entregas=r.entregas||[];
+  const total=entregas.reduce((s,e)=>s+parseFloat(e['Monto ($)']||0),0);
+  c.innerHTML=`<div class="page-title">Dinero recibido</div><div class="page-sub">Entregas de caja chica para ti</div>
+  <div class="card" style="background:var(--gold-light);border-color:var(--gold);margin-bottom:14px"><div style="font-size:11px;color:var(--gold);font-weight:700;text-transform:uppercase;margin-bottom:4px">Total recibido</div><div style="font-size:28px;font-weight:800;color:var(--gold)">$${total.toFixed(2)}</div></div>
+  ${entregas.length?entregasHtml(entregas):emptyHtml('Sin entregas registradas')}`;}catch(e){c.innerHTML=errorHtml();}
 }
 
-async function editarPrecio() {
-  const nuevo = prompt('Nuevo precio por KM (en USD):\nActual: $' + (config.precio_km || 0.35));
-  if (!nuevo) return;
-  const val = parseFloat(nuevo);
-  if (isNaN(val) || val <= 0) { toast('Valor inválido'); return; }
-  try {
-    const res = await api({ action: 'updateConfig', clave: 'precio_km', valor: val.toFixed(2) });
-    if (res.ok) { config.precio_km = val; toast('✓ Precio actualizado a $' + val.toFixed(2) + '/km'); renderConfig(document.getElementById('content-area')); }
-    else toast('Error al actualizar');
-  } catch(e) { toast('Error de conexión'); }
+// ── Config ─────────────────────────────────────────────────
+async function renderConfig(c){
+  c.innerHTML=loading();
+  try{const r=await api({action:'getConfig'});const cfg=r.config||{};
+  c.innerHTML=`<div class="page-title">Configuración</div><div class="page-sub">Parámetros del sistema</div>
+  <div class="card">
+    <div class="config-row"><div><div class="config-label">Precio por KM</div><div class="config-sub">Se aplica a todas las rutas aprobadas</div></div>
+      <div style="display:flex;align-items:center;gap:8px"><div class="config-val">$${parseFloat(cfg.precio_km||0.35).toFixed(2)}</div><button onclick="editarPrecio()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;color:var(--text)">Editar</button></div></div>
+    <div class="config-row"><div><div class="config-label">Período de corte</div><div class="config-sub">Inicio y fin del ciclo de pago</div></div><div class="config-val">26 → 25</div></div>
+  </div>`;}catch(e){c.innerHTML=errorHtml();}
+}
+async function editarPrecio(){const n=prompt('Nuevo precio por KM (USD):');if(!n)return;const v=parseFloat(n);if(isNaN(v)||v<=0){toast('Inválido');return;}try{const r=await api({action:'updateConfig',clave:'precio_km',valor:v.toFixed(2)});if(r.ok){config.precio_km=v;toast('✓ Precio actualizado');renderConfig(document.getElementById('content-area'));}else toast('Error');}catch(e){toast('Error de conexión');}}
+
+// ── Photo upload ───────────────────────────────────────────
+async function handlePhoto(input, previewId, loadingId, urlId){
+  const file=input.files[0];if(!file)return;
+  const preview=document.getElementById(previewId);
+  const loadingEl=document.getElementById(loadingId);
+  const urlInput=document.getElementById(urlId);
+  preview.src=URL.createObjectURL(file);preview.style.display='block';
+  loadingEl.style.display='block';
+  try{
+    const base64=await fileToBase64(file);
+    const r=await api({action:'savePhoto',base64,mimeType:file.type,nombre:file.name||'foto.jpg'});
+    if(r.ok){urlInput.value=r.url;loadingEl.textContent='✓ Foto subida a Drive';loadingEl.style.color='var(--brand)';}
+    else{loadingEl.textContent='Error al subir foto';loadingEl.style.color='var(--danger-text)';}
+  }catch(e){loadingEl.textContent='Error de conexión';loadingEl.style.color='var(--danger-text)';}
 }
 
-// ── API call ───────────────────────────────────────────────
-async function api(data) {
-  const res = await fetch(SCRIPT_URL, {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-  return res.json();
+function fileToBase64(file){
+  return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});
 }
 
-// ── Helpers ────────────────────────────────────────────────
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
+// ── API & Helpers ──────────────────────────────────────────
+async function api(data){
+  const params=new URLSearchParams(data).toString();
+  const r=await fetch(SCRIPT_URL+'?'+params,{method:'GET',redirect:'follow'});
+  return r.json();
 }
-
-function todayStr() {
-  const d = new Date();
-  return d.toISOString().split('T')[0];
-}
-
-function fmtDate(s) {
-  if (!s) return '—';
-  const [y,m,d] = (s+'').split('-');
-  const months = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-  return `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
-}
-
-function loading() {
-  return `<div class="loading"><div class="spinner"></div>Cargando...</div>`;
-}
-
-function emptyHtml(msg) {
-  return `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg><p>${msg}</p></div>`;
-}
-
-function errorHtml() {
-  return `<div class="empty"><p style="color:var(--danger-text)">Error de conexión.<br>Verifica que la URL del script esté configurada.</p></div>`;
-}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+function todayStr(){return new Date().toISOString().split('T')[0];}
+function fmtDate(s){if(!s)return'—';const p=(s+'').split('-');if(p.length<3)return s;const m=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];return `${parseInt(p[2])} ${m[parseInt(p[1])-1]} ${p[0]}`;}
+function loading(){return`<div class="loading"><div class="spinner"></div>Cargando...</div>`;}
+function emptyHtml(msg){return`<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg><p>${msg}</p></div>`;}
+function errorHtml(){return`<div class="empty"><p style="color:var(--danger-text)">Error de conexión.<br>Verifica la configuración.</p></div>`;}
+function hideAll(){['splash','user-screen','pin-screen','home-screen','app'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});}
+function showEl(id){const el=document.getElementById(id);if(el)el.style.display='flex';}
 </script>
 </body>
 </html>
