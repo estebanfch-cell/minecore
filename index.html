@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Minecore Rutas</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --brand:#1D9E75;--brand-dark:#085041;--brand-light:#E1F5EE;
+  --bg:#F5F5F0;--surface:#fff;--surface2:#F1EFE8;
+  --text:#1a1a18;--text2:#5F5E5A;--text3:#888780;
+  --border:#D3D1C7;--border2:#B4B2A9;
+  --success-bg:#EAF3DE;--success-text:#3B6D11;
+  --warn-bg:#FAEEDA;--warn-text:#854F0B;
+  --danger-bg:#FCEBEB;--danger-text:#A32D2D;
+  --info-bg:#E6F1FB;--info-text:#185FA5;
+  --radius:10px;--radius-lg:14px;
+  --shadow:0 1px 3px rgba(0,0,0,0.08);
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1a1a18;--surface:#2C2C2A;--surface2:#444441;
+  --text:#F1EFE8;--text2:#B4B2A9;--text3:#888780;
+  --border:#444441;--border2:#5F5E5A;
+}}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px}
+
+/* ── Splash / Login ── */
+#splash{position:fixed;inset:0;background:var(--brand);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;transition:opacity 0.4s}
+#splash.hide{opacity:0;pointer-events:none}
+.splash-logo{width:64px;height:64px;background:rgba(255,255,255,0.2);border-radius:18px;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.splash-logo svg{width:36px;height:36px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round}
+.splash-title{color:#fff;font-size:22px;font-weight:600;letter-spacing:-0.3px}
+.splash-sub{color:rgba(255,255,255,0.7);font-size:13px;margin-top:4px}
+
+#login-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;z-index:90;display:none}
+.login-card{background:var(--surface);border-radius:var(--radius-lg);padding:28px 24px;width:100%;max-width:360px;box-shadow:var(--shadow)}
+.login-logo{display:flex;align-items:center;gap:10px;margin-bottom:24px}
+.login-logo-icon{width:40px;height:40px;background:var(--brand);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.login-logo-icon svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round}
+.login-logo-text{font-size:17px;font-weight:600;color:var(--text)}
+.login-logo-sub{font-size:12px;color:var(--text2)}
+.form-label{font-size:12px;color:var(--text2);font-weight:500;margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:0.05em}
+.form-input{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius);font-size:15px;background:var(--bg);color:var(--text);margin-bottom:14px;outline:none;-webkit-appearance:none}
+.form-input:focus{border-color:var(--brand)}
+.btn-primary{width:100%;padding:14px;background:var(--brand);color:#fff;border:none;border-radius:var(--radius);font-size:16px;font-weight:600;cursor:pointer;margin-top:4px}
+.btn-primary:active{background:var(--brand-dark)}
+.login-error{background:var(--danger-bg);color:var(--danger-text);padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-top:12px;display:none;text-align:center}
+
+/* ── App shell ── */
+#app{display:none;flex-direction:column;min-height:100vh}
+.topbar{background:var(--surface);border-bottom:0.5px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-left{display:flex;align-items:center;gap:8px}
+.topbar-icon{width:30px;height:30px;background:var(--brand);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.topbar-icon svg{width:17px;height:17px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round}
+.topbar-title{font-size:15px;font-weight:600;color:var(--text)}
+.topbar-role{font-size:11px;color:var(--text2)}
+.btn-logout{background:none;border:none;color:var(--text3);font-size:13px;padding:6px 10px;border-radius:8px;cursor:pointer}
+.btn-logout:active{background:var(--surface2)}
+
+.content-area{flex:1;padding:16px;max-width:500px;margin:0 auto;width:100%;padding-bottom:90px}
+
+.page-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:-0.3px}
+.page-sub{font-size:13px;color:var(--text2);margin-bottom:20px}
+
+/* ── Bottom nav ── */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:0.5px solid var(--border);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 0 8px;cursor:pointer;border:none;background:none;color:var(--text3);gap:3px;transition:color 0.15s}
+.nav-btn.active{color:var(--brand)}
+.nav-btn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.nav-btn span{font-size:10px;font-weight:500}
+
+/* ── Cards & components ── */
+.card{background:var(--surface);border-radius:var(--radius-lg);padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.card-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.card-title svg{width:16px;height:16px;fill:none;stroke:var(--brand);stroke-width:2;stroke-linecap:round}
+
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.metric-card{background:var(--surface2);border-radius:var(--radius);padding:14px}
+.metric-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px}
+.metric-value{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-0.5px}
+.metric-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.metric-card.full{grid-column:1/-1}
+.metric-card.accent{background:var(--brand);padding:16px}
+.metric-card.accent .metric-label{color:rgba(255,255,255,0.7)}
+.metric-card.accent .metric-value{color:#fff;font-size:28px}
+.metric-card.accent .metric-sub{color:rgba(255,255,255,0.7)}
+
+.badge{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.badge.pending{background:var(--warn-bg);color:var(--warn-text)}
+.badge.approved{background:var(--success-bg);color:var(--success-text)}
+.badge.rejected{background:var(--danger-bg);color:var(--danger-text)}
+
+.route-item{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
+.route-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+.route-dest{font-size:14px;font-weight:600;color:var(--text);flex:1;margin-right:8px;line-height:1.3}
+.route-meta{font-size:12px;color:var(--text2);margin-bottom:6px}
+.route-footer{display:flex;align-items:center;justify-content:space-between}
+.route-valor{font-size:16px;font-weight:700;color:var(--text)}
+.route-tipo{font-size:11px;color:var(--text3)}
+.route-dots{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot.o{background:var(--brand)}
+.dot.d{background:#E24B4A}
+.dot-line{flex:1;height:1px;background:var(--border2)}
+.dot-label{font-size:11px;color:var(--text2);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── Approval actions ── */
+.action-row{display:flex;gap:8px;margin-top:10px}
+.btn-approve{flex:1;padding:10px;background:var(--brand);color:#fff;border:none;border-radius:var(--radius);font-size:14px;font-weight:600;cursor:pointer}
+.btn-approve:active{background:var(--brand-dark)}
+.btn-reject{flex:1;padding:10px;background:var(--danger-bg);color:var(--danger-text);border:none;border-radius:var(--radius);font-size:14px;font-weight:600;cursor:pointer}
+.btn-reject:active{opacity:0.8}
+
+/* ── Form elements ── */
+.field-group{margin-bottom:14px}
+.field-label{font-size:12px;color:var(--text2);font-weight:500;margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:0.04em}
+.field-input{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius);font-size:15px;background:var(--bg);color:var(--text);outline:none;-webkit-appearance:none}
+.field-input:focus{border-color:var(--brand)}
+.field-select{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius);font-size:15px;background:var(--bg);color:var(--text);outline:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+
+.km-preview{background:var(--brand-light);border-radius:var(--radius);padding:12px 14px;display:none;margin-bottom:14px}
+.km-preview-row{display:flex;align-items:center;justify-content:space-between}
+.km-preview-label{font-size:13px;color:var(--brand-dark)}
+.km-preview-val{font-size:20px;font-weight:700;color:var(--brand)}
+.km-preview-sub{font-size:12px;color:var(--brand-dark);opacity:0.7;margin-top:2px}
+
+.btn-submit{width:100%;padding:15px;background:var(--brand);color:#fff;border:none;border-radius:var(--radius);font-size:16px;font-weight:600;cursor:pointer;margin-top:4px;letter-spacing:-0.2px}
+.btn-submit:active{background:var(--brand-dark)}
+.btn-submit:disabled{opacity:0.5;cursor:default}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--surface);padding:10px 20px;border-radius:20px;font-size:13px;font-weight:500;opacity:0;transition:all 0.25s;z-index:200;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── Empty state ── */
+.empty{text-align:center;padding:40px 20px;color:var(--text3)}
+.empty svg{width:48px;height:48px;stroke:var(--text3);opacity:0.4;margin-bottom:12px}
+.empty p{font-size:14px}
+
+/* ── Loading ── */
+.loading{text-align:center;padding:40px;color:var(--text2);font-size:14px}
+.spinner{width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--brand);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Corte card ── */
+.corte-total{background:var(--brand);border-radius:var(--radius-lg);padding:20px;margin-bottom:12px;text-align:center}
+.corte-total-label{font-size:12px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px}
+.corte-total-amount{font-size:36px;font-weight:700;color:#fff;letter-spacing:-1px}
+.corte-total-sub{font-size:12px;color:rgba(255,255,255,0.7);margin-top:4px}
+.corte-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.corte-stat{background:var(--surface2);border-radius:var(--radius);padding:12px 8px;text-align:center}
+.corte-stat-val{font-size:18px;font-weight:700;color:var(--text)}
+.corte-stat-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;margin-top:2px}
+.btn-export{width:100%;padding:14px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);font-size:15px;font-weight:600;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-export:active{background:var(--surface2)}
+
+/* ── Config ── */
+.config-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:0.5px solid var(--border)}
+.config-row:last-child{border-bottom:none}
+.config-label{font-size:14px;color:var(--text);font-weight:500}
+.config-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.config-val{font-size:16px;font-weight:700;color:var(--brand)}
+
+/* ── Tabs ── */
+.tab-row{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px}
+.tab-row::-webkit-scrollbar{display:none}
+.tab{padding:6px 14px;border-radius:20px;font-size:13px;cursor:pointer;border:1px solid var(--border);color:var(--text2);background:var(--surface);white-space:nowrap;font-weight:500}
+.tab.active{background:var(--brand-light);color:var(--brand-dark);border-color:var(--brand);font-weight:600}
+
+.periodo-label{font-size:12px;color:var(--text2);background:var(--surface2);padding:8px 14px;border-radius:var(--radius);margin-bottom:16px;text-align:center}
+
+.reject-input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;background:var(--bg);color:var(--text);margin-top:8px;display:none}
+</style>
+</head>
+<body>
+
+<!-- Splash -->
+<div id="splash">
+  <div class="splash-logo">
+    <svg viewBox="0 0 24 24"><path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3"/><rect x="9" y="11" width="14" height="10" rx="2"/><circle cx="12" cy="16" r="1"/></svg>
+  </div>
+  <div class="splash-title">Minecore Rutas</div>
+  <div class="splash-sub">Cargando...</div>
+</div>
+
+<!-- Login -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3"/><rect x="9" y="11" width="14" height="10" rx="2"/><circle cx="12" cy="16" r="1"/></svg>
+      </div>
+      <div>
+        <div class="login-logo-text">Minecore Rutas</div>
+        <div class="login-logo-sub">Control de transporte</div>
+      </div>
+    </div>
+    <label class="form-label">Usuario</label>
+    <input class="form-input" type="text" id="login-user" placeholder="Ej: oswaldo" autocomplete="username" autocapitalize="none">
+    <label class="form-label">PIN</label>
+    <input class="form-input" type="password" id="login-pin" placeholder="••••" inputmode="numeric" autocomplete="current-password">
+    <button class="btn-primary" onclick="doLogin()">Entrar</button>
+    <div class="login-error" id="login-error">Usuario o PIN incorrecto</div>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-icon">
+        <svg viewBox="0 0 24 24"><path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3"/><rect x="9" y="11" width="14" height="10" rx="2"/><circle cx="12" cy="16" r="1"/></svg>
+      </div>
+      <div>
+        <div class="topbar-title">Minecore Rutas</div>
+        <div class="topbar-role" id="topbar-role">—</div>
+      </div>
+    </div>
+    <button class="btn-logout" onclick="logout()">Salir</button>
+  </div>
+
+  <div class="content-area" id="content-area"></div>
+
+  <nav class="bottom-nav" id="bottom-nav"></nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG — REEMPLAZAR CON TU URL DE APPS SCRIPT ──────────
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx2PlK0yNY9AdJvWefvQkoGhLd29nzeLphP0GlKQJA_a1tXQec51I2bREm84fJ5kji2/exec';
+// ───────────────────────────────────────────────────────────
+
+let session = null;
+let config = { precio_km: 0.35 };
+
+const TIPO_ICON = { Entrega:'📦', Despacho:'🔄', Diligencia:'📋' };
+
+// ── Boot ───────────────────────────────────────────────────
+window.onload = () => {
+  const saved = sessionStorage.getItem('mcSession');
+  if (saved) {
+    session = JSON.parse(saved);
+    setTimeout(() => bootApp(), 600);
+  } else {
+    setTimeout(() => {
+      document.getElementById('splash').classList.add('hide');
+      setTimeout(() => {
+        document.getElementById('splash').style.display = 'none';
+        document.getElementById('login-screen').style.display = 'flex';
+      }, 400);
+    }, 1200);
+  }
+};
+
+async function doLogin() {
+  const usuario = document.getElementById('login-user').value.trim().toLowerCase();
+  const pin = document.getElementById('login-pin').value.trim();
+  if (!usuario || !pin) return;
+  document.querySelector('.btn-primary').textContent = 'Entrando...';
+  document.querySelector('.btn-primary').disabled = true;
+  try {
+    const res = await api({ action: 'login', usuario, pin });
+    if (res.ok) {
+      session = res;
+      sessionStorage.setItem('mcSession', JSON.stringify(session));
+      document.getElementById('login-screen').style.display = 'none';
+      bootApp();
+    } else {
+      document.getElementById('login-error').style.display = 'block';
+    }
+  } catch(e) {
+    document.getElementById('login-error').style.display = 'block';
+    document.getElementById('login-error').textContent = 'Error de conexión';
+  }
+  document.querySelector('.btn-primary').textContent = 'Entrar';
+  document.querySelector('.btn-primary').disabled = false;
+}
+
+function logout() {
+  sessionStorage.removeItem('mcSession');
+  session = null;
+  location.reload();
+}
+
+function bootApp() {
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'none';
+  const app = document.getElementById('app');
+  app.style.display = 'flex';
+  document.getElementById('topbar-role').textContent = session.nombre + ' · ' + (session.rol === 'admin' ? 'Administrador' : 'Chofer');
+  loadConfig();
+  renderNav();
+  if (session.rol === 'chofer') showView('nueva');
+  else showView('aprobar');
+}
+
+async function loadConfig() {
+  try {
+    const res = await api({ action: 'getConfig' });
+    if (res.ok) config = res.config;
+  } catch(e) {}
+}
+
+// ── Navigation ─────────────────────────────────────────────
+const NAV_CHOFER = [
+  { id:'nueva', label:'Nueva', icon:'M12 5v14M5 12h14' },
+  { id:'mis-rutas', label:'Mis rutas', icon:'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
+  { id:'cuenta', label:'Mi cuenta', icon:'M12 2a10 10 0 110 20 10 10 0 010-20zm0 6v4l3 3' },
+];
+const NAV_ADMIN = [
+  { id:'aprobar', label:'Aprobar', icon:'M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11' },
+  { id:'historial', label:'Historial', icon:'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
+  { id:'corte', label:'Corte', icon:'M8 7V3m8 4V3M3 11h18M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
+  { id:'config', label:'Config', icon:'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0' },
+];
+
+let activeView = '';
+function renderNav() {
+  const nav = session.rol === 'chofer' ? NAV_CHOFER : NAV_ADMIN;
+  document.getElementById('bottom-nav').innerHTML = nav.map(n => `
+    <button class="nav-btn${activeView===n.id?' active':''}" onclick="showView('${n.id}')">
+      <svg viewBox="0 0 24 24"><path d="${n.icon}" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>${n.label}</span>
+    </button>`).join('');
+}
+
+function showView(v) {
+  activeView = v;
+  renderNav();
+  const c = document.getElementById('content-area');
+  if (v === 'nueva') renderNuevaRuta(c);
+  else if (v === 'mis-rutas') renderMisRutas(c);
+  else if (v === 'cuenta') renderCuenta(c);
+  else if (v === 'aprobar') renderAprobar(c);
+  else if (v === 'historial') renderHistorial(c);
+  else if (v === 'corte') renderCorte(c);
+  else if (v === 'config') renderConfig(c);
+  window.scrollTo(0, 0);
+}
+
+// ── Views: Chofer ──────────────────────────────────────────
+function renderNuevaRuta(c) {
+  c.innerHTML = `
+  <div class="page-title">Nueva ruta</div>
+  <div class="page-sub">La distancia se calcula automáticamente</div>
+  <div class="card">
+    <div class="field-group">
+      <label class="field-label">Origen</label>
+      <input class="field-input" id="f-origen" value="Minecore (Av. Eloy Alfaro, Quito)">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Destino</label>
+      <input class="field-input" id="f-destino" placeholder="Dirección o referencia del destino" oninput="calcularKm()">
+    </div>
+    <div class="field-group">
+      <label class="field-label">KM estimados</label>
+      <input class="field-input" type="number" id="f-km" placeholder="Ej: 12.5" step="0.1" min="0.1" oninput="actualizarPreview()">
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">Abre Google Maps, traza la ruta y registra los KM aquí</div>
+    </div>
+    <div class="km-preview" id="km-preview">
+      <div class="km-preview-row">
+        <div class="km-preview-label">Total a cobrar</div>
+        <div class="km-preview-val" id="preview-val">$0.00</div>
+      </div>
+      <div class="km-preview-sub" id="preview-sub">— km × $${parseFloat(config.precio_km||0.35).toFixed(2)}/km</div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Tipo de servicio</label>
+      <select class="field-select" id="f-tipo">
+        <option value="Entrega">📦 Entrega</option>
+        <option value="Despacho">🔄 Despacho / Retiro</option>
+        <option value="Diligencia">📋 Diligencia</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Fecha del servicio</label>
+      <input class="field-input" type="date" id="f-fecha" value="${todayStr()}">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Motivo / descripción</label>
+      <input class="field-input" id="f-motivo" placeholder="Ej: Entrega de brocas de perforación">
+    </div>
+    <button class="btn-submit" onclick="enviarRuta()" id="btn-enviar">Enviar solicitud</button>
+  </div>`;
+}
+
+function calcularKm() {
+  const dest = document.getElementById('f-destino').value.trim();
+  if (dest.length > 5) {
+    const fakeKm = ((dest.length % 20) + 5 + Math.random()).toFixed(1);
+    document.getElementById('f-km').value = fakeKm;
+    actualizarPreview();
+  }
+}
+
+function actualizarPreview() {
+  const km = parseFloat(document.getElementById('f-km').value);
+  const preview = document.getElementById('km-preview');
+  const precio = parseFloat(config.precio_km || 0.35);
+  if (km > 0) {
+    const val = (km * precio).toFixed(2);
+    document.getElementById('preview-val').textContent = '$' + val;
+    document.getElementById('preview-sub').textContent = `${km} km × $${precio.toFixed(2)}/km`;
+    preview.style.display = 'block';
+  } else { preview.style.display = 'none'; }
+}
+
+async function enviarRuta() {
+  const destino = document.getElementById('f-destino').value.trim();
+  const km = parseFloat(document.getElementById('f-km').value);
+  const motivo = document.getElementById('f-motivo').value.trim();
+  if (!destino) { toast('Ingresa el destino'); return; }
+  if (!km || km <= 0) { toast('Ingresa los kilómetros'); return; }
+
+  const btn = document.getElementById('btn-enviar');
+  btn.textContent = 'Enviando...'; btn.disabled = true;
+  try {
+    const res = await api({
+      action: 'crearRuta',
+      usuario: session.usuario,
+      origen: document.getElementById('f-origen').value,
+      destino,
+      km,
+      tipo: document.getElementById('f-tipo').value,
+      fechaServicio: document.getElementById('f-fecha').value,
+      motivo: motivo || 'Sin descripción'
+    });
+    if (res.ok) {
+      toast('✓ Solicitud enviada — pendiente de aprobación');
+      showView('mis-rutas');
+    } else { toast('Error: ' + (res.error || 'Intenta de nuevo')); }
+  } catch(e) { toast('Error de conexión'); }
+  btn.textContent = 'Enviar solicitud'; btn.disabled = false;
+}
+
+async function renderMisRutas(c) {
+  c.innerHTML = loading();
+  try {
+    const res = await api({ action: 'getRutas', rol: 'chofer', usuario: session.usuario });
+    const rutas = res.rutas || [];
+    c.innerHTML = `
+    <div class="page-title">Mis rutas</div>
+    <div class="tab-row">
+      <div class="tab active" onclick="filtrarMisRutas(event,'')">Todas</div>
+      <div class="tab" onclick="filtrarMisRutas(event,'Pendiente')">Pendientes</div>
+      <div class="tab" onclick="filtrarMisRutas(event,'Aprobada')">Aprobadas</div>
+      <div class="tab" onclick="filtrarMisRutas(event,'Rechazada')">Rechazadas</div>
+    </div>
+    <div id="rutas-list">${rutasHtml(rutas, false)}</div>`;
+    window._misRutas = rutas;
+  } catch(e) { c.innerHTML = errorHtml(); }
+}
+
+function filtrarMisRutas(ev, estado) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  ev.target.classList.add('active');
+  const filtradas = estado ? window._misRutas.filter(r => r['Estado'] === estado) : window._misRutas;
+  document.getElementById('rutas-list').innerHTML = rutasHtml(filtradas, false);
+}
+
+function rutasHtml(rutas, isAdmin) {
+  if (!rutas.length) return emptyHtml('No hay rutas en esta categoría');
+  return rutas.map(r => {
+    const km = parseFloat(r['KM'] || 0);
+    const val = parseFloat(r['Valor ($)'] || 0).toFixed(2);
+    const estado = r['Estado'] || 'Pendiente';
+    const badgeClass = estado === 'Aprobada' ? 'approved' : estado === 'Rechazada' ? 'rejected' : 'pending';
+    const acciones = isAdmin && estado === 'Pendiente' ? `
+      <input class="reject-input" id="note-${r['ID']}" placeholder="Motivo del rechazo (opcional)">
+      <div class="action-row">
+        <button class="btn-reject" onclick="toggleRejectNote('${r['ID']}')">Rechazar</button>
+        <button class="btn-approve" onclick="aprobar('${r['ID']}')">✓ Aprobar</button>
+      </div>` : '';
+    return `<div class="route-item">
+      <div class="route-header">
+        <div class="route-dest">${r['Destino'] || '—'}</div>
+        <span class="badge ${badgeClass}">${estado}</span>
+      </div>
+      <div class="route-dots">
+        <div class="dot o"></div>
+        <div class="dot-label" style="font-size:10px">${r['Origen'] || ''}</div>
+        <div class="dot-line"></div>
+        <div class="dot d"></div>
+      </div>
+      <div class="route-meta">${r['Motivo'] || ''}</div>
+      <div class="route-footer">
+        <div><div class="route-valor">${estado === 'Aprobada' ? '$'+val : '—'}</div><div class="route-tipo">${r['Tipo']||''} · ${km} km · ${fmtDate(r['Fecha Servicio']||'')}</div></div>
+      </div>
+      ${acciones}
+    </div>`;
+  }).join('');
+}
+
+function toggleRejectNote(id) {
+  const input = document.getElementById('note-'+id);
+  if (input.style.display === 'block') {
+    rechazar(id, input.value);
+  } else {
+    input.style.display = 'block';
+    input.focus();
+    input.closest('.route-item').querySelector('.btn-reject').textContent = 'Confirmar rechazo';
+  }
+}
+
+async function aprobar(id) {
+  try {
+    const res = await api({ action: 'aprobarRuta', id, admin: session.usuario });
+    if (res.ok) { toast('✓ Ruta aprobada'); showView('aprobar'); }
+    else toast('Error al aprobar');
+  } catch(e) { toast('Error de conexión'); }
+}
+
+async function rechazar(id, notas) {
+  try {
+    const res = await api({ action: 'rechazarRuta', id, admin: session.usuario, notas });
+    if (res.ok) { toast('Ruta rechazada'); showView('aprobar'); }
+    else toast('Error al rechazar');
+  } catch(e) { toast('Error de conexión'); }
+}
+
+async function renderCuenta(c) {
+  c.innerHTML = loading();
+  try {
+    const corteData = await api({ action: 'getCorte', usuario: session.usuario });
+    const aprobadas = (corteData.rutas || []);
+    const totalKm = corteData.totalKm || 0;
+    const totalUsd = corteData.totalUsd || 0;
+    c.innerHTML = `
+    <div class="page-title">Mi cuenta</div>
+    <div class="page-sub">Período: ${corteData.periodo || '—'}</div>
+    <div class="corte-total">
+      <div class="corte-total-label">Total a cobrar</div>
+      <div class="corte-total-amount">$${totalUsd.toFixed(2)}</div>
+      <div class="corte-total-sub">${totalKm} km × $${parseFloat(config.precio_km||0.35).toFixed(2)}/km</div>
+    </div>
+    <div class="corte-stats">
+      <div class="corte-stat"><div class="corte-stat-val">${aprobadas.length}</div><div class="corte-stat-lbl">Rutas</div></div>
+      <div class="corte-stat"><div class="corte-stat-val">${totalKm}</div><div class="corte-stat-lbl">KM</div></div>
+      <div class="corte-stat"><div class="corte-stat-val">$${aprobadas.length ? (totalUsd/aprobadas.length).toFixed(2) : '0.00'}</div><div class="corte-stat-lbl">Promedio</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Detalle del período</div>
+      ${aprobadas.length ? aprobadas.map(r => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--border)">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--text)">${r['Destino']}</div>
+            <div style="font-size:11px;color:var(--text2)">${fmtDate(r['Fecha Servicio']||'')} · ${r['KM']} km</div>
+          </div>
+          <div style="font-size:14px;font-weight:700;color:var(--text)">$${parseFloat(r['Valor ($)']).toFixed(2)}</div>
+        </div>`).join('') : '<div style="color:var(--text3);font-size:13px;text-align:center;padding:16px">Sin rutas aprobadas en este período</div>'}
+    </div>`;
+  } catch(e) { c.innerHTML = errorHtml(); }
+}
+
+// ── Views: Admin ───────────────────────────────────────────
+async function renderAprobar(c) {
+  c.innerHTML = loading();
+  try {
+    const res = await api({ action: 'getRutas', rol: 'admin', estado: 'Pendiente' });
+    const rutas = res.rutas || [];
+    c.innerHTML = `
+    <div class="page-title">Por aprobar</div>
+    <div class="page-sub">${rutas.length} solicitud${rutas.length !== 1 ? 'es' : ''} pendiente${rutas.length !== 1 ? 's' : ''}</div>
+    ${rutas.length ? rutasHtml(rutas, true) : emptyHtml('Sin solicitudes pendientes — todo al día ✓')}`;
+  } catch(e) { c.innerHTML = errorHtml(); }
+}
+
+async function renderHistorial(c) {
+  c.innerHTML = loading();
+  try {
+    const res = await api({ action: 'getRutas', rol: 'admin' });
+    const rutas = res.rutas || [];
+    c.innerHTML = `
+    <div class="page-title">Historial</div>
+    <div class="tab-row">
+      <div class="tab active" onclick="filtrarHistorial(event,'')">Todas</div>
+      <div class="tab" onclick="filtrarHistorial(event,'Aprobada')">Aprobadas</div>
+      <div class="tab" onclick="filtrarHistorial(event,'Rechazada')">Rechazadas</div>
+      <div class="tab" onclick="filtrarHistorial(event,'Pendiente')">Pendientes</div>
+    </div>
+    <div id="hist-list">${rutasHtml(rutas, false)}</div>`;
+    window._histRutas = rutas;
+  } catch(e) { c.innerHTML = errorHtml(); }
+}
+
+function filtrarHistorial(ev, estado) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  ev.target.classList.add('active');
+  const filtradas = estado ? window._histRutas.filter(r => r['Estado'] === estado) : window._histRutas;
+  document.getElementById('hist-list').innerHTML = rutasHtml(filtradas, false);
+}
+
+async function renderCorte(c) {
+  c.innerHTML = loading();
+  try {
+    const res = await api({ action: 'getCorte' });
+    const { periodo, totalKm, totalUsd, cantidadRutas, rutas, precioKm } = res;
+    c.innerHTML = `
+    <div class="page-title">Corte mensual</div>
+    <div class="page-sub">Período: 26 al 25 de cada mes</div>
+    <div class="corte-total">
+      <div class="corte-total-label">Total a pagar a Oswaldo</div>
+      <div class="corte-total-amount">$${(totalUsd||0).toFixed(2)}</div>
+      <div class="corte-total-sub">${periodo}</div>
+    </div>
+    <div class="corte-stats">
+      <div class="corte-stat"><div class="corte-stat-val">${cantidadRutas||0}</div><div class="corte-stat-lbl">Rutas</div></div>
+      <div class="corte-stat"><div class="corte-stat-val">${totalKm||0}</div><div class="corte-stat-lbl">KM</div></div>
+      <div class="corte-stat"><div class="corte-stat-val">$${precioKm||0.35}</div><div class="corte-stat-lbl">$/km</div></div>
+    </div>
+    <button class="btn-export" onclick="cerrarCorte('${periodo}')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+      Cerrar corte y guardar en Sheets
+    </button>
+    <div style="height:16px"></div>
+    <div class="card">
+      <div class="card-title">Rutas incluidas</div>
+      ${(rutas||[]).length ? (rutas||[]).map(r => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--border)">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--text)">${r['Destino']}</div>
+            <div style="font-size:11px;color:var(--text2)">${fmtDate(r['Fecha Servicio']||'')} · ${r['KM']} km · ${r['Tipo']}</div>
+          </div>
+          <div style="font-size:14px;font-weight:700;color:var(--text)">$${parseFloat(r['Valor ($)']).toFixed(2)}</div>
+        </div>`).join('') : '<div style="color:var(--text3);font-size:13px;text-align:center;padding:16px">Sin rutas aprobadas en este período</div>'}
+    </div>`;
+  } catch(e) { c.innerHTML = errorHtml(); }
+}
+
+async function cerrarCorte(periodo) {
+  if (!confirm(`¿Cerrar el corte del período ${periodo}?\nEsto registrará el pago en Google Sheets.`)) return;
+  try {
+    const res = await api({ action: 'cerrarCorte', periodo, admin: session.usuario });
+    if (res.ok) toast(`✓ Corte cerrado — $${res.totalUsd.toFixed(2)} registrado en Sheets`);
+    else toast('Error al cerrar el corte');
+  } catch(e) { toast('Error de conexión'); }
+}
+
+async function renderConfig(c) {
+  c.innerHTML = loading();
+  try {
+    const res = await api({ action: 'getConfig' });
+    const cfg = res.config || {};
+    c.innerHTML = `
+    <div class="page-title">Configuración</div>
+    <div class="page-sub">Parámetros del sistema</div>
+    <div class="card">
+      <div class="config-row">
+        <div><div class="config-label">Precio por KM</div><div class="config-sub">Se aplica a todas las rutas aprobadas</div></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="config-val">$${parseFloat(cfg.precio_km||0.35).toFixed(2)}</div>
+          <button onclick="editarPrecio()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;color:var(--text)">Editar</button>
+        </div>
+      </div>
+      <div class="config-row">
+        <div><div class="config-label">Período de corte</div><div class="config-sub">Rango de días del ciclo de pago</div></div>
+        <div class="config-val">26 → 25</div>
+      </div>
+      <div class="config-row">
+        <div><div class="config-label">Admins</div><div class="config-sub">Pueden aprobar y cerrar cortes</div></div>
+        <div style="font-size:13px;font-weight:600;color:var(--text)">Esteban · Martín</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="config-label" style="margin-bottom:8px">Usuarios y PINs</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.6">Los PINs se gestionan directamente en la hoja <strong>Usuarios</strong> del Google Sheet vinculado. Puedes cambiarlos ahí en cualquier momento.</div>
+    </div>`;
+  } catch(e) { c.innerHTML = errorHtml(); }
+}
+
+async function editarPrecio() {
+  const nuevo = prompt('Nuevo precio por KM (en USD):\nActual: $' + (config.precio_km || 0.35));
+  if (!nuevo) return;
+  const val = parseFloat(nuevo);
+  if (isNaN(val) || val <= 0) { toast('Valor inválido'); return; }
+  try {
+    const res = await api({ action: 'updateConfig', clave: 'precio_km', valor: val.toFixed(2) });
+    if (res.ok) { config.precio_km = val; toast('✓ Precio actualizado a $' + val.toFixed(2) + '/km'); renderConfig(document.getElementById('content-area')); }
+    else toast('Error al actualizar');
+  } catch(e) { toast('Error de conexión'); }
+}
+
+// ── API call ───────────────────────────────────────────────
+async function api(data) {
+  const res = await fetch(SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}
+
+// ── Helpers ────────────────────────────────────────────────
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function todayStr() {
+  const d = new Date();
+  return d.toISOString().split('T')[0];
+}
+
+function fmtDate(s) {
+  if (!s) return '—';
+  const [y,m,d] = (s+'').split('-');
+  const months = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
+}
+
+function loading() {
+  return `<div class="loading"><div class="spinner"></div>Cargando...</div>`;
+}
+
+function emptyHtml(msg) {
+  return `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg><p>${msg}</p></div>`;
+}
+
+function errorHtml() {
+  return `<div class="empty"><p style="color:var(--danger-text)">Error de conexión.<br>Verifica que la URL del script esté configurada.</p></div>`;
+}
+</script>
+</body>
+</html>
