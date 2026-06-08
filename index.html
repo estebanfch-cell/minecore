@@ -212,6 +212,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;backg
 .filter-btn{padding:7px 14px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid var(--border);color:var(--text2);background:var(--surface);white-space:nowrap;font-weight:500;transition:all 0.1s}
 .filter-btn.active{background:var(--brand-light);color:var(--brand-dark);border-color:var(--brand);font-weight:700}
 .filter-btn:active{transform:scale(0.96)}
+.cnt-btn{padding:8px 16px;border-radius:20px;font-size:13px;cursor:pointer;border:1.5px solid var(--border);color:var(--text2);background:var(--surface);white-space:nowrap;font-weight:600;transition:all 0.12s}
+.cnt-btn.active{background:var(--mc-dark);color:#fff;border-color:var(--mc-dark);font-weight:700}
+.cnt-btn:active{transform:scale(0.95)}
 </style>
 </head>
 <body>
@@ -424,7 +427,12 @@ async function submitPin(){
       setTimeout(()=>{ pinBuf=''; updateDots(); document.getElementById('pin-error').textContent=''; },900);
     }
   }catch(e){
-    document.getElementById('pin-error').textContent='Error de conexión';
+    // Check if it's a local file issue
+    if(window.location.protocol==='file:'){
+      document.getElementById('pin-error').textContent='Abre desde GitHub Pages, no como archivo local';
+    } else {
+      document.getElementById('pin-error').textContent='Error de conexión — verifica tu internet';
+    }
     pinBuf=''; updateDots();
   }
 }
@@ -930,123 +938,157 @@ async function rejR(id,n){try{const r=await api({action:'rechazarRuta',id,admin:
 async function vCuenta(c){
   c.innerHTML=spin();
   try{
-    // Load ALL approved routes for this user (not just current period)
     const r=await api({action:'getRutas',rol:'chofer',usuario:session.usuario});
     const todas=(r.rutas||[]).filter(x=>x['Estado']==='Aprobada');
-    // Sort newest first
-    todas.sort((a,b)=>{
-      const da=new Date(a['Fecha Servicio']||a['Fecha Solicitud']||0);
-      const db=new Date(b['Fecha Servicio']||b['Fecha Solicitud']||0);
-      return db-da;
-    });
+    todas.sort((a,b)=>new Date(b['Fecha Servicio']||0)-new Date(a['Fecha Servicio']||0));
     window._cuentaRutas=todas;
-    renderCuentaView(c, todas, 'periodo');
+    // Default: current period
+    const hoy=new Date();
+    const diaI=26;
+    let fi,ff;
+    if(hoy.getDate()>=diaI){fi=new Date(hoy.getFullYear(),hoy.getMonth(),diaI);ff=new Date(hoy.getFullYear(),hoy.getMonth()+1,25,23,59,59);}
+    else{fi=new Date(hoy.getFullYear(),hoy.getMonth()-1,diaI);ff=new Date(hoy.getFullYear(),hoy.getMonth(),25,23,59,59);}
+    window._cuentaFi=fi.toISOString().split('T')[0];
+    window._cuentaFf=ff.toISOString().split('T')[0];
+    window._cuentaFiltro='periodo';
+    renderCuentaView(c);
   }catch(e){c.innerHTML=err();}
 }
 
-function renderCuentaView(c, rutas, filtro){
+function setCuentaFiltro(filtro){
   const hoy=new Date();
+  const hoyStr=hoy.toISOString().split('T')[0];
+  const ayer=new Date(hoy);ayer.setDate(hoy.getDate()-1);
+  const ayerStr=ayer.toISOString().split('T')[0];
+  window._cuentaFiltro=filtro;
+  if(filtro==='hoy'){window._cuentaFi=hoyStr;window._cuentaFf=hoyStr;}
+  else if(filtro==='ayer'){window._cuentaFi=ayerStr;window._cuentaFf=ayerStr;}
+  else if(filtro==='7dias'){const s=new Date(hoy);s.setDate(hoy.getDate()-6);window._cuentaFi=s.toISOString().split('T')[0];window._cuentaFf=hoyStr;}
+  else if(filtro==='mes'){window._cuentaFi=hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0')+'-01';window._cuentaFf=hoyStr;}
+  else if(filtro==='periodo'){
+    const diaI=26;let fi,ff;
+    if(hoy.getDate()>=diaI){fi=new Date(hoy.getFullYear(),hoy.getMonth(),diaI);ff=new Date(hoy.getFullYear(),hoy.getMonth()+1,25,23,59,59);}
+    else{fi=new Date(hoy.getFullYear(),hoy.getMonth()-1,diaI);ff=new Date(hoy.getFullYear(),hoy.getMonth(),25,23,59,59);}
+    window._cuentaFi=fi.toISOString().split('T')[0];window._cuentaFf=ff.toISOString().split('T')[0];
+  }
+  // Update date inputs
+  const fiInp=document.getElementById('cnt-fi');const ffInp=document.getElementById('cnt-ff');
+  if(fiInp)fiInp.value=window._cuentaFi;if(ffInp)ffInp.value=window._cuentaFf;
+  // Update buttons
+  document.querySelectorAll('.cnt-btn').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('cnt-btn-'+filtro);if(btn)btn.classList.add('active');
+  renderCuentaList();
+}
+
+function applyCuentaFechas(){
+  const fi=document.getElementById('cnt-fi').value;
+  const ff=document.getElementById('cnt-ff').value;
+  if(!fi||!ff){toast('Ingresa fechas válidas');return;}
+  window._cuentaFi=fi;window._cuentaFf=ff;window._cuentaFiltro='custom';
+  document.querySelectorAll('.cnt-btn').forEach(b=>b.classList.remove('active'));
+  renderCuentaList();
+}
+
+function renderCuentaList(){
+  const rutas=window._cuentaRutas||[];
+  const fi=new Date(window._cuentaFi+'T00:00:00');
+  const ff=new Date(window._cuentaFf+'T23:59:59');
+  const filtradas=rutas.filter(r=>{
+    const d=new Date((r['Fecha Servicio']||'').split(' ')[0]+'T12:00:00');
+    return d>=fi&&d<=ff;
+  });
   const precio=parseFloat(config.precio_km||0.35);
-
-  // Apply filter
-  let filtradas=rutas;
-  if(filtro==='hoy'){
-    const hoyStr=hoy.toISOString().split('T')[0];
-    filtradas=rutas.filter(r=>(r['Fecha Servicio']||'').startsWith(hoyStr));
-  } else if(filtro==='ayer'){
-    const ayer=new Date(hoy); ayer.setDate(hoy.getDate()-1);
-    const ayerStr=ayer.toISOString().split('T')[0];
-    filtradas=rutas.filter(r=>(r['Fecha Servicio']||'').startsWith(ayerStr));
-  } else if(filtro==='periodo'){
-    // Current period: 26 prev month to 25 this month
-    const diaI=26;
-    let fi,ff;
-    if(hoy.getDate()>=diaI){
-      fi=new Date(hoy.getFullYear(),hoy.getMonth(),diaI);
-      ff=new Date(hoy.getFullYear(),hoy.getMonth()+1,25,23,59,59);
-    } else {
-      fi=new Date(hoy.getFullYear(),hoy.getMonth()-1,diaI);
-      ff=new Date(hoy.getFullYear(),hoy.getMonth(),25,23,59,59);
-    }
-    filtradas=rutas.filter(r=>{
-      const d=new Date(r['Fecha Servicio']||'');
-      return d>=fi&&d<=ff;
-    });
-  } else if(filtro==='fecha' && window._cuentaFecha){
-    filtradas=rutas.filter(r=>(r['Fecha Servicio']||'').startsWith(window._cuentaFecha));
-  } else if(filtro==='periodo_custom' && window._cuentaPeriodo){
-    const [fi,ff]=window._cuentaPeriodo;
-    filtradas=rutas.filter(r=>{
-      const d=new Date(r['Fecha Servicio']||'');
-      return d>=new Date(fi)&&d<=new Date(ff+'T23:59:59');
-    });
-  }
-
   const totalKm=Math.round(filtradas.reduce((s,r)=>s+parseFloat(r['KM']||0),0)*10)/10;
-  const totalUsd=Math.round(filtradas.reduce((s,r)=>s+parseFloat(r['Valor ($)']||0),0)*100)/100;
-
-  const meses=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-  const diaI2=26;
-  let periodoLabel;
-  if(hoy.getDate()>=diaI2){
-    periodoLabel='26 '+meses[hoy.getMonth()]+' — 25 '+meses[(hoy.getMonth()+1)%12];
-  } else {
-    const pm=(hoy.getMonth()-1+12)%12;
-    periodoLabel='26 '+meses[pm]+' — 25 '+meses[hoy.getMonth()];
-  }
-
-  c.innerHTML=`<div class="page-title">Mi cuenta</div>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
-    <button class="filter-btn${filtro==='hoy'?' active':''}" onclick="renderCuentaView(document.getElementById('content'),window._cuentaRutas,'hoy')">Hoy</button>
-    <button class="filter-btn${filtro==='ayer'?' active':''}" onclick="renderCuentaView(document.getElementById('content'),window._cuentaRutas,'ayer')">Ayer</button>
-    <button class="filter-btn${filtro==='periodo'?' active':''}" onclick="renderCuentaView(document.getElementById('content'),window._cuentaRutas,'periodo')">Período (${periodoLabel})</button>
-    <button class="filter-btn${filtro==='fecha'?' active':''}" onclick="pickFecha()">📅 Fecha</button>
-    <button class="filter-btn${filtro==='periodo_custom'?' active':''}" onclick="pickPeriodo()">📆 Rango</button>
-  </div>
-  <div class="corte-total">
-    <div class="corte-label">Total ${filtro==='hoy'?'hoy':filtro==='ayer'?'ayer':filtro==='periodo'?'período':filtro==='fecha'?window._cuentaFecha||'':'rango'}</div>
-    <div class="corte-amount">$${totalUsd.toFixed(2)}</div>
-    <div class="corte-sub">${totalKm} km × $${precio.toFixed(2)}/km</div>
-  </div>
-  <div class="corte-stats">
-    <div class="corte-stat"><div class="corte-stat-val">${filtradas.length}</div><div class="corte-stat-lbl">Rutas</div></div>
-    <div class="corte-stat"><div class="corte-stat-val">${totalKm}</div><div class="corte-stat-lbl">KM</div></div>
-    <div class="corte-stat"><div class="corte-stat-val">$${filtradas.length?(totalUsd/filtradas.length).toFixed(2):'0.00'}</div><div class="corte-stat-lbl">Prom.</div></div>
-  </div>
-  <div class="card">
-    <div style="font-size:13px;font-weight:600;margin-bottom:10px">Detalle (${filtradas.length} rutas)</div>
-    ${filtradas.length?filtradas.map(r=>`
-      <div style="padding:10px 0;border-bottom:.5px solid var(--border)">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px">
-          <div style="font-size:13px;font-weight:600;color:var(--text);flex:1;margin-right:8px">${placeName(r['Destino']||'—')}</div>
-          <div style="font-size:14px;font-weight:700;color:var(--text);flex-shrink:0">$${parseFloat(r['Valor ($)']).toFixed(2)}</div>
-        </div>
-        <div style="font-size:11px;color:var(--text2)">${fd(r['Fecha Servicio']||'')} · ${r['KM']} km · ${r['Tipo']||''}</div>
-        <div style="font-size:11px;color:var(--text3)">${placeAddr(r['Destino']||'')}</div>
-      </div>`).join('')
-    :'<div class="empty">Sin rutas en este período</div>'}
-  </div>`;
+  const totalUsd=Math.round(filtradas.reduce((s,r)=>s+parseFloat(r['Valor ($)'||'Valor']||0),0)*100)/100;
+  // Update summary
+  const sumEl=document.getElementById('cnt-summary');
+  if(sumEl) sumEl.innerHTML=`
+    <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">
+      RESUMEN · ${window._cuentaFi}${window._cuentaFi!==window._cuentaFf?' → '+window._cuentaFf:''}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:0">
+      <div style="background:var(--surface2);border-radius:var(--radius);padding:14px 8px;text-align:center">
+        <div style="font-size:22px;font-weight:800;color:var(--brand)">${filtradas.length}</div>
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;margin-top:3px">Rutas</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:var(--radius);padding:14px 8px;text-align:center">
+        <div style="font-size:22px;font-weight:800;color:var(--text)">${totalKm}</div>
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;margin-top:3px">KM</div>
+      </div>
+      <div style="background:var(--gold-light);border-radius:var(--radius);padding:14px 8px;text-align:center;border:1px solid rgba(186,117,23,0.2)">
+        <div style="font-size:22px;font-weight:800;color:var(--gold)">$${totalUsd.toFixed(2)}</div>
+        <div style="font-size:10px;color:var(--gold);text-transform:uppercase;margin-top:3px">Total</div>
+      </div>
+    </div>`;
+  // Update list
+  const listEl=document.getElementById('cnt-list');
+  if(!listEl)return;
+  if(!filtradas.length){listEl.innerHTML='<div class="empty">Sin rutas en este período</div>';return;}
+  listEl.innerHTML=filtradas.map(r=>`
+    <div style="padding:11px 0;border-bottom:.5px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px">
+        <div style="font-size:13px;font-weight:700;color:var(--text);flex:1;margin-right:8px;line-height:1.3">${placeName(r['Destino']||'—')}</div>
+        <div style="font-size:15px;font-weight:800;color:var(--gold);flex-shrink:0">$${parseFloat(r['Valor ($)'||'Valor']||0).toFixed(2)}</div>
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:2px">${fd(r['Fecha Servicio']||'')} · ${r['KM']} km · ${r['Tipo']||''}</div>
+      <div style="font-size:11px;color:var(--text3)">${placeAddr(r['Destino']||'')}</div>
+    </div>`).join('');
 }
 
-function pickFecha(){
-  const f=prompt('Ingresa la fecha (YYYY-MM-DD):',new Date().toISOString().split('T')[0]);
-  if(!f||!f.match(/^\d{4}-\d{2}-\d{2}$/)){toast('Fecha inválida');return;}
-  window._cuentaFecha=f;
-  renderCuentaView(document.getElementById('content'),window._cuentaRutas,'fecha');
+function renderCuentaView(c){
+  const hoy=new Date().toISOString().split('T')[0];
+  const filtro=window._cuentaFiltro||'periodo';
+  c.innerHTML=`
+  <div class="page-title">Mi cuenta</div>
+  <div class="card" style="margin-bottom:12px">
+    <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">📅 RANGO DE FECHAS</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <button id="cnt-btn-hoy" class="cnt-btn${filtro==='hoy'?' active':''}" onclick="setCuentaFiltro('hoy')">Hoy</button>
+      <button id="cnt-btn-ayer" class="cnt-btn${filtro==='ayer'?' active':''}" onclick="setCuentaFiltro('ayer')">Ayer</button>
+      <button id="cnt-btn-7dias" class="cnt-btn${filtro==='7dias'?' active':''}" onclick="setCuentaFiltro('7dias')">7 días</button>
+      <button id="cnt-btn-mes" class="cnt-btn${filtro==='mes'?' active':''}" onclick="setCuentaFiltro('mes')">Este mes</button>
+      <button id="cnt-btn-periodo" class="cnt-btn${filtro==='periodo'?' active':''}" onclick="setCuentaFiltro('periodo')">Período</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <input type="date" id="cnt-fi" value="${window._cuentaFi||hoy}" class="field-input" style="flex:1;padding:9px 12px;font-size:13px">
+      <span style="color:var(--text3);font-size:16px">→</span>
+      <input type="date" id="cnt-ff" value="${window._cuentaFf||hoy}" class="field-input" style="flex:1;padding:9px 12px;font-size:13px">
+      <button onclick="applyCuentaFechas()" style="padding:9px 14px;background:var(--gold);color:#fff;border:none;border-radius:var(--radius);font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0">OK</button>
+    </div>
+  </div>
+  <div class="card" id="cnt-summary" style="margin-bottom:12px"></div>
+  <div class="card"><div id="cnt-list"></div></div>`;
+  renderCuentaList();
 }
 
-function pickPeriodo(){
-  const fi=prompt('Fecha inicio (YYYY-MM-DD):');
-  if(!fi||!fi.match(/^\d{4}-\d{2}-\d{2}$/)){toast('Fecha inválida');return;}
-  const ff=prompt('Fecha fin (YYYY-MM-DD):');
-  if(!ff||!ff.match(/^\d{4}-\d{2}-\d{2}$/)){toast('Fecha inválida');return;}
-  window._cuentaPeriodo=[fi,ff];
-  renderCuentaView(document.getElementById('content'),window._cuentaRutas,'periodo_custom');
-}
+
 
 async function vAprobar(c){
   c.innerHTML=spin();
-  try{const r=await api({action:'getRutas',rol:'admin',estado:'Pendiente'});const rutas=r.rutas||[];c.innerHTML=`<div class="page-title">Por aprobar</div><div class="page-sub">${rutas.length} pendiente${rutas.length!==1?'s':''}</div>${rutas.length?rutasH(rutas,true):'<div class="empty">Sin solicitudes pendientes ✓</div>'}`;}catch(e){c.innerHTML=err();}
+  try{
+    const r=await api({action:'getRutas',rol:'admin',estado:'Pendiente'});
+    const rutas=r.rutas||[];
+    window._pendientes=rutas;
+    c.innerHTML=`<div class="page-title">Por aprobar</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div class="page-sub" style="margin:0">${rutas.length} pendiente${rutas.length!==1?'s':''}</div>
+      ${rutas.length>1?`<button onclick="aprobarTodo()" style="padding:8px 16px;background:var(--brand);color:#fff;border:none;border-radius:var(--radius);font-size:13px;font-weight:700;cursor:pointer">✓ Aprobar todo</button>`:''}
+    </div>
+    ${rutas.length?rutasH(rutas,true):'<div class="empty">Sin solicitudes pendientes ✓</div>'}`;
+  }catch(e){c.innerHTML=err();}
+}
+
+async function aprobarTodo(){
+  const rutas=window._pendientes||[];
+  if(!rutas.length)return;
+  if(!confirm('¿Aprobar las '+rutas.length+' rutas pendientes?'))return;
+  let ok=0,fail=0;
+  for(const r of rutas){
+    try{const res=await api({action:'aprobarRuta',id:r['ID'],admin:session.usuario});if(res.ok)ok++;else fail++;}
+    catch(e){fail++;}
+  }
+  toast('✓ '+ok+' aprobadas'+(fail?' · '+fail+' fallaron':''));
+  vAprobar(document.getElementById('content'));
 }
 
 async function vHistorial(c){
@@ -1250,6 +1292,26 @@ async function uploadFoto(inp,prevId,statId,urlId){
 async function api(data){
   const p=new URLSearchParams();
   Object.entries(data).forEach(([k,v])=>p.append(k,String(v)));
+  // Use JSONP for file:// protocol (bypasses CORS)
+  if(window.location.protocol==='file:'){
+    return new Promise((resolve,reject)=>{
+      const cbName='_cb'+Date.now();
+      const script=document.createElement('script');
+      const url=SCRIPT_URL+'?'+p.toString()+'&callback='+cbName;
+      window[cbName]=(data)=>{
+        delete window[cbName];
+        document.body.removeChild(script);
+        resolve(data);
+      };
+      script.onerror=()=>{
+        delete window[cbName];
+        document.body.removeChild(script);
+        reject(new Error('Error de red'));
+      };
+      script.src=url;
+      document.body.appendChild(script);
+    });
+  }
   const r=await fetch(SCRIPT_URL+'?'+p.toString(),{method:'GET',redirect:'follow'});
   return r.json();
 }
