@@ -317,7 +317,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;backg
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD89tboX5JzwLTm7EcdAI1I_Xeq3vZy0kE&libraries=places,geometry&callback=mapsLoaded" async defer></script>
 
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw-ma32OMdhxQasruV3TNVy1DQdIaLUts_ltQLdwAE4g5Wx2sKO4VjOij1qv1UOfpoS/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxYQD6mYcymB0Kc8WRl8PhoovCw58NpfL6WLY6k95CxhhGC93_enrOPWFQg_V9cxfG6/exec';
 const MAPS_CENTER = {lat:-0.1940519,lng:-78.4841933}; // Minecore S.A.S - Alpallana E7-212, Quito
 const MINECORE_ADDR = 'Minecore S.A.S — Alpallana E7-212, Quito';
 
@@ -335,10 +335,10 @@ let currentMod = '';
 let activeView = '';
 // Default users (used offline/first load) - like Sunsu pattern
 const DEFAULT_USERS = [
-  {usuario:'EF', nombre:'Esteban Ferlito',  rol:'admin',  pin:'2765', activo:'SI'},
-  {usuario:'MP', nombre:'Martin Pinto',     rol:'admin',  pin:'1111', activo:'SI'},
-  {usuario:'OP', nombre:'Oswaldo Peña',     rol:'chofer', pin:'2222', activo:'SI'},
-  {usuario:'AG', nombre:'Angel Guachamin',  rol:'chofer', pin:'3333', activo:'SI'}
+  {usuario:'EFCH', nombre:'Esteban Ferlito', rol:'admin',  pin:'0000', activo:'SI'},
+  {usuario:'MPL',  nombre:'Martin',          rol:'admin',  pin:'1111', activo:'SI'},
+  {usuario:'OPM',  nombre:'Oswaldo',         rol:'chofer', pin:'2222', activo:'SI'},
+  {usuario:'AG',   nombre:'Angel',           rol:'chofer', pin:'3333', activo:'SI'}
 ];
 
 function getLocalUsers(){
@@ -376,11 +376,17 @@ function saveFavs(){ try{localStorage.setItem('mcFavs',JSON.stringify(favs));}ca
 })();
 
 function renderGrid(){
+  // If localStorage has bad data, reset to defaults
   const active = allUsers.filter(u=>u.activo==='SI');
-  document.getElementById('user-grid').innerHTML = active.map(u=>{
+  if(!active.length){
+    allUsers=DEFAULT_USERS;
+    try{localStorage.removeItem('mc_users');}catch(e){}
+  }
+  const toShow = allUsers.filter(u=>u.activo==='SI');
+  document.getElementById('user-grid').innerHTML = toShow.map(u=>{
     const c = col(u.usuario);
     return `<div class="user-card" onclick="selectUser('${u.usuario}')">
-      ${u.rol==='admin'?'<div class="admin-dot"></div>':''}
+      ${(u.rol||'').toLowerCase()==='admin'?'<div class="admin-dot"></div>':''}
       <div class="user-avatar" style="background:${c.bg};color:${c.tx}">${u.usuario}</div>
       <div class="user-full-name">${u.nombre}</div>
     </div>`;
@@ -424,7 +430,9 @@ function updateDots(){
 async function submitPin(){
   // Check PIN locally first (works offline/file://) - Sunsu pattern
   const localUser = allUsers.find(u=>u.usuario===selUser.usuario&&u.activo==='SI');
-  if(localUser && localUser.pin && String(localUser.pin)===String(pinBuf)){
+  // Pad PIN to 4 digits to handle Sheets stripping leading zeros (0000 → 0)
+  const localPin = String(localUser&&localUser.pin||'').padStart(4,'0');
+  if(localUser && localPin===String(pinBuf)){
     // Local login success
     session={ok:true, usuario:localUser.usuario, nombre:localUser.nombre, rol:(localUser.rol||'chofer').toLowerCase()};
     sessionStorage.setItem('mcSession',JSON.stringify(session));
@@ -486,7 +494,7 @@ function openMod(mod){
   renderNav();
   show('app-screen');
   const rol=(session.rol||'chofer').toLowerCase();
-  if(mod==='rutas') setView(rol==='chofer'?'nueva':'aprobar');
+  if(mod==='rutas') setView('nueva');
   else setView('balance');
 }
 
@@ -499,6 +507,7 @@ const NAV = {
       {id:'cuenta',    label:'Cuenta',   icon:'M12 2a10 10 0 110 20 10 10 0 010-20zm0 6v4l3 3'}
     ],
     admin:[
+      {id:'nueva',     label:'Nueva',    icon:'M12 5v14M5 12h14'},
       {id:'aprobar',   label:'Aprobar',  icon:'M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11'},
       {id:'historial', label:'Historial',icon:'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'},
       {id:'corte',     label:'Corte',    icon:'M8 7V3m8 4V3M3 11h18M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'},
@@ -579,6 +588,13 @@ function vNuevaRuta(c){
   <div class="card">
     <div class="field-group"><label class="field-label">Tipo</label>
       <select class="field-select" id="f-tipo"><option value="Entrega">📦 Entrega</option><option value="Despacho">🔄 Despacho</option><option value="Diligencia">📋 Diligencia</option></select></div>
+    <div class="field-group"><label class="field-label">Vehículo</label>
+      <select class="field-select" id="f-vehiculo" onchange="actualizarPrecioVehiculo()">
+        <option value="Camioneta Nissan">🚚 Camioneta Nissan</option>
+        <option value="Camioneta Mazda">🚙 Camioneta Mazda</option>
+        <option value="Camioneta Poer">🛻 Camioneta Poer</option>
+        <option value="Moto Minecore">🏍 Moto Minecore</option>
+      </select></div>
     <div class="field-group"><label class="field-label">Fecha</label><input class="field-input" type="date" id="f-fecha" value="${hoy()}"></div>
     <div class="field-group"><label class="field-label">Motivo</label><input class="field-input" id="f-motivo" placeholder="Ej: Entrega de brocas"></div>
     <button class="btn-submit" onclick="enviarRuta()" id="btn-enviar">Enviar solicitud</button>
@@ -833,6 +849,23 @@ function delFav(i){
   favs=favs.filter(f=>!(f.u===session.usuario&&f.n===fav.n));saveFavs();setView('nueva');
 }
 
+function actualizarPrecioVehiculo(){
+  const v=document.getElementById('f-vehiculo')?.value||'';
+  // Moto uses different rate
+  const precioBase=v==='Moto Minecore'?0.15:parseFloat(config.precio_km||0.35);
+  window._precioVehiculo=precioBase;
+  // Recalculate if we have a route
+  if(routeKm>0){
+    const val=(routeKm*precioBase).toFixed(2);
+    const prev=document.getElementById('km-prev');
+    if(prev){
+      prev.style.display='block';
+      document.getElementById('prev-val').textContent='$'+val;
+      document.getElementById('prev-sub').textContent=routeKm+' km × $'+precioBase.toFixed(2)+'/km';
+    }
+  }
+}
+
 async function enviarRuta(){
   const valid=paradas.filter(p=>p.ll);
   if(!valid.length){toast('Agrega al menos un destino');return;}
@@ -845,7 +878,10 @@ async function enviarRuta(){
   const r=await api({action:'crearRuta',usuario:session.usuario,
       origen:origenDisplay,
       destino:destinoDisplay,
-      km:routeKm,tipo:document.getElementById('f-tipo').value,
+      km:routeKm,
+      vehiculo:(document.getElementById('f-vehiculo')||{value:'Camioneta Nissan'}).value,
+      precioKm:(document.getElementById('f-vehiculo')||{value:''}).value==='Moto Minecore'?0.15:parseFloat(config.precio_km||0.35),
+      tipo:document.getElementById('f-tipo').value,
       fechaServicio:document.getElementById('f-fecha').value,
       motivo:document.getElementById('f-motivo').value||'Sin descripción'});
     if(r.ok){toast('✓ Solicitud enviada');setView('mis-rutas');}
@@ -857,29 +893,123 @@ async function enviarRuta(){
 async function vMisRutas(c){
   c.innerHTML=spin();
   try{
-    const r=await api({action:'getRutas',rol:(session.rol||'chofer').toLowerCase(),usuario:session.usuario});const rutas=r.rutas||[];
-    c.innerHTML=`<div class="page-title">Mis rutas</div>
-    <div class="tab-row"><div class="tab active" onclick="filtRutas('',this)">Todas</div><div class="tab" onclick="filtRutas('Pendiente',this)">Pendientes</div><div class="tab" onclick="filtRutas('Aprobada',this)">Aprobadas</div><div class="tab" onclick="filtRutas('Rechazada',this)">Rechazadas</div></div>
-    <div id="rl">${rutasH(rutas,false)}</div>`;
-    window._rd=rutas;
+    const r=await api({action:'getRutas',rol:(session.rol||'chofer').toLowerCase(),usuario:session.usuario});
+    window._misRutas=(r.rutas||[]);
+    window._misRutasFiltro='todo';
+    window._misRutasEstado='';
+    window._misRutasSearch='';
+    window._misRutasFi='2020-01-01';
+    window._misRutasFf='2099-12-31';
+    renderMisRutasView(c);
   }catch(e){c.innerHTML=err();}
 }
-function filtRutas(e,el){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');const f=e?window._rd.filter(r=>r['Estado']===e):window._rd;document.getElementById('rl').innerHTML=rutasH(f,false);}
 
-function placeName(addr){
-  // Extract business names from single or multi-stop route
-  // Format: "Name — Street → Name2 — Street2 → ..."
-  if(!addr) return '—';
-  // Split by arrow first (multi-stop)
-  const stops = addr.split(' → ');
-  return stops.map(stop => {
-    stop = stop.trim();
-    if(stop.includes(' — ')){
-      return stop.split(' — ')[0].trim(); // just the name
-    }
-    return shortName(stop); // no name, clean the address
-  }).join(' → ');
+function renderMisRutasView(c){
+  const hoy=new Date().toISOString().split('T')[0];
+  const filtro=window._misRutasFiltro||'todo';
+  const pd=getPeriodoDates(0); const pa=getPeriodoDates(-1);
+  const meses=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  function periodoLabel(d){const fi=new Date(d.fi+'T12:00:00');const ff=new Date(d.ff+'T12:00:00');return '26 '+meses[fi.getMonth()]+' → 25 '+meses[ff.getMonth()];}
+  c.innerHTML=`
+  <div class="page-title">Mis rutas</div>
+  <div class="card" style="margin-bottom:10px">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      <button id="mr-btn-todo" class="cnt-btn${filtro==='todo'?' active':''}" onclick="setMisRutasFiltro('todo')">Todas</button>
+      <button id="mr-btn-hoy" class="cnt-btn${filtro==='hoy'?' active':''}" onclick="setMisRutasFiltro('hoy')">Hoy</button>
+      <button id="mr-btn-ayer" class="cnt-btn${filtro==='ayer'?' active':''}" onclick="setMisRutasFiltro('ayer')">Ayer</button>
+      <button id="mr-btn-periodo" class="cnt-btn${filtro==='periodo'?' active':''}" onclick="setMisRutasFiltro('periodo')">Período (${periodoLabel(pd)})</button>
+      <button id="mr-btn-periodo_ant" class="cnt-btn${filtro==='periodo_ant'?' active':''}" onclick="setMisRutasFiltro('periodo_ant')">← Anterior</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <input type="date" id="mr-fi" value="${window._misRutasFi||hoy}" class="field-input" style="flex:1;padding:9px 12px;font-size:13px">
+      <span style="color:var(--text3)">→</span>
+      <input type="date" id="mr-ff" value="${window._misRutasFf||hoy}" class="field-input" style="flex:1;padding:9px 12px;font-size:13px">
+      <button onclick="applyMisRutasRango()" style="padding:9px 14px;background:var(--gold);color:#fff;border:none;border-radius:var(--radius);font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0">OK</button>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="cnt-btn${!window._misRutasEstado?' active':''}" onclick="window._misRutasEstado='';renderMisRutasBody()">Todas</button>
+      <button class="cnt-btn${window._misRutasEstado==='Pendiente'?' active':''}" onclick="window._misRutasEstado='Pendiente';renderMisRutasBody()">Pendientes</button>
+      <button class="cnt-btn${window._misRutasEstado==='Aprobada'?' active':''}" onclick="window._misRutasEstado='Aprobada';renderMisRutasBody()">Aprobadas</button>
+      <button class="cnt-btn${window._misRutasEstado==='Rechazada'?' active':''}" onclick="window._misRutasEstado='Rechazada';renderMisRutasBody()">Rechazadas</button>
+    </div>
+  </div>
+  <div id="mr-body"></div>`;
+  renderMisRutasBody();
 }
+
+function setMisRutasFiltro(filtro){
+  const hoy=new Date();
+  const hoyStr=hoy.toISOString().split('T')[0];
+  window._misRutasFiltro=filtro;
+  if(filtro==='todo'){window._misRutasFi='2020-01-01';window._misRutasFf='2099-12-31';}
+  else if(filtro==='hoy'){window._misRutasFi=hoyStr;window._misRutasFf=hoyStr;}
+  else if(filtro==='ayer'){const a=new Date(hoy);a.setDate(hoy.getDate()-1);const as=a.toISOString().split('T')[0];window._misRutasFi=as;window._misRutasFf=as;}
+  else if(filtro==='periodo'){const d=getPeriodoDates(0);window._misRutasFi=d.fi;window._misRutasFf=d.ff;}
+  else if(filtro==='periodo_ant'){const d=getPeriodoDates(-1);window._misRutasFi=d.fi;window._misRutasFf=d.ff;}
+  const fi=document.getElementById('mr-fi');const ff=document.getElementById('mr-ff');
+  if(fi)fi.value=window._misRutasFi;if(ff)ff.value=window._misRutasFf;
+  document.querySelectorAll('[id^="mr-btn-"]').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('mr-btn-'+filtro);if(btn)btn.classList.add('active');
+  renderMisRutasBody();
+}
+
+function applyMisRutasRango(){
+  window._misRutasFi=document.getElementById('mr-fi').value;
+  window._misRutasFf=document.getElementById('mr-ff').value;
+  window._misRutasFiltro='custom';
+  document.querySelectorAll('[id^="mr-btn-"]').forEach(b=>b.classList.remove('active'));
+  renderMisRutasBody();
+}
+
+function renderMisRutasBody(){
+  const el=document.getElementById('mr-body');if(!el)return;
+  const todas=window._misRutas||[];
+  const fi=new Date((window._misRutasFi||'2020-01-01')+'T00:00:00');
+  const ff=new Date((window._misRutasFf||'2099-12-31')+'T23:59:59');
+  const estado=window._misRutasEstado||'';
+
+  let rutas=todas.filter(rt=>{
+    let ds=String(rt['Fecha Servicio']||rt['Fecha Solicitud']||'').split(' ')[0];
+    if(!ds||ds==='undefined')return false;
+    let d;
+    if(ds.includes('-')&&ds.length>=8) d=new Date(ds+'T12:00:00');
+    else if(!isNaN(parseFloat(ds))) d=new Date((parseFloat(ds)-25569)*86400000);
+    if(!d||isNaN(d.getTime()))return false;
+    if(d<fi||d>ff)return false;
+    if(estado&&rt['Estado']!==estado)return false;
+    return true;
+  });
+
+  if(!rutas.length){el.innerHTML='<div class="empty">Sin rutas para este filtro</div>';return;}
+
+  el.innerHTML=`<div style="font-size:12px;color:var(--text3);margin-bottom:8px">${rutas.length} ruta${rutas.length!==1?'s':''}</div>`+
+  rutas.map(r=>{
+    const km=parseFloat(r['KM']||0);
+    const val=parseFloat(r['Valor ($)']||0).toFixed(2);
+    const est=r['Estado']||'Pendiente';
+    const bc=est==='Aprobada'?'approved':est==='Rechazada'?'rejected':'pending';
+    const veh=r['Vehiculo']||'';
+    return `<div class="route-item" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div style="flex:1;margin-right:8px">
+          <div class="route-dest">${placeName(r['Destino']||'—')}</div>
+          <div style="font-size:11px;margin-top:3px;display:flex;gap:8px;flex-wrap:wrap">
+            <span style="color:var(--brand);font-weight:600">👤 ${r['Usuario']||''}</span>
+            ${veh?`<span style="color:var(--text3)">🚗 ${veh}</span>`:''}
+          </div>
+        </div>
+        <span class="badge ${bc}">${est}</span>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px">${placeAddr(r['Destino']||'')}</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:6px">${r['Motivo']||''}</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text)">${est==='Aprobada'?'$'+val:'—'}</div>
+      <div style="font-size:11px;color:var(--text3)">${r['Tipo']||''} · ${km} km · ${fd(r['Fecha Servicio']||'')}</div>
+      ${est==='Rechazada'&&r['Notas']?`<div style="font-size:11px;color:var(--danger-text);margin-top:4px">Motivo: ${r['Notas']}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+
 
 function placeAddr(addr){
   // Extract street addresses from single or multi-stop route
@@ -927,35 +1057,102 @@ function rutasH(rutas,admin){
   return rutas.map(r=>{
     const km=parseFloat(r['KM']||0),val=parseFloat(r['Valor ($)']||0).toFixed(2),est=r['Estado']||'Pendiente';
     const bc=est==='Aprobada'?'approved':est==='Rechazada'?'rejected':'pending';
-    const origen = r['Origen']||'';
-    const destino = r['Destino']||'—';
-    // Build short title: Origen → Destino(s)
-    // Title: only business names (no street addresses)
-    const shortOrigen = placeName(origen);
-    const shortDestino = placeName(destino);
-    const titleRoute = shortOrigen ? shortOrigen+' → '+shortDestino : shortDestino;
-    // Detail: full addresses for reference
-    const detailOrigen = placeAddr(origen) || origen;
-    const detailDestino = placeAddr(destino) || destino;
-    const acc=admin&&est==='Pendiente'?`<input class="reject-input" id="ri-${r['ID']}" placeholder="Motivo"><div class="action-row"><button class="btn-reject" onclick="trRej('${r['ID']}',this)">Rechazar</button><button class="btn-approve" onclick="aprR('${r['ID']}')">✓ Aprobar</button></div>`:'';
+    const usuario=r['Usuario']||'';
+    const vehiculo=r['Vehiculo']||r['Vehículo']||'';
+    const acc=admin&&est==='Pendiente'?`
+      <input class="reject-input" id="ri-${r['ID']}" placeholder="Motivo">
+      <div class="action-row">
+        <button class="btn-reject" onclick="trRej('${r['ID']}',this)">Rechazar</button>
+        <button class="btn-approve" onclick="aprR('${r['ID']}')">✓ Aprobar</button>
+      </div>`:'';
+    const editBtn=admin?`<button onclick="editarRuta('${r['ID']}','${est}',${km},'${encodeURIComponent(r['Origen']||'')}','${encodeURIComponent(r['Destino']||'')}',${val})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;padding:2px 6px;border-radius:6px;border:1px solid var(--border)" title="Editar">✏️ Editar</button>`:'';
     return `<div class="route-item">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
-        <div class="route-dest" style="flex:1;margin-right:8px">${titleRoute}</div>
-        <span class="badge ${bc}" style="flex-shrink:0">${est}</span>
+        <div style="flex:1;margin-right:8px">
+          <div class="route-dest">${placeName(r['Destino']||'—')}</div>
+          ${admin?`<div style="font-size:11px;color:var(--brand);font-weight:600;margin-top:2px">👤 ${usuario}${vehiculo?' · 🚗 '+vehiculo:''}</div>`:''}
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+          ${editBtn}
+          <span class="badge ${bc}">${est}</span>
+        </div>
       </div>
       <div style="font-size:11px;color:var(--text3);margin-bottom:4px;line-height:1.4">
-        ${detailOrigen?`<span style="color:var(--text2)">${detailOrigen}</span><br>`:''}
-        ${detailDestino?`<span>${detailDestino}</span>`:''}
+        ${placeAddr(r['Destino']||'')||''}
       </div>
       <div class="route-meta">${r['Motivo']||''}</div>
       <div style="display:flex;justify-content:space-between;margin-top:6px">
         <div>
           <div class="route-valor">${est==='Aprobada'?'$'+val:'—'}</div>
-          <div class="route-tipo">${r['Tipo']||''} · ${km} km · ${fd(r['Fecha Servicio']||'')}${admin?' · '+r['Usuario']:''}</div>
+          <div class="route-tipo">${r['Tipo']||''} · ${km} km · ${fd(r['Fecha Servicio']||'')}</div>
         </div>
       </div>
-      ${acc}</div>`;
+      ${acc}
+    </div>`;
   }).join('');
+}
+
+async function editarRuta(id, estadoActual, km, origenEnc, destinoEnc, valor){
+  const origen = decodeURIComponent(origenEnc||'');
+  const destino = decodeURIComponent(destinoEnc||'');
+  // Build edit form in a modal overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'edit-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:flex;align-items:flex-end;justify-content:center';
+  overlay.innerHTML = `
+    <div style="background:var(--surface);border-radius:18px 18px 0 0;padding:24px;width:100%;max-width:500px;max-height:85vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+        <div style="font-size:16px;font-weight:700;color:var(--text)">✏️ Editar ruta</div>
+        <button onclick="document.getElementById('edit-overlay').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text3)">×</button>
+      </div>
+      <div class="field-group"><label class="field-label">Estado</label>
+        <select class="field-select" id="edit-estado">
+          <option value="Pendiente" ${estadoActual==='Pendiente'?'selected':''}>Pendiente</option>
+          <option value="Aprobada" ${estadoActual==='Aprobada'?'selected':''}>Aprobada</option>
+          <option value="Rechazada" ${estadoActual==='Rechazada'?'selected':''}>Rechazada</option>
+        </select>
+      </div>
+      <div class="field-group"><label class="field-label">KM</label>
+        <input class="field-input" type="number" id="edit-km" value="${km}" step="0.1">
+      </div>
+      <div class="field-group"><label class="field-label">Origen</label>
+        <input class="field-input" id="edit-origen" value="${(origen||'').replace(/"/g,'&quot;')}">
+      </div>
+      <div class="field-group"><label class="field-label">Destino</label>
+        <input class="field-input" id="edit-destino" value="${(destino||'').replace(/"/g,'&quot;')}">
+      </div>
+      <div class="field-group"><label class="field-label">Vehículo</label>
+        <select class="field-select" id="edit-vehiculo">
+          <option value="Camioneta Nissan">🚚 Camioneta Nissan</option>
+          <option value="Camioneta Mazda">🚙 Camioneta Mazda</option>
+          <option value="Camioneta Poer">🛻 Camioneta Poer</option>
+          <option value="Moto Minecore">🏍 Moto Minecore</option>
+        </select>
+      </div>
+      <button class="btn-submit" onclick="guardarEdicionRuta('${id}','${estadoActual}')">Guardar cambios</button>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function guardarEdicionRuta(id, estadoAnterior){
+  const nuevoEstado = document.getElementById('edit-estado').value;
+  const nuevoKm     = parseFloat(document.getElementById('edit-km').value)||0;
+  const nuevoOrigen = document.getElementById('edit-origen').value;
+  const nuevoDestino= document.getElementById('edit-destino').value;
+  const nuevoVeh    = document.getElementById('edit-vehiculo').value;
+  const precio      = nuevoVeh==='Moto Minecore' ? 0.15 : parseFloat(config.precio_km||0.35);
+  const nuevoValor  = (nuevoKm*precio).toFixed(2);
+  try{
+    // Update all fields
+    await api({action:'editarRuta',id,
+      estado:nuevoEstado,estadoAnterior,
+      km:nuevoKm,valor:nuevoValor,
+      origen:nuevoOrigen,destino:nuevoDestino,
+      vehiculo:nuevoVeh,admin:session.usuario});
+    document.getElementById('edit-overlay').remove();
+    toast('✓ Ruta actualizada');
+    setView(activeView);
+  }catch(e){toast('Error de conexión');}
 }
 
 function trRej(id,btn){const i=document.getElementById('ri-'+id);if(i.style.display==='block')rejR(id,i.value);else{i.style.display='block';i.focus();btn.textContent='Confirmar';}}
@@ -965,8 +1162,23 @@ async function rejR(id,n){try{const r=await api({action:'rechazarRuta',id,admin:
 async function vCuenta(c){
   c.innerHTML=spin();
   try{
-    const r=await api({action:'getRutas',rol:'chofer',usuario:session.usuario});
-    const todas=(r.rutas||[]).filter(x=>x['Estado']==='Aprobada');
+    // Always fetch all approved routes then filter by vehicle ownership
+    const r=await api({action:'getRutas',rol:'admin'});
+    // Vehicle → owner: each vehicle accrues to its owner's account
+    const VEHICULO_OWNER = {
+      'Camioneta Nissan': 'EFCH',
+      'Moto Minecore':    'EFCH',
+      'Camioneta Mazda':  'MPL',
+      'Camioneta Poer':   'OPM'
+    };
+    const todas=(r.rutas||[]).filter(x=>{
+      if(x['Estado']!=='Aprobada') return false;
+      const vehiculo = String(x['Vehiculo']||x['Vehículo']||'').trim();
+      const owner = VEHICULO_OWNER[vehiculo];
+      if(owner) return owner === session.usuario;
+      // No vehicle set: show to whoever submitted it (admins only see their own submissions here)
+      return x['Usuario'] === session.usuario;
+    });
     todas.sort((a,b)=>new Date(b['Fecha Servicio']||0)-new Date(a['Fecha Servicio']||0));
     window._cuentaRutas=todas;
     // Default: current period
@@ -1027,9 +1239,15 @@ function renderCuentaList(){
   const fi=new Date((window._cuentaFi||'2020-01-01')+'T00:00:00');
   const ff=new Date((window._cuentaFf||'2099-12-31')+'T23:59:59');
   const filtradas=rutas.filter(r=>{
-    const ds=(r['Fecha Servicio']||r['Fecha Solicitud']||'').split(' ')[0];
-    if(!ds)return false;
-    const d=new Date(ds+'T12:00:00');
+    let ds=String(r['Fecha Servicio']||r['Fecha Solicitud']||'').split(' ')[0];
+    if(!ds||ds==='undefined')return false;
+    let d;
+    if(ds.includes('-')&&ds.length>=8){
+      d=new Date(ds+'T12:00:00');
+    } else if(!isNaN(parseFloat(ds))){
+      d=new Date((parseFloat(ds)-25569)*86400000);
+    }
+    if(!d||isNaN(d.getTime()))return false;
     return d>=fi&&d<=ff;
   });
   const precio=parseFloat(config.precio_km||0.35);
@@ -1146,21 +1364,302 @@ async function aprobarTodo(){
 
 async function vHistorial(c){
   c.innerHTML=spin();
-  try{const r=await api({action:'getRutas',rol:'admin'});const rutas=r.rutas||[];
-  c.innerHTML=`<div class="page-title">Historial</div><div class="tab-row"><div class="tab active" onclick="filtH('',this)">Todas</div><div class="tab" onclick="filtH('Aprobada',this)">Aprobadas</div><div class="tab" onclick="filtH('Rechazada',this)">Rechazadas</div><div class="tab" onclick="filtH('Pendiente',this)">Pendientes</div></div><div id="hl">${rutasH(rutas,false)}</div>`;
-  window._hd=rutas;}catch(e){c.innerHTML=err();}
+  try{
+    const r=await api({action:'getRutas',rol:'admin'});
+    window._histRutas=(r.rutas||[]);
+    window._histFiltro='periodo';
+    const pd=getPeriodoDates(0);
+    window._histFi=pd.fi; window._histFf=pd.ff;
+    window._histEstado=''; window._histSearch='';
+    renderHistorialView(c);
+  }catch(e){c.innerHTML=err();}
 }
-function filtH(e,el){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');const f=e?window._hd.filter(r=>r['Estado']===e):window._hd;document.getElementById('hl').innerHTML=rutasH(f,false);}
 
-async function vCorte(c){
-  c.innerHTML=spin();
-  try{const r=await api({action:'getCorte'});const{periodo,totalKm,totalUsd,cantidadRutas,rutas,precioKm}=r;
-  c.innerHTML=`<div class="page-title">Corte mensual</div><div class="page-sub">Período: 26 al 25</div>
-  <div class="corte-total"><div class="corte-label">Total a pagar</div><div class="corte-amount">$${(totalUsd||0).toFixed(2)}</div><div class="corte-sub">${periodo}</div></div>
-  <div class="corte-stats"><div class="corte-stat"><div class="corte-stat-val">${cantidadRutas||0}</div><div class="corte-stat-lbl">Rutas</div></div><div class="corte-stat"><div class="corte-stat-val">${totalKm||0}</div><div class="corte-stat-lbl">KM</div></div><div class="corte-stat"><div class="corte-stat-val">$${precioKm||0.35}</div><div class="corte-stat-lbl">$/km</div></div></div>
-  <button class="btn-export" onclick="cerrarCorte('${periodo}')">📊 Cerrar corte y guardar en Sheets</button>
-  <div style="height:12px"></div>
-  <div class="card"><div style="font-size:13px;font-weight:600;margin-bottom:10px">Rutas incluidas</div>${(rutas||[]).length?(rutas||[]).map(r=>`<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:.5px solid var(--border)"><div><div style="font-size:13px;font-weight:600">${r['Destino']}</div><div style="font-size:11px;color:var(--text2)">${fd(r['Fecha Servicio']||'')} · ${r['KM']} km · ${r['Usuario']}</div></div><div style="font-size:14px;font-weight:700">$${parseFloat(r['Valor ($)']).toFixed(2)}</div></div>`).join(''):'<div class="empty">Sin rutas</div>'}</div>`;}catch(e){c.innerHTML=err();}
+function renderHistorialView(c){
+  const hoy=new Date().toISOString().split('T')[0];
+  const filtro=window._histFiltro||'periodo';
+  const pd=getPeriodoDates(0); const pa=getPeriodoDates(-1);
+  const meses=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  function periodoLabel(d){const fi=new Date(d.fi+'T12:00:00');const ff=new Date(d.ff+'T12:00:00');return '26 '+meses[fi.getMonth()]+' → 25 '+meses[ff.getMonth()];}
+  c.innerHTML=`
+  <div class="page-title">Historial de rutas</div>
+  <div class="card" style="margin-bottom:10px">
+    <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">📅 PERÍODO</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      <button id="hist-btn-hoy" class="cnt-btn${filtro==='hoy'?' active':''}" onclick="setHistFiltro('hoy')">Hoy</button>
+      <button id="hist-btn-ayer" class="cnt-btn${filtro==='ayer'?' active':''}" onclick="setHistFiltro('ayer')">Ayer</button>
+      <button id="hist-btn-7dias" class="cnt-btn${filtro==='7dias'?' active':''}" onclick="setHistFiltro('7dias')">7 días</button>
+      <button id="hist-btn-periodo" class="cnt-btn${filtro==='periodo'?' active':''}" onclick="setHistFiltro('periodo')">Período (${periodoLabel(pd)})</button>
+      <button id="hist-btn-periodo_ant" class="cnt-btn${filtro==='periodo_ant'?' active':''}" onclick="setHistFiltro('periodo_ant')">← Anterior (${periodoLabel(pa)})</button>
+      <button id="hist-btn-todo" class="cnt-btn${filtro==='todo'?' active':''}" onclick="setHistFiltro('todo')">Todo</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <input type="date" id="hist-fi" value="${window._histFi||hoy}" class="field-input" style="flex:1;padding:9px 12px;font-size:13px">
+      <span style="color:var(--text3)">→</span>
+      <input type="date" id="hist-ff" value="${window._histFf||hoy}" class="field-input" style="flex:1;padding:9px 12px;font-size:13px">
+      <button onclick="applyHistRango()" style="padding:9px 14px;background:var(--gold);color:#fff;border:none;border-radius:var(--radius);font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0">OK</button>
+    </div>
+    <input class="field-input" id="hist-search" placeholder="🔍 Buscar por usuario, origen, destino, vehículo..." 
+      oninput="window._histSearch=this.value;renderHistBody()" 
+      style="margin-bottom:10px;font-size:13px;padding:9px 12px">
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="cnt-btn${!window._histEstado?' active':''}" onclick="window._histEstado='';document.querySelectorAll('.hest-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active');renderHistBody()">Todas</button>
+      <button class="hest-btn cnt-btn${window._histEstado==='Pendiente'?' active':''}" onclick="window._histEstado='Pendiente';document.querySelectorAll('.cnt-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active');renderHistBody()">Pendientes</button>
+      <button class="hest-btn cnt-btn${window._histEstado==='Aprobada'?' active':''}" onclick="window._histEstado='Aprobada';document.querySelectorAll('.cnt-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active');renderHistBody()">Aprobadas</button>
+      <button class="hest-btn cnt-btn${window._histEstado==='Rechazada'?' active':''}" onclick="window._histEstado='Rechazada';document.querySelectorAll('.cnt-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active');renderHistBody()">Rechazadas</button>
+    </div>
+  </div>
+  <div id="hist-body"></div>`;
+  renderHistBody();
+}
+
+function setHistFiltro(filtro){
+  const hoy=new Date();
+  const hoyStr=hoy.toISOString().split('T')[0];
+  window._histFiltro=filtro;
+  if(filtro==='hoy'){window._histFi=hoyStr;window._histFf=hoyStr;}
+  else if(filtro==='ayer'){const a=new Date(hoy);a.setDate(hoy.getDate()-1);const as=a.toISOString().split('T')[0];window._histFi=as;window._histFf=as;}
+  else if(filtro==='7dias'){const s=new Date(hoy);s.setDate(hoy.getDate()-6);window._histFi=s.toISOString().split('T')[0];window._histFf=hoyStr;}
+  else if(filtro==='periodo'){const d=getPeriodoDates(0);window._histFi=d.fi;window._histFf=d.ff;}
+  else if(filtro==='periodo_ant'){const d=getPeriodoDates(-1);window._histFi=d.fi;window._histFf=d.ff;}
+  else if(filtro==='todo'){window._histFi='2020-01-01';window._histFf='2099-12-31';}
+  const fi=document.getElementById('hist-fi');const ff=document.getElementById('hist-ff');
+  if(fi)fi.value=window._histFi;if(ff)ff.value=window._histFf;
+  document.querySelectorAll('[id^="hist-btn-"]').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('hist-btn-'+filtro);if(btn)btn.classList.add('active');
+  renderHistBody();
+}
+
+function applyHistRango(){
+  window._histFi=document.getElementById('hist-fi').value;
+  window._histFf=document.getElementById('hist-ff').value;
+  window._histFiltro='custom';
+  document.querySelectorAll('[id^="hist-btn-"]').forEach(b=>b.classList.remove('active'));
+  renderHistBody();
+}
+
+function renderHistBody(){
+  const el=document.getElementById('hist-body');if(!el)return;
+  const todas=window._histRutas||[];
+  const fi=new Date((window._histFi||'2020-01-01')+'T00:00:00');
+  const ff=new Date((window._histFf||'2099-12-31')+'T23:59:59');
+  const search=(window._histSearch||'').toLowerCase().trim();
+  const estado=window._histEstado||'';
+
+  let rutas=todas.filter(rt=>{
+    // Date filter
+    let ds=String(rt['Fecha Servicio']||rt['Fecha Solicitud']||'').split(' ')[0];
+    if(!ds||ds==='undefined')return false;
+    let d;
+    if(ds.includes('-')&&ds.length>=8) d=new Date(ds+'T12:00:00');
+    else if(!isNaN(parseFloat(ds))) d=new Date((parseFloat(ds)-25569)*86400000);
+    if(!d||isNaN(d.getTime()))return false;
+    if(d<fi||d>ff)return false;
+    // Estado filter
+    if(estado&&rt['Estado']!==estado)return false;
+    // Search filter
+    if(search){
+      const hay=[rt['Usuario'],rt['Origen'],rt['Destino'],rt['Vehiculo'],rt['Motivo'],rt['Tipo']]
+        .join(' ').toLowerCase();
+      if(!hay.includes(search))return false;
+    }
+    return true;
+  });
+
+  if(!rutas.length){el.innerHTML='<div class="empty">Sin rutas para este filtro</div>';return;}
+
+  el.innerHTML=`<div style="font-size:12px;color:var(--text3);margin-bottom:8px">${rutas.length} ruta${rutas.length!==1?'s':''}</div>`+
+  rutas.map(r=>{
+    const km=parseFloat(r['KM']||0);
+    const val=parseFloat(r['Valor ($)']||0).toFixed(2);
+    const est=r['Estado']||'Pendiente';
+    const bc=est==='Aprobada'?'approved':est==='Rechazada'?'rejected':'pending';
+    const veh=r['Vehiculo']||'';
+    const usuario=r['Usuario']||'';
+    return `<div class="route-item" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div style="flex:1;margin-right:8px">
+          <div class="route-dest">${placeName(r['Destino']||'—')}</div>
+          <div style="font-size:11px;margin-top:3px;display:flex;gap:8px;flex-wrap:wrap">
+            <span style="color:var(--brand);font-weight:600">👤 ${usuario}</span>
+            ${veh?`<span style="color:var(--text3)">🚗 ${veh}</span>`:''}
+          </div>
+        </div>
+        <span class="badge ${bc}">${est}</span>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px">${placeAddr(r['Destino']||'')}</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:6px">${r['Motivo']||''}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:var(--text)">${est==='Aprobada'?'$'+val:'—'}</div>
+          <div style="font-size:11px;color:var(--text3)">${r['Tipo']||''} · ${km} km · ${fd(r['Fecha Servicio']||'')}</div>
+        </div>
+        <button onclick="editarRuta('${r['ID']}','${est}',${km},'${encodeURIComponent(r['Origen']||'')}','${encodeURIComponent(r['Destino']||'')}',${val})" 
+          style="padding:7px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);font-size:12px;font-weight:600;cursor:pointer;color:var(--text)">
+          ✏️ Editar
+        </button>
+      </div>
+      ${est==='Pendiente'?`
+      <input class="reject-input" id="ri-${r['ID']}" placeholder="Motivo de rechazo">
+      <div class="action-row" style="margin-top:8px">
+        <button class="btn-reject" onclick="trRej('${r['ID']}',this)">Rechazar</button>
+        <button class="btn-approve" onclick="aprR('${r['ID']}')">✓ Aprobar</button>
+      </div>`:''}
+    </div>`;
+  }).join('');
+}
+
+
+function renderCorteView(c){
+  const hoy=new Date().toISOString().split('T')[0];
+  const filtro=window._corteFiltro||'periodo';
+  const pd=getPeriodoDates(0); const pa=getPeriodoDates(-1);
+  const meses=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  function periodoLabel(d){
+    const fi=new Date(d.fi+'T12:00:00');const ff=new Date(d.ff+'T12:00:00');
+    return '26 '+meses[fi.getMonth()]+' → 25 '+meses[ff.getMonth()];
+  }
+  c.innerHTML=`
+  <div class="page-title">Corte mensual</div>
+  <div class="card" style="margin-bottom:12px">
+    <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">📅 PERÍODO</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <button id="corte-btn-hoy" class="cnt-btn${filtro==='hoy'?' active':''}" onclick="setCorteFiltro('hoy')">Hoy</button>
+      <button id="corte-btn-ayer" class="cnt-btn${filtro==='ayer'?' active':''}" onclick="setCorteFiltro('ayer')">Ayer</button>
+      <button id="corte-btn-7dias" class="cnt-btn${filtro==='7dias'?' active':''}" onclick="setCorteFiltro('7dias')">7 días</button>
+      <button id="corte-btn-periodo" class="cnt-btn${filtro==='periodo'?' active':''}" onclick="setCorteFiltro('periodo')">Período (${periodoLabel(pd)})</button>
+      <button id="corte-btn-periodo_ant" class="cnt-btn${filtro==='periodo_ant'?' active':''}" onclick="setCorteFiltro('periodo_ant')">← Anterior (${periodoLabel(pa)})</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <input type="date" id="corte-fi" value="${window._corteFi||hoy}" class="field-input" style="flex:1;padding:9px 12px;font-size:13px">
+      <span style="color:var(--text3);font-size:16px">→</span>
+      <input type="date" id="corte-ff" value="${window._corteFf||hoy}" class="field-input" style="flex:1;padding:9px 12px;font-size:13px">
+      <button onclick="applyCorteRango()" style="padding:9px 14px;background:var(--gold);color:#fff;border:none;border-radius:var(--radius);font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0">OK</button>
+    </div>
+  </div>
+  <div id="corte-body"></div>`;
+  renderCorteBody();
+}
+
+function setCorteFiltro(filtro){
+  const hoy=new Date();
+  const hoyStr=hoy.toISOString().split('T')[0];
+  const ayer=new Date(hoy);ayer.setDate(hoy.getDate()-1);
+  window._corteFiltro=filtro;
+  if(filtro==='hoy'){window._corteFi=hoyStr;window._corteFf=hoyStr;}
+  else if(filtro==='ayer'){const a=ayer.toISOString().split('T')[0];window._corteFi=a;window._corteFf=a;}
+  else if(filtro==='7dias'){const s=new Date(hoy);s.setDate(hoy.getDate()-6);window._corteFi=s.toISOString().split('T')[0];window._corteFf=hoyStr;}
+  else if(filtro==='periodo'){const d=getPeriodoDates(0);window._corteFi=d.fi;window._corteFf=d.ff;}
+  else if(filtro==='periodo_ant'){const d=getPeriodoDates(-1);window._corteFi=d.fi;window._corteFf=d.ff;}
+  const fi=document.getElementById('corte-fi');const ff=document.getElementById('corte-ff');
+  if(fi)fi.value=window._corteFi;if(ff)ff.value=window._corteFf;
+  document.querySelectorAll('[id^="corte-btn-"]').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('corte-btn-'+filtro);if(btn)btn.classList.add('active');
+  renderCorteBody();
+}
+
+function applyCorteRango(){
+  window._corteFi=document.getElementById('corte-fi').value;
+  window._corteFf=document.getElementById('corte-ff').value;
+  window._corteFiltro='custom';
+  document.querySelectorAll('[id^="corte-btn-"]').forEach(b=>b.classList.remove('active'));
+  renderCorteBody();
+}
+
+function renderCorteBody(){
+  const el=document.getElementById('corte-body');if(!el)return;
+  const todas=window._corteRutas||[];
+  const fi=new Date((window._corteFi||'2020-01-01')+'T00:00:00');
+  const ff=new Date((window._corteFf||'2099-12-31')+'T23:59:59');
+  const rutas=todas.filter(rt=>{
+    // Handle both text dates (2026-06-05) and Excel serials (46181.5)
+    let ds = String(rt['Fecha Servicio']||rt['Fecha Solicitud']||'').split(' ')[0];
+    if(!ds||ds==='undefined')return false;
+    let d;
+    if(ds.includes('-')&&ds.length>=8){
+      d=new Date(ds+'T12:00:00');
+    } else if(!isNaN(parseFloat(ds))){
+      // Excel serial date: days since 1899-12-30
+      const serial=parseFloat(ds);
+      d=new Date((serial-25569)*86400000); // convert to JS timestamp
+    }
+    if(!d||isNaN(d.getTime()))return false;
+    return d>=fi&&d<=ff;
+  });
+
+  const VEHICULO_OWNER={
+    'Camioneta Nissan':{usuario:'EFCH',nombre:'Esteban Ferlito'},
+    'Moto Minecore':   {usuario:'EFCH',nombre:'Esteban Ferlito'},
+    'Camioneta Mazda': {usuario:'MPL', nombre:'Martín Pinto'},
+    'Camioneta Poer':  {usuario:'OPM', nombre:'Oswaldo Peña'}
+  };
+  const byOwner={};
+  rutas.forEach(rt=>{
+    const veh=String(rt['Vehiculo']||'').trim();
+    const owner=VEHICULO_OWNER[veh];
+    if(!owner)return;
+    const key=owner.usuario;
+    if(!byOwner[key])byOwner[key]={usuario:key,nombre:owner.nombre,km:0,usd:0,vehiculos:{}};
+    byOwner[key].km=Math.round((byOwner[key].km+parseFloat(rt['KM']||0))*10)/10;
+    byOwner[key].usd=Math.round((byOwner[key].usd+parseFloat(rt['Valor ($)']||0))*100)/100;
+    if(!byOwner[key].vehiculos[veh])byOwner[key].vehiculos[veh]={km:0,usd:0,count:0};
+    byOwner[key].vehiculos[veh].km=Math.round((byOwner[key].vehiculos[veh].km+parseFloat(rt['KM']||0))*10)/10;
+    byOwner[key].vehiculos[veh].usd=Math.round((byOwner[key].vehiculos[veh].usd+parseFloat(rt['Valor ($)']||0))*100)/100;
+    byOwner[key].vehiculos[veh].count++;
+  });
+  const ownerList=Object.values(byOwner).sort((a,b)=>b.usd-a.usd);
+  const totalKm=Math.round(rutas.reduce((s,r)=>s+parseFloat(r['KM']||0),0)*10)/10;
+  const totalUsd=Math.round(rutas.reduce((s,r)=>s+parseFloat(r['Valor ($)']||0),0)*100)/100;
+  const meses=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const fid=new Date(window._corteFi+'T12:00:00');
+  const ffd=new Date(window._corteFf+'T12:00:00');
+  const label=window._corteFi===window._corteFf
+    ?fid.getDate()+' '+meses[fid.getMonth()]+' '+fid.getFullYear()
+    :fid.getDate()+' '+meses[fid.getMonth()]+' → '+ffd.getDate()+' '+meses[ffd.getMonth()]+' '+ffd.getFullYear();
+
+  el.innerHTML=`
+  <div class="corte-total" style="margin-bottom:12px">
+    <div class="corte-label">Total a pagar</div>
+    <div class="corte-amount">$${totalUsd.toFixed(2)}</div>
+    <div class="corte-sub">${label}</div>
+  </div>
+  <div class="corte-stats" style="margin-bottom:12px">
+    <div class="corte-stat"><div class="corte-stat-val">${rutas.length}</div><div class="corte-stat-lbl">Rutas</div></div>
+    <div class="corte-stat"><div class="corte-stat-val">${totalKm}</div><div class="corte-stat-lbl">KM</div></div>
+    <div class="corte-stat"><div class="corte-stat-val">$${totalUsd&&rutas.length?(totalUsd/rutas.length).toFixed(2):'0.00'}</div><div class="corte-stat-lbl">Prom.</div></div>
+  </div>
+  <div class="card" style="margin-bottom:12px">
+    <div style="font-size:13px;font-weight:700;margin-bottom:14px">💰 Desglose por propietario</div>
+    ${ownerList.map(o=>{
+      const co=col(o.usuario);
+      const vehLines=Object.entries(o.vehiculos).map(([v,d])=>`
+        <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid var(--border)">
+          <div style="font-size:12px;color:var(--text2)">${v} · ${d.km} km · ${d.count} ruta${d.count!==1?'s':''}</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text)">$${d.usd.toFixed(2)}</div>
+        </div>`).join('');
+      return `<div style="background:var(--surface2);border-radius:var(--radius-lg);padding:14px;margin-bottom:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:38px;height:38px;border-radius:50%;background:${co.bg};color:${co.tx};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900">${o.usuario}</div>
+            <div><div style="font-size:14px;font-weight:700;color:var(--text)">${o.nombre}</div>
+            <div style="font-size:11px;color:var(--text3)">${o.km} km total</div></div>
+          </div>
+          <div style="font-size:20px;font-weight:900;color:var(--brand)">$${o.usd.toFixed(2)}</div>
+        </div>${vehLines}
+      </div>`;
+    }).join('')||'<div class="empty">Sin rutas con vehículo asignado</div>'}
+  </div>
+  <div class="card">
+    <div style="font-size:13px;font-weight:700;margin-bottom:10px">Detalle de rutas (${rutas.length})</div>
+    ${rutas.length?rutas.map(rt=>`
+      <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:.5px solid var(--border)">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)">${placeName(rt['Destino']||'—')}</div>
+          <div style="font-size:11px;color:var(--text2)">${fd(rt['Fecha Servicio']||'')} · ${rt['KM']} km · ${rt['Usuario']}${rt['Vehiculo']?' · '+rt['Vehiculo']:''}</div>
+        </div>
+        <div style="font-size:14px;font-weight:700;color:var(--text)">$${parseFloat(rt['Valor ($)']).toFixed(2)}</div>
+      </div>`).join(''):'<div class="empty">Sin rutas en este período</div>'}
+  </div>`;
 }
 async function cerrarCorte(p){if(!confirm('¿Cerrar el corte del período '+p+'?'))return;try{const r=await api({action:'cerrarCorte',periodo:p,admin:session.usuario});if(r.ok)toast('✓ Corte cerrado — $'+r.totalUsd.toFixed(2));else toast('Error');}catch(e){toast('Error conexión');}}
 
@@ -1345,14 +1844,49 @@ async function uploadFoto(inp,prevId,statId,urlId){
 async function api(data){
   const p=new URLSearchParams();
   Object.entries(data).forEach(([k,v])=>p.append(k,String(v)));
-  const r=await fetch(SCRIPT_URL+'?'+p.toString(),{redirect:'follow'});
-  return r.json();
+  const ckey='mc2_'+JSON.stringify(data);
+  try{
+    const r=await fetch(SCRIPT_URL+'?'+p.toString(),{redirect:'follow'});
+    const json=await r.json();
+    if(data.action&&data.action.startsWith('get')){
+      try{localStorage.setItem(ckey,JSON.stringify(json));}catch(e){}
+    }
+    return json;
+  }catch(e){
+    if(data.action&&data.action.startsWith('get')){
+      try{
+        const cached=JSON.parse(localStorage.getItem(ckey));
+        if(cached)return cached;
+      }catch(e2){}
+    }
+    throw e;
+  }
 }
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 function hoy(){return new Date().toISOString().split('T')[0];}
-function fd(s){if(!s)return'—';const p=(s+'').split('-');if(p.length<3)return s;const m=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];return`${parseInt(p[2])} ${m[parseInt(p[1])-1]} ${p[0]}`;}
+function fd(s){
+  if(!s||s==='undefined'||s==='0')return'—';
+  const str=String(s).split(' ')[0];
+  // Handle Excel serial dates
+  if(!str.includes('-')&&!isNaN(parseFloat(str))){
+    const d=new Date((parseFloat(str)-25569)*86400000);
+    const m=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    return d.getDate()+' '+m[d.getMonth()]+' '+d.getFullYear();
+  }
+  const p=str.split('-');
+  if(p.length<3)return str;
+  const m=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return parseInt(p[2])+' '+m[parseInt(p[1])-1]+' '+p[0];
+}
 function spin(){return'<div class="loading"><div class="spinner"></div>Cargando...</div>';}
-function err(){return'<div class="empty" style="color:var(--danger-text)">Error de conexión</div>';}
+function err(){
+  return`<div class="empty" style="padding:32px 16px;text-align:center">
+    <div style="font-size:32px;margin-bottom:10px">⚠️</div>
+    <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px">Error de conexión</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:12px">No se pudo conectar al servidor</div>
+    <button onclick="setView(activeView)" style="padding:8px 16px;background:var(--brand);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-size:13px">🔄 Reintentar</button>
+  </div>`;
+}
 </script>
 </body>
 </html>
