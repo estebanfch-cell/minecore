@@ -354,7 +354,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;backg
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD89tboX5JzwLTm7EcdAI1I_Xeq3vZy0kE&libraries=places,geometry&callback=mapsReady" async defer></script>
 <script>
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxYQD6mYcymB0Kc8WRl8PhoovCw58NpfL6WLY6k95CxhhGC93_enrOPWFQg_V9cxfG6/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwey092-gmFNWsJQmJVSZ9aiSVNxMCFUhfcu_3hyotGNtc6219atTs-y3dApG3JtWw/exec';
 const MINECORE_LL = {lat:-0.1940519, lng:-78.4841933};
 const MINECORE_ADDR = 'Minecore S.A.S — Alpallana E7-212, Quito';
 
@@ -393,6 +393,15 @@ try{ favs=JSON.parse(localStorage.getItem('mc_favs')||'[]'); }catch(e){}
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 async function api(data){
+  if(data.action==='savePhoto'){
+    // Use POST for large payloads (base64 images)
+    const r=await fetch(SCRIPT_URL,{
+      method:'POST',
+      body:JSON.stringify(data),
+      redirect:'follow'
+    });
+    return r.json();
+  }
   const p=new URLSearchParams();
   Object.entries(data).forEach(([k,v])=>p.append(k,String(v)));
   const r=await fetch(SCRIPT_URL+'?'+p.toString(),{redirect:'follow'});
@@ -1697,20 +1706,29 @@ async function vMisEntregas(c){
 
 function entregasH(ent){
   if(!ent.length)return empty('Sin entregas');
-  return ent.map(e=>`<div class="caja-item">
+  return ent.map(e=>{
+    const fotoUrl=e['Foto URL']||e['FotoURL']||'';
+    const fotoOk=fotoUrl&&fotoUrl!=='undefined'&&fotoUrl.startsWith('http');
+    return `<div class="caja-item">
     <div class="caja-hdr"><div class="caja-desc">${e['Descripción']||e['Descripcion']||'Sin descripción'}</div><div class="caja-monto" style="color:var(--gold)">$${parseFloat(e['Monto ($)']||0).toFixed(2)}</div></div>
-    <div class="caja-meta">Para: <strong>${e['Usuario Destino']}</strong> · ${e['Forma de Entrega']} · ${fd((e['Fecha']||'').split(' ')[0])}</div>
-    ${e['Foto URL']&&e['Foto URL']!=='undefined'&&e['Foto URL']?`<a href="${e['Foto URL']}" target="_blank" class="caja-link">📎 Ver comprobante</a>`:''}</div>`).join('');
+    <div class="caja-meta">Para: <strong>${e['Usuario Destino']}</strong> · ${e['Forma de Entrega']||''} · ${fd((e['Fecha']||'').split(' ')[0])}</div>
+    ${fotoOk?`<a href="${fotoUrl}" target="_blank" class="caja-link" style="display:inline-flex;align-items:center;gap:6px;margin-top:6px;padding:6px 12px;background:var(--gold-light);border-radius:20px;font-size:12px;font-weight:600;color:var(--gold);text-decoration:none">📎 Ver comprobante →</a>`
+    :'<div style="font-size:11px;color:var(--text3);margin-top:4px">Sin comprobante adjunto</div>'}
+  </div>`;
+  }).join('');
 }
 
 function gastoH(g,isAdmin){
   const est=g['Estado']||'Pendiente', bc=badgeClass(est==='Aprobado'?'Aprobada':est==='Rechazado'?'Rechazada':est);
   const acc=isAdmin&&est==='Pendiente'?`<div class="action-row"><button class="btn-reject" onclick="rejG('${g['ID']}')">Rechazar</button><button class="btn-approve" onclick="aprG('${g['ID']}')">✓ Aprobar</button></div>`:'';
+  const fotoUrl=g['Foto Factura URL']||g['Foto URL']||g['FotoURL']||'';
+  const fotoOk=fotoUrl&&fotoUrl!=='undefined'&&fotoUrl.startsWith('http');
   return `<div class="caja-item">
     <div class="caja-hdr"><div class="caja-desc">${g['Descripción']||g['Descripcion']||'Sin descripción'}</div><span class="badge ${bc}">${est}</span></div>
     <div class="caja-monto" style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px">$${parseFloat(g['Monto ($)']||0).toFixed(2)}</div>
     <div class="caja-meta">${g['Categoría']||g['Categoria']||''} · ${g['Usuario']} · ${fd((g['Fecha']||'').split(' ')[0])}</div>
-    ${g['Foto Factura URL']&&g['Foto Factura URL']!=='undefined'&&g['Foto Factura URL']?`<a href="${g['Foto Factura URL']}" target="_blank" class="caja-link">📎 Ver factura</a>`:''}
+    ${fotoOk?`<a href="${fotoUrl}" target="_blank" class="caja-link" style="display:inline-flex;align-items:center;gap:6px;margin-top:6px;padding:6px 12px;background:var(--brand-light);border-radius:20px;font-size:12px;font-weight:600;color:var(--brand-dark);text-decoration:none">📎 Ver factura →</a>`
+    :'<div style="font-size:11px;color:var(--text3);margin-top:4px">Sin foto adjunta</div>'}
     ${acc}</div>`;
 }
 async function aprG(id){try{const r=await api({action:'aprobarGasto',id,admin:session.usuario});if(r.ok){toast('✓ Aprobado');setView('aprobar-gastos');}else toast('Error');}catch(e){toast('Error de conexión');}}
