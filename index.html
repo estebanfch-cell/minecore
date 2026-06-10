@@ -330,7 +330,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;backg
     <div id="home-actions" style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px"></div>
     <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Ver y gestionar</div>
     <div id="home-secondary" style="display:flex;flex-direction:column;gap:10px"></div>
-    <div id="home-summary" style="display:none"></div>
+    <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:10px"><button onclick="openMod('rutas','corte')" style="padding:16px;background:var(--mc-dark);border:none;border-radius:14px;text-align:left;cursor:pointer;width:100%"><div style="font-size:10px;color:var(--mc-yellow);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Rutas</div><div style="font-size:14px;font-weight:700;color:#fff">Corte →</div></button><button onclick="openMod('caja','balance')" style="padding:16px;background:var(--mc-dark);border:none;border-radius:14px;text-align:left;cursor:pointer;width:100%"><div style="font-size:10px;color:var(--mc-yellow);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Caja chica</div><div style="font-size:14px;font-weight:700;color:#fff">Balance →</div></button></div>
     <button onclick="logout()" style="width:100%;margin-top:24px;padding:12px;background:none;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;color:var(--text3);cursor:pointer">Cerrar sesión</button>
   </div>
 </div>
@@ -651,6 +651,8 @@ function rutaTicket(r, isAdmin){
   const veh=r['Vehiculo']||'', usr=r['Usuario']||'';
   const destName=placeName(r['Destino']||'—');
   const destAddr=placeAddr(r['Destino']||'');
+  const origenShort=(r['Origen']||'Minecore').split(' — ')[0].split(',')[0].trim();
+  const titulo=origenShort+' → '+destName;
   const actions=isAdmin&&est==='Pendiente'?`
     <input class="reject-input" id="ri-${r['ID']}" placeholder="Motivo de rechazo">
     <div class="action-row">
@@ -660,7 +662,7 @@ function rutaTicket(r, isAdmin){
   const editBtn=isAdmin?`<button onclick="editRuta('${r['ID']}')" style="padding:6px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);font-size:12px;cursor:pointer;color:var(--text)">✏️ Editar</button>`:'';
   return `<div class="rticket">
     <div class="rt-top">
-      <div class="rt-dest">${destName}</div>
+      <div class="rt-dest">${titulo}</div>
       <span class="badge ${bc}">${est}</span>
     </div>
     ${destAddr?`<div class="rt-addr">${destAddr}</div>`:''}
@@ -671,7 +673,7 @@ function rutaTicket(r, isAdmin){
     <div class="rt-meta">${r['Motivo']||''}</div>
     <div class="rt-bottom">
       <div>
-        <div class="rt-val">${est==='Aprobada'?'$'+val.toFixed(2):'—'}</div>
+        <div class="rt-val">$${val.toFixed(2)}</div>
         <div class="rt-info">${r['Tipo']||''} · ${km} km · ${fd(r['Fecha Servicio']||'')}</div>
       </div>
       ${editBtn}
@@ -1831,7 +1833,7 @@ async function renderHomeActions(){
       <button onclick="openMod('rutas','aprobar')" style="width:100%;padding:14px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
         <div style="width:44px;height:44px;border-radius:13px;background:#0D5C3A;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🚛</div>
         <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--text)">Aprobar Rutas</div><div style="font-size:12px;color:var(--text2);margin-top:1px">Ver solicitudes pendientes</div></div>
-        <div style="font-size:22px;color:var(--text3)">›</div>
+        <div style="display:flex;align-items:center;gap:8px"><span id="badge-rutas" style="display:none;background:#E24B4A;color:#fff;font-size:11px;font-weight:800;border-radius:20px;padding:2px 8px"></span><div style="font-size:22px;color:var(--text3)">›</div></div>
       </button>
       <button onclick="openMod('rutas','historial')" style="width:100%;padding:14px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
         <div style="width:44px;height:44px;border-radius:13px;background:#2C4A7C;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📋</div>
@@ -1841,7 +1843,7 @@ async function renderHomeActions(){
       <button onclick="openMod('caja','aprobar-gastos')" style="width:100%;padding:14px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
         <div style="width:44px;height:44px;border-radius:13px;background:#5C3A0D;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🧾</div>
         <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--text)">Aprobar Gastos</div><div style="font-size:12px;color:var(--text2);margin-top:1px">Gastos pendientes de caja</div></div>
-        <div style="font-size:22px;color:var(--text3)">›</div>
+        <div style="display:flex;align-items:center;gap:8px"><span id="badge-gastos" style="display:none;background:#E24B4A;color:#fff;font-size:11px;font-weight:800;border-radius:20px;padding:2px 8px"></span><div style="font-size:22px;color:var(--text3)">›</div></div>
       </button>
       <button onclick="openMod('caja','historial-caja')" style="width:100%;padding:14px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
         <div style="width:44px;height:44px;border-radius:13px;background:#3A2C5C;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📒</div>
@@ -1883,42 +1885,17 @@ async function renderHomeActions(){
       </button>`;
   }
 
-  // Admin summary
   if(!isAdmin) return;
-  const sumEl=document.getElementById('home-summary');
-  if(!sumEl)return;
-  sumEl.innerHTML='<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Resumen</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div style="background:var(--surface);border:.5px solid var(--border);border-radius:14px;padding:14px;text-align:center"><div class="spinner"></div></div><div style="background:var(--surface);border:.5px solid var(--border);border-radius:14px;padding:14px;text-align:center"><div class="spinner"></div></div></div>';
-  try{
-    const[rr,rc]=await Promise.all([
-      api({action:'getRutas',rol:'admin'}),
-      api({action:'getBalanceCaja'})
-    ]);
-    // Rutas: ALL approved routes total (no date filter — same as corte "Todo")
-    const todasRutas=rr.rutas||[];
-    const aprobadas=todasRutas.filter(r=>r['Estado']==='Aprobada');
-    const totalPagar=Math.round(aprobadas.reduce((s,r)=>s+parseFloat(r['Valor ($)']||0),0)*100)/100;
-    const cantRutas=aprobadas.length;
-    // Caja: disponible
-    const balances=rc.balances||[];
-    const totalEnt=Math.round(balances.reduce((s,b)=>s+b.entregado,0)*100)/100;
-    const totalGas=Math.round(balances.reduce((s,b)=>s+b.aprobado,0)*100)/100;
-    const totalPend=Math.round(balances.reduce((s,b)=>s+b.pendiente,0)*100)/100;
-    const disp=Math.round((totalEnt-totalGas)*100)/100;
-    sumEl.innerHTML=`
-    <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Resumen</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <button onclick="openMod('rutas','corte')" style="background:var(--surface);border:.5px solid var(--border);border-radius:14px;padding:14px;text-align:left;cursor:pointer;width:100%">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:6px">🚗 Total a pagar</div>
-        <div style="font-size:26px;font-weight:900;color:var(--brand)">$${totalPagar.toFixed(2)}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:4px">${cantRutas} rutas →</div>
-      </button>
-      <button onclick="openMod('caja','balance')" style="background:var(--surface);border:.5px solid var(--border);border-radius:14px;padding:14px;text-align:left;cursor:pointer;width:100%">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:6px">💰 Caja disponible</div>
-        <div style="font-size:26px;font-weight:900;color:${disp>=0?'var(--brand)':'#E24B4A'}">$${disp.toFixed(2)}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:4px">${totalPend>0?'$'+totalPend.toFixed(2)+' pendiente':'al día ✓'}</div>
-      </button>
-    </div>`;
-  }catch(e){ sumEl.innerHTML=''; }
+  Promise.all([
+    api({action:'getRutas',rol:'admin',estado:'Pendiente'}),
+    api({action:'getGastos',rol:'admin',estado:'Pendiente'})
+  ]).then(([rr,rg])=>{
+    const nr=(rr.rutas||[]).length,ng=(rg.gastos||[]).length;
+    const br=document.getElementById('badge-rutas');
+    const bg=document.getElementById('badge-gastos');
+    if(br&&nr>0){br.textContent=nr;br.style.display='inline-block';}
+    if(bg&&ng>0){bg.textContent=ng;bg.style.display='inline-block';}
+  }).catch(()=>{});
 }
 
 </script>
