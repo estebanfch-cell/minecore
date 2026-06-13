@@ -1250,7 +1250,11 @@ async function vCorte(c){
   c.innerHTML=spin();
   try{
     const r=await api({action:'getRutas',rol:'admin'});
-    window._corteRutas=(r.rutas||[]).filter(x=>x['Estado']==='Aprobada');
+    const todas=(r.rutas||[]).filter(x=>x['Estado']==='Aprobada');
+    // Non-admin: only show routes for vehicles they own
+    const isAdmin=session.rol==='admin';
+    const myVehs=isAdmin?null:Object.keys(VEH_OWNER).filter(v=>VEH_OWNER[v]===session.usuario);
+    window._corteRutas=isAdmin?todas:todas.filter(x=>myVehs.includes(String(x['Vehiculo']||'').trim()));
     const pd=getPeriodoDates(0);
     window._corFi=pd.fi; window._corFf=pd.ff; window._corFiltro='periodo';
     renderCorte(c);
