@@ -857,11 +857,12 @@ async function vCorte(c){
   c.innerHTML=spin();
   try{
     const r=await api({action:'getRutas',rol:'admin'});
-    const todas=(r.rutas||[]).filter(x=>x['Estado']==='Aprobada');
+    const all0=r.rutas||[];
     // Non-admin: only show routes for vehicles they own
     const isAdmin=session.rol==='admin';
     const myVehs=isAdmin?null:Object.keys(VEH_OWNER).filter(v=>VEH_OWNER[v]===session.usuario);
-    window._corteRutas=isAdmin?todas:todas.filter(x=>myVehs.includes(String(x['Vehiculo']||'').trim()));
+    window._corteRutasAll=isAdmin?all0:all0.filter(x=>myVehs.includes(String(x['Vehiculo']||'').trim()));
+    window._corteRutas=window._corteRutasAll.filter(x=>x['Estado']==='Aprobada');
     const pd=getPeriodoDates(0);
     window._corFi=pd.fi; window._corFf=pd.ff; window._corFiltro='periodo';
     renderCorte(c);
@@ -1606,6 +1607,37 @@ async function descargarCortePDF(fiArg,ffArg){
     doc.setFontSize(10);doc.setFont(undefined,'bold');
     doc.text('TOTAL: '+tKm+' km',14,y);
     doc.text('$'+tUsd.toFixed(2),196,y,{align:'right'});
+    // Sección aparte: rutas rechazadas (no cuentan en totales)
+    const fuenteAll=(window._histRutas&&window._histRutas.length?window._histRutas:(window._corteRutasAll||[]));
+    let rech=fuenteAll.filter(x=>x['Estado']==='Rechazada');
+    if(filtro!=='todo') rech=filterByDate(rech,fi,ff);
+    if(rech.length){
+      y+=10;if(y>268){doc.addPage();y=16;}
+      doc.setFontSize(11);doc.setFont(undefined,'bold');
+      doc.setTextColor(163,45,45);
+      doc.text('Rutas rechazadas ('+rech.length+') \u2014 no incluidas en el total',14,y);
+      doc.setTextColor(30,30,30);
+      y=_pdfLinea(doc,y+3);
+      doc.setFontSize(8);doc.setFont(undefined,'normal');
+      rech.forEach(x=>{
+        const dest=_pdfSafe(String(x['Destino']||'\u2014'));
+        const motivo=_pdfSafe(String(x['Notas']||''));
+        const lines=doc.splitTextToSize((x['Usuario']||'')+' \u00B7 '+dest,90);
+        const mLines=motivo?doc.splitTextToSize('Motivo: '+motivo,90):[];
+        const needH=(lines.length+mLines.length)*4.3+1.6;
+        if(y+needH>276){doc.addPage();y=16;}
+        doc.setTextColor(100,100,100);
+        doc.text(fd((x['Fecha Servicio']||'').slice(0,10)),14,y);
+        doc.setTextColor(30,30,30);
+        doc.text((parseFloat(x['KM']||0))+' km',158,y,{align:'right'});
+        doc.text('$'+parseFloat(x['Valor ($)']||0).toFixed(2),196,y,{align:'right'});
+        for(let k=0;k<lines.length;k++){ doc.text(lines[k],36,y); y+=4.3; }
+        doc.setTextColor(163,45,45);
+        for(let k=0;k<mLines.length;k++){ doc.text(mLines[k],36,y); y+=4.3; }
+        doc.setTextColor(30,30,30);
+        y+=1.6;
+      });
+    }
     doc.save('minecore-corte-'+(filtro==='todo'?'todo':fi)+'.pdf');
   }catch(e){toast('No se pudo generar el PDF');}
 }
@@ -1651,10 +1683,12 @@ async function descargarCajaPDF(fiArg,ffArg){
     doc.text('Total entregado',14,y);doc.text('$'+tE.toFixed(2),196,y,{align:'right'});y+=9;
 
     y=_pdfCheckPage(doc,y);
-    doc.setFontSize(11);doc.text('Gastos ('+gas.length+')',14,y);y=_pdfLinea(doc,y+3);
+    const gasAct=gas.filter(x=>x['Estado']!=='Rechazado');
+    const gasRech=gas.filter(x=>x['Estado']==='Rechazado');
+    doc.setFontSize(11);doc.text('Gastos ('+gasAct.length+')',14,y);y=_pdfLinea(doc,y+3);
     doc.setFontSize(8);doc.setFont(undefined,'normal');
     let tA=0,tP=0;
-    gas.forEach(g=>{
+    gasAct.forEach(g=>{
       const m=parseFloat(g['Monto ($)']||0);
       const est=g['Estado']||'Pendiente';
       if(est==='Aprobado')tA+=m; if(est==='Pendiente')tP+=m;
@@ -1674,6 +1708,29 @@ async function descargarCajaPDF(fiArg,ffArg){
     doc.setFont(undefined,'bold');doc.setFontSize(9);
     doc.text('Inicial $'+saldoIni.toFixed(2)+'  +  entró $'+tE.toFixed(2)+'  −  salió $'+tA.toFixed(2)+(tP>0?'   (pendiente $'+tP.toFixed(2)+')':''),14,y);
     doc.text('SALDO FINAL: $'+(Math.round((saldoIni+tE-tA)*100)/100).toFixed(2),196,y,{align:'right'});
+    // Sección aparte: gastos rechazados (no cuentan en totales)
+    if(gasRech.length){
+      y+=10;if(y>268){doc.addPage();y=16;}
+      doc.setFontSize(11);doc.setFont(undefined,'bold');
+      doc.setTextColor(163,45,45);
+      doc.text('Gastos rechazados ('+gasRech.length+') \u2014 no incluidos en el saldo',14,y);
+      doc.setTextColor(30,30,30);
+      y=_pdfLinea(doc,y+3);
+      doc.setFontSize(8);doc.setFont(undefined,'normal');
+      gasRech.forEach(g=>{
+        const m=parseFloat(g['Monto ($)']||0);
+        const desc=_pdfSafe(String(g['Descripcion']||g['Descripción']||''));
+        const lines=doc.splitTextToSize((g['Usuario']||'')+' \u00B7 '+desc,88);
+        const needH=lines.length*4.3+1.6;
+        if(y+needH>276){doc.addPage();y=16;}
+        doc.setTextColor(100,100,100);
+        doc.text(fd(((g['Fecha']||'').toString()).split(' ')[0]),14,y);
+        doc.setTextColor(30,30,30);
+        doc.text('$'+m.toFixed(2),196,y,{align:'right'});
+        for(let k=0;k<lines.length;k++){ doc.text(lines[k],36,y); y+=4.3; }
+        y+=1.6;
+      });
+    }
     doc.save('minecore-caja-'+(filtro==='todo'?'todo':fi)+'.pdf');
   }catch(e){toast('No se pudo generar el PDF');}
 }
