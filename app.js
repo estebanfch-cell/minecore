@@ -1588,15 +1588,17 @@ async function descargarCortePDF(fiArg,ffArg){
     doc.text('Detalle de rutas ('+rutas.length+')',14,y);y=_pdfLinea(doc,y+3);
     doc.setFontSize(8);doc.setFont(undefined,'normal');
     rutas.forEach(r=>{
-      y=_pdfCheckPage(doc,y);
-      const dest=placeName(r['Destino']||'').slice(0,52);
+      const dest=_pdfSafe(String(r['Destino']||'\u2014'));
+      const lines=doc.splitTextToSize((r['Usuario']||'')+' \u00B7 '+dest,90);
+      const needH=lines.length*4.3+1.6;
+      if(y+needH>276){doc.addPage();y=16;}
       doc.setTextColor(100,100,100);
       doc.text(fd((r['Fecha Servicio']||'').slice(0,10)),14,y);
       doc.setTextColor(30,30,30);
-      doc.text((r['Usuario']||'')+' · '+dest,36,y);
       doc.text((parseFloat(r['KM']||0))+' km',158,y,{align:'right'});
       doc.text('$'+parseFloat(r['Valor ($)']||0).toFixed(2),196,y,{align:'right'});
-      y+=5;
+      for(let k=0;k<lines.length;k++){ doc.text(lines[k],36,y); y+=4.3; }
+      y+=1.6;
     });
     const tKm=Math.round(rutas.reduce((s,r)=>s+parseFloat(r['KM']||0),0)*10)/10;
     const tUsd=Math.round(rutas.reduce((s,r)=>s+parseFloat(r['Valor ($)']||0),0)*100)/100;
@@ -1623,8 +1625,13 @@ async function descargarCajaPDF(fiArg,ffArg){
     const gas=(window._cajGas||[]).filter(inRange);
     const rango=(filtro==='todo')?'Todas las fechas':(fd(fi)+' — '+fd(ff));
     let y=_pdfHeader(doc,'Caja chica — Historial','Generado '+fd(new Date().toISOString().split('T')[0])+' por '+session.usuario);
+    const saldoIni=(filtro==='todo')?0:saldoAnterior(fi);
     doc.setFontSize(10);doc.setFont(undefined,'bold');
-    doc.text('Período: '+rango,14,y);y+=8;
+    doc.text('Período: '+rango,14,y);y+=6;
+    if(filtro!=='todo'){
+      doc.setFont(undefined,'normal');doc.setFontSize(9);
+      doc.text('Saldo inicial (arrastre del período anterior): $'+saldoIni.toFixed(2),14,y);y+=7;
+    } else { y+=2; }
 
     doc.setFontSize(11);doc.text('Entregas ('+ent.length+')',14,y);y=_pdfLinea(doc,y+3);
     doc.setFontSize(8);doc.setFont(undefined,'normal');
@@ -1635,7 +1642,7 @@ async function descargarCajaPDF(fiArg,ffArg){
       doc.setTextColor(100,100,100);
       doc.text(fd(((e['Fecha']||'').toString()).split(' ')[0]),14,y);
       doc.setTextColor(30,30,30);
-      doc.text((e['Admin']||'')+' → '+(e['Usuario Destino']||'')+' · '+(e['Forma']||''),36,y);
+      doc.text(_pdfSafe((e['Admin']||'')+' > '+(e['Usuario Destino']||'')+' \u00B7 '+(e['Forma']||'')),36,y);
       doc.text('$'+m.toFixed(2),196,y,{align:'right'});
       y+=5;
     });
@@ -1648,23 +1655,25 @@ async function descargarCajaPDF(fiArg,ffArg){
     doc.setFontSize(8);doc.setFont(undefined,'normal');
     let tA=0,tP=0;
     gas.forEach(g=>{
-      y=_pdfCheckPage(doc,y);
       const m=parseFloat(g['Monto ($)']||0);
       const est=g['Estado']||'Pendiente';
       if(est==='Aprobado')tA+=m; if(est==='Pendiente')tP+=m;
-      const desc=String(g['Descripcion']||g['Descripción']||'').slice(0,44);
+      const desc=_pdfSafe(String(g['Descripcion']||g['Descripción']||''));
+      const lines=doc.splitTextToSize((g['Usuario']||'')+' \u00B7 '+desc,88);
+      const needH=lines.length*4.3+1.6;
+      if(y+needH>276){doc.addPage();y=16;}
       doc.setTextColor(100,100,100);
       doc.text(fd(((g['Fecha']||'').toString()).split(' ')[0]),14,y);
       doc.setTextColor(30,30,30);
-      doc.text((g['Usuario']||'')+' · '+desc,36,y);
       doc.text(est,158,y,{align:'right'});
       doc.text('$'+m.toFixed(2),196,y,{align:'right'});
-      y+=5;
+      for(let k=0;k<lines.length;k++){ doc.text(lines[k],36,y); y+=4.3; }
+      y+=1.6;
     });
     y=_pdfLinea(doc,y+1);y=_pdfCheckPage(doc,y);
     doc.setFont(undefined,'bold');doc.setFontSize(9);
-    doc.text('Gastado aprobado: $'+tA.toFixed(2)+'   ·   Pendiente: $'+tP.toFixed(2),14,y);
-    doc.text('Disponible: $'+(Math.round((tE-tA)*100)/100).toFixed(2),196,y,{align:'right'});
+    doc.text('Inicial $'+saldoIni.toFixed(2)+'  +  entró $'+tE.toFixed(2)+'  −  salió $'+tA.toFixed(2)+(tP>0?'   (pendiente $'+tP.toFixed(2)+')':''),14,y);
+    doc.text('SALDO FINAL: $'+(Math.round((saldoIni+tE-tA)*100)/100).toFixed(2),196,y,{align:'right'});
     doc.save('minecore-caja-'+(filtro==='todo'?'todo':fi)+'.pdf');
   }catch(e){toast('No se pudo generar el PDF');}
 }
@@ -1720,10 +1729,12 @@ function renderHistCaja(c){
     if(!e.length&&!g.length)return '';
     const tE=Math.round(e.reduce((s,x)=>s+parseFloat(x['Monto ($)']||0),0)*100)/100;
     const tG=Math.round(g.filter(x=>x['Estado']==='Aprobado').reduce((s,x)=>s+parseFloat(x['Monto ($)']||0),0)*100)/100;
+    const ini=saldoAnterior(p.fi);
+    const fin=Math.round((ini+tE-tG)*100)/100;
     const open=i===0;
     return `<div class="pfolder">
       <div class="pfolder-hdr" onclick="togglePF('pf-c-${i}',this)">
-        <div><div class="pf-lbl">📁 ${p.label}</div><div class="pf-sub">Entró $${tE.toFixed(2)} · Salió $${tG.toFixed(2)}</div></div>
+        <div><div class="pf-lbl">📁 ${p.label}</div><div class="pf-sub">Inicial $${ini.toFixed(2)} · Entró $${tE.toFixed(2)} · Salió $${tG.toFixed(2)} · <b style="color:var(--brand)">Final $${fin.toFixed(2)}</b></div></div>
         <div class="pf-actions"><button class="pf-pdf" onclick="event.stopPropagation();descargarCajaPDF('${p.fi}','${p.ff}')">↓ PDF</button><span class="pf-chev">${open?'▴':'▾'}</span></div>
       </div>
       <div class="pfolder-body" id="pf-c-${i}" style="display:${open?'block':'none'}">
@@ -1758,4 +1769,22 @@ function togglePF(id,hdr){
   const open=el.style.display==='none';
   el.style.display=open?'block':'none';
   if(hdr){const ch=hdr.querySelector('.pf-chev');if(ch)ch.textContent=open?'▴':'▾';}
+}
+
+function saldoAnterior(fi){
+  const d1=new Date(fi+'T00:00:00');
+  const getD=x=>parseDateStr(((x['Fecha']||'').toString()).split(' ')[0]);
+  const e=(window._cajEnt||[]).filter(x=>{const d=getD(x);return d&&d<d1;}).reduce((s,x)=>s+parseFloat(x['Monto ($)']||0),0);
+  const g=(window._cajGas||[]).filter(x=>{const d=getD(x);return d&&d<d1&&x['Estado']==='Aprobado';}).reduce((s,x)=>s+parseFloat(x['Monto ($)']||0),0);
+  return Math.round((e-g)*100)/100;
+}
+
+function _pdfSafe(s){
+  return String(s)
+    .replace(/\u2192/g,' > ')
+    .replace(/\s*>\s*/g,' > ')
+    .replace(/\u2713/g,'OK')
+    .replace(/\u26A0/g,'!')
+    .replace(/\u25CF/g,'\u00B7')
+    .replace(/\uD83D\uDCC1/g,'');
 }
