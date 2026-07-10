@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Minecore">
 <title>Minecore App</title>
-<link rel="stylesheet" href="styles.css?v=7">
+<link rel="stylesheet" href="styles.css?v=8">
 </head>
 <body>
 
@@ -73,14 +73,22 @@
     <div id="greet-name" style="font-size:28px;font-weight:900;color:#fff;letter-spacing:-.5px"></div>
     <div id="home-uname" style="font-size:13px;color:rgba(255,255,255,.4);margin-top:3px"></div>
   </div>
-  <!-- Quick actions -->
-  <div style="flex:1;background:var(--bg);border-radius:28px 28px 0 0;padding:24px 20px 40px;overflow-y:auto">
-    <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">Acciones rápidas</div>
-    <div id="home-actions" style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px"></div>
-    <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Ver y gestionar</div>
-    <div id="home-secondary" style="display:flex;flex-direction:column;gap:10px"></div>
-    <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:10px"><button onclick="openMod('rutas','corte')" style="padding:16px;background:var(--mc-dark);border:none;border-radius:14px;text-align:left;cursor:pointer;width:100%"><div style="font-size:10px;color:var(--mc-yellow);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Rutas</div><div style="font-size:14px;font-weight:700;color:#fff">Corte →</div></button><button onclick="openMod('caja','balance')" style="padding:16px;background:var(--mc-dark);border:none;border-radius:14px;text-align:left;cursor:pointer;width:100%"><div style="font-size:10px;color:var(--mc-yellow);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Caja chica</div><div style="font-size:14px;font-weight:700;color:#fff">Balance →</div></button></div>
-    <button onclick="logout()" style="width:100%;margin-top:24px;padding:12px;background:none;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;color:var(--text3);cursor:pointer">Cerrar sesión</button>
+  <!-- Home v7: dashboard -->
+  <div style="flex:1;background:#161926;border-radius:28px 28px 0 0;padding:24px 20px 110px;overflow-y:auto">
+    <div id="home-attn"></div>
+    <div class="home-label">Este período</div>
+    <div id="home-metrics" class="hm-grid"></div>
+    <div class="home-label">Ver y gestionar</div>
+    <div id="home-grid" class="hg-grid"></div>
+    <button onclick="logout()" style="width:100%;margin-top:24px;padding:12px;background:none;border:1px solid rgba(255,255,255,.12);border-radius:var(--radius);font-size:13px;color:rgba(255,255,255,.35);cursor:pointer">Cerrar sesión</button>
+    <div id="fab-menu" class="fab-menu" style="display:none" onclick="toggleFab(false)">
+      <div class="fab-actions">
+        <button class="fab-item" id="fab-dinero" onclick="event.stopPropagation();fabGo('caja','nueva-entrega')"><span class="fab-lbl">Entregar dinero</span></button>
+        <button class="fab-item" onclick="event.stopPropagation();fabGo('rutas','nueva')"><span class="fab-lbl">Nueva ruta</span></button>
+        <button class="fab-item fab-hi" onclick="event.stopPropagation();fabGo('caja','nuevo-gasto')"><span class="fab-lbl">Registrar gasto</span></button>
+      </div>
+    </div>
+    <button id="fab-btn" class="fab" onclick="toggleFab()">+</button>
   </div>
 </div>
 
@@ -97,6 +105,6 @@
 
 <div class="toast" id="toast"></div>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD89tboX5JzwLTm7EcdAI1I_Xeq3vZy0kE&libraries=places,geometry&callback=mapsReady" async defer></script>
-<script src="app.js?v=7"></script>
+<script src="app.js?v=8"></script>
 </body>
 </html>

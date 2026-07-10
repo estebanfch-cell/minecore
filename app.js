@@ -138,7 +138,7 @@ function bootHome(){
   const c=avc(session.usuario);
   const ha=document.getElementById('home-av');
   ha.style.background=c.bg; ha.style.color=c.tx; ha.textContent=session.usuario;
-  document.getElementById('home-uname').textContent=session.nombre.split(' ')[0];
+  try{const _pd=getPeriodoDates(0);const _M=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];const _d1=new Date(_pd.fi+'T12:00:00'),_d2=new Date(_pd.ff+'T12:00:00');document.getElementById('home-uname').textContent='Período '+_d1.getDate()+' '+_M[_d1.getMonth()]+' → '+_d2.getDate()+' '+_M[_d2.getMonth()];}catch(e){document.getElementById('home-uname').textContent='';}
   document.getElementById('greet-name').textContent='Hola, '+session.nombre.split(' ')[0]+'!';
   hideAll(); show('scr-home');
   setTimeout(renderHomeActions,50);
@@ -1453,93 +1453,109 @@ function comprimirImagen(file, maxW, quality){
 // ─── HOME QUICK ACTIONS ─────────────────────────────────────────────────────
 async function renderHomeActions(){
   const isAdmin=session.rol==='admin';
-  const actEl=document.getElementById('home-actions');
-  const secEl=document.getElementById('home-secondary');
-  if(!actEl||!secEl)return;
+  const attnEl=document.getElementById('home-attn');
+  const metEl=document.getElementById('home-metrics');
+  const gridEl=document.getElementById('home-grid');
+  if(!attnEl||!metEl||!gridEl)return;
 
-  if(isAdmin){
-    actEl.innerHTML=`
-      <button onclick="openMod('rutas','nueva')" style="width:100%;padding:16px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
-        <div style="width:46px;height:46px;border-radius:13px;background:var(--brand);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🚗</div>
-        <div style="flex:1"><div style="font-size:15px;font-weight:700;color:var(--text)">Nueva Ruta</div><div style="font-size:12px;color:var(--text2);margin-top:2px">Registrar entrega o servicio</div></div>
-        <div style="font-size:22px;color:var(--text3)">›</div>
-      </button>
-      <button onclick="openMod('caja','nueva-entrega')" style="width:100%;padding:16px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
-        <div style="width:46px;height:46px;border-radius:13px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">💵</div>
-        <div style="flex:1"><div style="font-size:15px;font-weight:700;color:var(--text)">Entregar Dinero</div><div style="font-size:12px;color:var(--text2);margin-top:2px">Entregar caja chica a colaborador</div></div>
-        <div style="font-size:22px;color:var(--text3)">›</div>
-      </button>
-      <button onclick="openMod('caja','nuevo-gasto')" style="width:100%;padding:16px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
-        <div style="width:46px;height:46px;border-radius:13px;background:#3B5EA6;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">📷</div>
-        <div style="flex:1"><div style="font-size:15px;font-weight:700;color:var(--text)">Registrar Gasto</div><div style="font-size:12px;color:var(--text2);margin-top:2px">Subir factura para aprobación</div></div>
-        <div style="font-size:22px;color:var(--text3)">›</div>
-      </button>`;
-    secEl.innerHTML=`
-      <button onclick="openMod('rutas','aprobar')" style="width:100%;padding:14px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
-        <div style="width:44px;height:44px;border-radius:13px;background:#0D5C3A;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🚛</div>
-        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--text)">Aprobar Rutas</div><div style="font-size:12px;color:var(--text2);margin-top:1px">Ver solicitudes pendientes</div></div>
-        <div style="display:flex;align-items:center;gap:8px"><span id="badge-rutas" style="display:none;background:#E24B4A;color:#fff;font-size:11px;font-weight:800;border-radius:20px;padding:2px 8px"></span><div style="font-size:22px;color:var(--text3)">›</div></div>
-      </button>
-      <button onclick="openMod('rutas','historial')" style="width:100%;padding:14px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
-        <div style="width:44px;height:44px;border-radius:13px;background:#2C4A7C;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📋</div>
-        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--text)">Historial Rutas</div><div style="font-size:12px;color:var(--text2);margin-top:1px">Todas las rutas registradas</div></div>
-        <div style="font-size:22px;color:var(--text3)">›</div>
-      </button>
-      <button onclick="openMod('caja','aprobar-gastos')" style="width:100%;padding:14px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
-        <div style="width:44px;height:44px;border-radius:13px;background:#5C3A0D;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🧾</div>
-        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--text)">Aprobar Gastos</div><div style="font-size:12px;color:var(--text2);margin-top:1px">Gastos pendientes de caja</div></div>
-        <div style="display:flex;align-items:center;gap:8px"><span id="badge-gastos" style="display:none;background:#E24B4A;color:#fff;font-size:11px;font-weight:800;border-radius:20px;padding:2px 8px"></span><div style="font-size:22px;color:var(--text3)">›</div></div>
-      </button>
-      <button onclick="openMod('caja','historial-caja')" style="width:100%;padding:14px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
-        <div style="width:44px;height:44px;border-radius:13px;background:#3A2C5C;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📒</div>
-        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--text)">Historial Caja</div><div style="font-size:12px;color:var(--text2);margin-top:1px">Entregas y gastos registrados</div></div>
-        <div style="font-size:22px;color:var(--text3)">›</div>
-      </button>`;
-  } else {
-    actEl.innerHTML=`
-      <button onclick="openMod('rutas','nueva')" style="width:100%;padding:16px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
-        <div style="width:46px;height:46px;border-radius:13px;background:var(--brand);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🚗</div>
-        <div style="flex:1"><div style="font-size:15px;font-weight:700;color:var(--text)">Nueva Ruta</div><div style="font-size:12px;color:var(--text2);margin-top:2px">Registrar entrega o servicio</div></div>
-        <div style="font-size:22px;color:var(--text3)">›</div>
-      </button>
-      <button onclick="openMod('caja','nuevo-gasto')" style="width:100%;padding:16px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
-        <div style="width:46px;height:46px;border-radius:13px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">📷</div>
-        <div style="flex:1"><div style="font-size:15px;font-weight:700;color:var(--text)">Registrar Gasto</div><div style="font-size:12px;color:var(--text2);margin-top:2px">Subir factura para aprobación</div></div>
-        <div style="font-size:22px;color:var(--text3)">›</div>
-      </button>`;
-    secEl.innerHTML=`
-      <button onclick="openMod('rutas','mis-rutas')" style="width:100%;padding:14px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
-        <div style="width:44px;height:44px;border-radius:13px;background:#2C4A7C;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📋</div>
-        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--text)">Mis Rutas</div><div style="font-size:12px;color:var(--text2);margin-top:1px">Ver mis solicitudes</div></div>
-        <div style="font-size:22px;color:var(--text3)">›</div>
-      </button>
-      <button onclick="openMod('rutas','cuenta')" style="width:100%;padding:14px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
-        <div style="width:44px;height:44px;border-radius:13px;background:#0D5C3A;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">💰</div>
-        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--text)">Mi Cuenta</div><div style="font-size:12px;color:var(--text2);margin-top:1px">Total KM y cobros del período</div></div>
-        <div style="font-size:22px;color:var(--text3)">›</div>
-      </button>
-      <button onclick="openMod('caja','balance')" style="width:100%;padding:14px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
-        <div style="width:44px;height:44px;border-radius:13px;background:#5C3A0D;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">💳</div>
-        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--text)">Mi Caja</div><div style="font-size:12px;color:var(--text2);margin-top:1px">Balance y disponible</div></div>
-        <div style="font-size:22px;color:var(--text3)">›</div>
-      </button>
-      <button onclick="openMod('caja','historial-caja')" style="width:100%;padding:14px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
-        <div style="width:44px;height:44px;border-radius:13px;background:#3A2C5C;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📒</div>
-        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--text)">Historial Caja</div><div style="font-size:12px;color:var(--text2);margin-top:1px">Entregas y gastos</div></div>
-        <div style="font-size:22px;color:var(--text3)">›</div>
-      </button>`;
+  const fabDin=document.getElementById('fab-dinero');
+  if(fabDin) fabDin.style.display=isAdmin?'flex':'none';
+
+  function hgBtn(mod,view,t,s){
+    return `<button class="hg-item" onclick="openMod('${mod}','${view}')"><div class="hg-t">${t}</div><div class="hg-s">${s}</div></button>`;
+  }
+  function mcCard(mod,view,lbl,val,sub){
+    return `<button class="metric-card" onclick="openMod('${mod}','${view}')"><div class="mc-lbl">${lbl}</div><div class="mc-val">${val}</div><div class="mc-sub">${sub}</div></button>`;
+  }
+  function attnRow(mod,view,txt){
+    return `<button class="attn-row" onclick="openMod('${mod}','${view}')"><span class="attn-txt">${txt}</span><span class="attn-go">Ver →</span></button>`;
   }
 
-  if(!isAdmin) return;
-  Promise.all([
-    api({action:'getRutas',rol:'admin',estado:'Pendiente'}),
-    api({action:'getGastos',rol:'admin',estado:'Pendiente'})
-  ]).then(([rr,rg])=>{
-    const nr=(rr.rutas||[]).length,ng=(rg.gastos||[]).length;
-    const br=document.getElementById('badge-rutas');
-    const bg=document.getElementById('badge-gastos');
-    if(br&&nr>0){br.textContent=nr;br.style.display='inline-block';}
-    if(bg&&ng>0){bg.textContent=ng;bg.style.display='inline-block';}
-  }).catch(()=>{});
+  if(isAdmin){
+    gridEl.innerHTML=
+      hgBtn('rutas','aprobar','Aprobar Rutas','Pendientes')+
+      hgBtn('caja','aprobar-gastos','Aprobar Gastos','Pendientes')+
+      hgBtn('rutas','historial','Historial Rutas','Ver todas')+
+      hgBtn('caja','historial-caja','Historial Caja','Entregas y gastos');
+  } else {
+    gridEl.innerHTML=
+      hgBtn('rutas','mis-rutas','Mis Rutas','Mis solicitudes')+
+      hgBtn('rutas','cuenta','Mi Cuenta','KM y cobros')+
+      hgBtn('caja','balance','Mi Caja','Balance')+
+      hgBtn('caja','historial-caja','Historial Caja','Entregas y gastos');
+  }
+
+  metEl.innerHTML=
+    mcCard('rutas','corte',isAdmin?'A pagar':'Mi período','...','')+
+    mcCard('caja','balance','Caja disponible','...','');
+
+  try{
+    const calls=[
+      api({action:'getRutas',rol:isAdmin?'admin':'chofer',usuario:session.usuario}),
+      api({action:'getBalanceCaja'})
+    ];
+    if(isAdmin) calls.push(api({action:'getGastos',rol:'admin',estado:'Pendiente'}));
+    const res=await Promise.all(calls);
+    const rutas=res[0].rutas||[];
+    const balances=(res[1].balances)||[];
+
+    const pd=getPeriodoDates(0);
+    const enPeriodo=r=>{const f=String(r['Fecha Servicio']||'').slice(0,10);return f>=pd.fi&&f<=pd.ff;};
+    const aprob=rutas.filter(r=>r['Estado']==='Aprobada'&&enPeriodo(r));
+    const km=Math.round(aprob.reduce((s,r)=>s+parseFloat(r['KM']||0),0)*10)/10;
+    const usd=Math.round(aprob.reduce((s,r)=>s+parseFloat(r['Valor ($)']||0),0)*100)/100;
+
+    let dispTxt,dispSub;
+    if(isAdmin){
+      const tE=balances.reduce((s,b)=>s+(b.entregado||0),0);
+      const tA=balances.reduce((s,b)=>s+(b.aprobado||0),0);
+      const tP=balances.reduce((s,b)=>s+(b.pendiente||0),0);
+      const disp=Math.round((tE-tA)*100)/100;
+      dispTxt='$'+disp.toFixed(2);
+      dispSub=tP>0?('$'+(Math.round(tP*100)/100).toFixed(2)+' pendiente'):'al día ✓';
+    } else {
+      const b=balances.find(x=>x.usuario===session.usuario)||{entregado:0,aprobado:0,pendiente:0};
+      const disp=Math.round(((b.entregado||0)-(b.aprobado||0))*100)/100;
+      dispTxt='$'+disp.toFixed(2);
+      dispSub=(b.pendiente||0)>0?('$'+(Math.round(b.pendiente*100)/100).toFixed(2)+' pendiente'):'al día ✓';
+    }
+
+    metEl.innerHTML=
+      mcCard('rutas','corte',isAdmin?'A pagar':'Mi período','$'+usd.toFixed(2),aprob.length+' rutas · '+km+' km')+
+      mcCard('caja','balance','Caja disponible',dispTxt,dispSub);
+
+    const pendR=rutas.filter(r=>r['Estado']==='Pendiente');
+    if(isAdmin){
+      const pendG=(res[2]&&res[2].gastos)||[];
+      let rows='';
+      if(pendR.length) rows+=attnRow('rutas','aprobar',pendR.length+(pendR.length!==1?' rutas':' ruta')+' por aprobar');
+      if(pendG.length) rows+=attnRow('caja','aprobar-gastos',pendG.length+(pendG.length!==1?' gastos':' gasto')+' por aprobar');
+      attnEl.innerHTML=rows?('<div class="attn-card"><div class="attn-title">Requiere tu atención</div>'+rows+'</div>'):'';
+    } else {
+      const hoy=new Date().toISOString().split('T')[0];
+      const tieneHoy=rutas.some(r=>String(r['Fecha Servicio']||r['Fecha Solicitud']||'').slice(0,10)===hoy);
+      let rows='';
+      if(!tieneHoy) rows+=attnRow('rutas','nueva','No has registrado rutas hoy');
+      attnEl.innerHTML=rows?('<div class="attn-card"><div class="attn-title">Recordatorio</div>'+rows+'</div>'):'';
+    }
+  }catch(e){
+    metEl.innerHTML=
+      mcCard('rutas','corte',isAdmin?'A pagar':'Mi período','—','sin conexión')+
+      mcCard('caja','balance','Caja disponible','—','sin conexión');
+  }
+}
+
+function toggleFab(force){
+  const menu=document.getElementById('fab-menu');
+  const btn=document.getElementById('fab-btn');
+  if(!menu||!btn)return;
+  const open=force!==undefined?force:(menu.style.display==='none');
+  menu.style.display=open?'block':'none';
+  btn.textContent=open?'×':'+';
+}
+
+function fabGo(mod,view){
+  toggleFab(false);
+  openMod(mod,view);
 }
 
