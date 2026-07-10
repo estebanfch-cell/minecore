@@ -1,0 +1,1545 @@
+
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwey092-gmFNWsJQmJVSZ9aiSVNxMCFUhfcu_3hyotGNtc6219atTs-y3dApG3JtWw/exec';
+const MINECORE_LL = {lat:-0.1940519, lng:-78.4841933};
+const MINECORE_ADDR = 'Minecore S.A.S — Alpallana E7-212, Quito';
+
+// Vehicle → owner map
+const VEH_OWNER = {
+  'Camioneta Nissan': 'EFCH',
+  'Moto Minecore':    'EFCH',
+  'Camioneta Mazda':  'MPL',
+  'Camioneta Poer':   'OPM'
+};
+const VEH_RATE = {'Moto Minecore': 0.15};
+
+// Hardcoded users (login works offline)
+const DEFAULT_USERS = [
+  {usuario:'EFCH', nombre:'Esteban Ferlito', rol:'admin', pin:'2765', activo:'SI'},
+  {usuario:'MPL',  nombre:'Martín Pinto',    rol:'admin', pin:'1111', activo:'SI'},
+  {usuario:'OPM',  nombre:'Oswaldo Peña',    rol:'chofer',pin:'2222', activo:'SI'},
+  {usuario:'AG',   nombre:'Ángel Guachamin', rol:'chofer',pin:'3333', activo:'SI'}
+];
+
+const AV_COLORS = {
+  E:{bg:'#185FA5',tx:'#fff'}, M:{bg:'#085041',tx:'#fff'},
+  O:{bg:'#854F0B',tx:'#fff'}, A:{bg:'#993556',tx:'#fff'},
+  _:{bg:'#444441',tx:'#fff'}
+};
+function avc(id){ const k=(id||'?')[0].toUpperCase(); return AV_COLORS[k]||AV_COLORS._; }
+function col(id){ const c=avc(id); return c; }
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let session=null, cfg={precio_km:0.40}, allUsers=[...DEFAULT_USERS], currentMod='', activeView='';
+let mReady=false, gmap, dirSvc, dirRen, geocoder;
+let originLL=null, paradas=[], routeKm=0, markers=[];
+let pinBuf='', selUser=null;
+let favs=[];
+try{ favs=JSON.parse(localStorage.getItem('mc_favs')||'[]'); }catch(e){}
+
+// ─── API ──────────────────────────────────────────────────────────────────────
+async function api(data){
+  if(data.action==='savePhoto'){
+    // Use POST for large payloads (base64 images)
+    const r=await fetch(SCRIPT_URL,{
+      method:'POST',
+      body:JSON.stringify(data),
+      redirect:'follow'
+    });
+    return r.json();
+  }
+  const p=new URLSearchParams();
+  Object.entries(data).forEach(([k,v])=>p.append(k,String(v)));
+  const r=await fetch(SCRIPT_URL+'?'+p.toString(),{redirect:'follow'});
+  return r.json();
+}
+
+// ─── BOOT ─────────────────────────────────────────────────────────────────────
+function mapsReady(){ mReady=true; }
+
+window.onload=()=>{
+  const saved=sessionStorage.getItem('mcSess');
+  if(saved){ session=JSON.parse(saved); setTimeout(bootHome,700); }
+  else{
+    setTimeout(()=>{
+      document.getElementById('splash').classList.add('hide');
+      setTimeout(()=>{
+        document.getElementById('splash').style.display='none';
+        loadUsers();
+        show('scr-users');
+      },400);
+    },1400);
+  }
+  // Try to load updated users from server
+  api({action:'getUsuarios'}).then(r=>{ if(r.ok&&r.usuarios) allUsers=r.usuarios; renderGrid(); }).catch(()=>{});
+};
+
+async function loadUsers(){
+  renderGrid();
+}
+
+function renderGrid(){
+  const active=allUsers.filter(u=>u.activo==='SI'||(u.activo===undefined));
+  document.getElementById('user-grid').innerHTML=active.map(u=>{
+    const c=avc(u.usuario);
+    return `<div class="user-card" onclick="selU('${u.usuario}')">
+      ${(u.rol||'').toLowerCase()==='admin'?'<div class="user-card-dot"></div>':''}
+      <div class="user-av" style="background:${c.bg};color:${c.tx}">${u.usuario}</div>
+      <div class="user-name">${u.nombre}</div>
+    </div>`;
+  }).join('');
+}
+
+function selU(uid){
+  selUser=allUsers.find(u=>u.usuario===uid);
+  if(!selUser)return;
+  pinBuf='';
+  const c=avc(selUser.usuario);
+  const av=document.getElementById('pin-av');
+  av.style.background=c.bg; av.style.color=c.tx; av.textContent=selUser.usuario;
+  document.getElementById('pin-name').textContent=selUser.nombre;
+  document.getElementById('pin-err').textContent='';
+  updDots();
+  hideAll(); show('scr-pin');
+}
+
+function backToUsers(){ pinBuf=''; hideAll(); show('scr-users'); }
+
+function pk(d){ if(pinBuf.length>=4)return; pinBuf+=d; updDots(); if(pinBuf.length===4)setTimeout(submitPin,120); }
+function pdel(){ pinBuf=pinBuf.slice(0,-1); updDots(); document.getElementById('pin-err').textContent=''; }
+function updDots(){ document.querySelectorAll('.pin-dot').forEach((d,i)=>{ d.className='pin-dot'+(i<pinBuf.length?' on':''); }); }
+
+async function submitPin(){
+  // Local check first
+  const localPin=String(selUser.pin||'').padStart(4,'0');
+  if(localPin===pinBuf){
+    session={ok:true,usuario:selUser.usuario,nombre:selUser.nombre,rol:(selUser.rol||'chofer').toLowerCase()};
+    sessionStorage.setItem('mcSess',JSON.stringify(session));
+    hideAll(); bootHome();
+    return;
+  }
+  // Try server
+  try{
+    const r=await api({action:'login',usuario:selUser.usuario,pin:pinBuf});
+    if(r.ok){ session=r; session.rol=(session.rol||'chofer').toLowerCase(); sessionStorage.setItem('mcSess',JSON.stringify(session)); hideAll(); bootHome(); }
+    else{ pinErr(); }
+  }catch(e){ pinErr(); }
+}
+
+function pinErr(){
+  document.querySelectorAll('.pin-dot').forEach(d=>d.className='pin-dot err');
+  document.getElementById('pin-err').textContent='PIN incorrecto';
+  setTimeout(()=>{ pinBuf=''; updDots(); document.getElementById('pin-err').textContent=''; },900);
+}
+
+function bootHome(){
+  document.getElementById('splash').style.display='none';
+  api({action:'getConfig'}).then(r=>{ if(r.ok&&r.config)cfg=r.config; }).catch(()=>{});
+  const c=avc(session.usuario);
+  const ha=document.getElementById('home-av');
+  ha.style.background=c.bg; ha.style.color=c.tx; ha.textContent=session.usuario;
+  document.getElementById('home-uname').textContent=session.nombre.split(' ')[0];
+  document.getElementById('greet-name').textContent='Hola, '+session.nombre.split(' ')[0]+'!';
+  hideAll(); show('scr-home');
+  setTimeout(renderHomeActions,50);
+}
+
+function openMod(mod, targetView){
+  currentMod=mod; hideAll(); show('app');
+  document.getElementById('topbar-dot').className='topbar-dot '+mod;
+  document.getElementById('topbar-title').textContent=mod==='rutas'?'Rutas':'Caja Chica';
+  const c=avc(session.usuario);
+  const av=document.getElementById('topbar-av');
+  av.style.background=c.bg; av.style.color=c.tx; av.textContent=session.usuario;
+  renderNav();
+  const def=mod==='rutas'?(session.rol==='chofer'?'nueva':'aprobar'):(session.rol==='chofer'?'caja-chofer':'caja-admin');
+  setView(targetView||def);
+}
+
+function goHome(){
+  hideAll(); show('scr-home');
+}
+function logout(){ sessionStorage.removeItem('mcSess'); session=null; pinBuf=''; hideAll(); renderGrid(); show('scr-users'); }
+
+// ─── NAV ──────────────────────────────────────────────────────────────────────
+const NAV={
+  rutas:{
+    chofer:[
+      {id:'nueva',   label:'Nueva',    icon:'M12 5v14M5 12h14'},
+      {id:'mis-rutas',label:'Mis rutas',icon:'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'},
+      {id:'cuenta',  label:'Mi cuenta',icon:'M12 2a10 10 0 110 20 10 10 0 010-20zm0 6v4l3 3'}
+    ],
+    admin:[
+      {id:'nueva',    label:'Nueva',    icon:'M12 5v14M5 12h14'},
+      {id:'aprobar',  label:'Aprobar',  icon:'M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11'},
+      {id:'historial',label:'Historial',icon:'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'},
+      {id:'corte',    label:'Corte',    icon:'M8 7V3m8 4V3M3 11h18M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'},
+      {id:'usuarios', label:'Usuarios', icon:'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75'},
+      {id:'config',   label:'Config',   icon:'M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z'}
+    ]
+  },
+  caja:{
+    chofer:[
+      {id:'balance',       label:'Balance',  icon:'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'},
+      {id:'nuevo-gasto',   label:'Nuevo',    icon:'M12 5v14M5 12h14'},
+      {id:'historial-caja',label:'Historial',icon:'M4 6h16M4 10h16M4 14h16M4 18h16'}
+    ],
+    admin:[
+      {id:'balance',      label:'Balance',  icon:'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'},
+      {id:'nueva-entrega',label:'Entregar', icon:'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z'},
+      {id:'aprobar-gastos',label:'Gastos', icon:'M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11'},
+      {id:'historial-caja',label:'Historial',icon:'M4 6h16M4 10h16M4 14h16M4 18h16'}
+    ]
+  }
+};
+
+function renderNav(){
+  const isGold=currentMod==='caja';
+  const list=NAV[currentMod]?.[session.rol]||[];
+  document.getElementById('bottom-nav').innerHTML=list.map(n=>`
+    <button class="nav-btn${activeView===n.id?' active':''}${isGold&&activeView===n.id?' cy':''}" onclick="setView('${n.id}')">
+      <svg viewBox="0 0 24 24"><path d="${n.icon}" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>${n.label}</span>
+    </button>`).join('');
+}
+
+function setView(v){
+  activeView=v; renderNav();
+  const c=document.getElementById('content');
+  const views={
+    'nueva':vNueva,'mis-rutas':vMisRutas,'cuenta':vCuenta,
+    'aprobar':vAprobar,'historial':vHistorial,'corte':vCorte,
+    'usuarios':vUsuarios,'config':vConfig,
+    'balance':vBalance,'nueva-entrega':vNuevaEntrega,
+    'aprobar-gastos':vAprobarGastos,'historial-caja':vHistorialCaja,
+    'mis-gastos':vMisGastos,'nuevo-gasto':vNuevoGasto,'mis-entregas':vMisEntregas
+  };
+  if(views[v]) views[v](c);
+  window.scrollTo(0,0);
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function spin(){ return '<div class="loading"><div class="spinner"></div>Cargando...</div>'; }
+function empty(msg){ return `<div class="empty">${msg}</div>`; }
+function errMsg(){ return `<div class="empty" style="color:var(--err-tx)">⚠️ Error de conexión<br><small>Verifica tu conexión e intenta de nuevo</small></div>`; }
+function toast(msg){ const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800); }
+function today(){ return new Date().toISOString().split('T')[0]; }
+function fd(s){
+  if(!s||s==='undefined'||s==='0')return'—';
+  const str=String(s).split(' ')[0];
+  if(!str.includes('-')&&!isNaN(parseFloat(str))){
+    const d=new Date((parseFloat(str)-25569)*86400000);
+    const m=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    return d.getDate()+' '+m[d.getMonth()]+' '+d.getFullYear();
+  }
+  const p=str.split('-'); if(p.length<3)return str;
+  const m=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return parseInt(p[2])+' '+m[parseInt(p[1])-1]+' '+p[0];
+}
+function placeName(dest){
+  if(!dest)return'—';
+  return dest.split(' → ').map(part=>{
+    const dash=part.indexOf(' — ');
+    return dash>0?part.substring(0,dash):part.split(',')[0];
+  }).join(' → ');
+}
+function placeAddr(dest){
+  if(!dest)return'';
+  const last=dest.split(' → ').pop();
+  const dash=last.indexOf(' — ');
+  return dash>0?last.substring(dash+3):'';
+}
+function getPeriodoDates(offset){
+  const hoy=new Date();
+  const dia=hoy.getDate();
+  const ini=parseInt(cfg.corte_dia_inicio||26);
+  let fi,ff;
+  if(dia>=ini){
+    fi=new Date(hoy.getFullYear(),hoy.getMonth()+offset,ini);
+    ff=new Date(hoy.getFullYear(),hoy.getMonth()+offset+1,ini-1);
+  } else {
+    fi=new Date(hoy.getFullYear(),hoy.getMonth()-1+offset,ini);
+    ff=new Date(hoy.getFullYear(),hoy.getMonth()+offset,ini-1);
+  }
+  return{fi:fi.toISOString().split('T')[0], ff:ff.toISOString().split('T')[0]};
+}
+function periodLabel(offset){
+  const d=getPeriodoDates(offset);
+  const m=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const fi=new Date(d.fi+'T12:00:00'), ff=new Date(d.ff+'T12:00:00');
+  return `26 ${m[fi.getMonth()]} → 25 ${m[ff.getMonth()]}`;
+}
+function parseDateStr(s){
+  if(!s||s==='undefined')return null;
+  const str=String(s).split(' ')[0];
+  if(!str.includes('-')&&!isNaN(parseFloat(str))){
+    return new Date((parseFloat(str)-25569)*86400000);
+  }
+  const p=str.split('-'); if(p.length<3)return null;
+  return new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]),12,0,0);
+}
+function hide(id){ const e=document.getElementById(id); if(e)e.style.display='none'; }
+function show(id){ const e=document.getElementById(id); if(e)e.style.display='flex'; }
+function hideAll(){ ['splash','scr-users','scr-pin','scr-home','app'].forEach(hide); }
+
+// ─── BADGE & STATUS ──────────────────────────────────────────────────────────
+function badgeClass(est){ return est==='Aprobada'?'approved':est==='Rechazada'?'rejected':'pending'; }
+
+// ─── RUTAS HTML ──────────────────────────────────────────────────────────────
+function rutaTicket(r, isAdmin){
+  const km=parseFloat(r['KM']||0), val=parseFloat(r['Valor ($)']||0);
+  const est=r['Estado']||'Pendiente', bc=badgeClass(est);
+  const veh=r['Vehiculo']||'', usr=r['Usuario']||'';
+  const destName=placeName(r['Destino']||'—');
+  const destAddr=placeAddr(r['Destino']||'');
+  const origenShort=(r['Origen']||'Minecore').split(' — ')[0].split(',')[0].trim();
+  const titulo=origenShort+' → '+destName;
+  const actions=isAdmin&&est==='Pendiente'?`
+    <input class="reject-input" id="ri-${r['ID']}" placeholder="Motivo de rechazo">
+    <div class="action-row">
+      <button class="btn-reject" onclick="doReject('${r['ID']}',this)">Rechazar</button>
+      <button class="btn-approve" onclick="doApprove('${r['ID']}')">✓ Aprobar</button>
+    </div>`:'';
+  const editBtn=isAdmin?`<button onclick="editRuta('${r['ID']}')" style="padding:6px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);font-size:12px;cursor:pointer;color:var(--text)">✏️ Editar</button>`:'';
+  return `<div class="rticket">
+    <div class="rt-top">
+      <div class="rt-dest">${titulo}</div>
+      <span class="badge ${bc}">${est}</span>
+    </div>
+    ${destAddr?`<div class="rt-addr">${destAddr}</div>`:''}
+    <div class="rt-badges">
+      <span style="font-size:11px;color:var(--brand);font-weight:600">👤 ${usr}</span>
+      ${veh?`<span style="font-size:11px;color:var(--text3)">🚗 ${veh}</span>`:''}
+    </div>
+    <div class="rt-meta">${r['Motivo']||''}</div>
+    <div class="rt-bottom">
+      <div>
+        <div class="rt-val">$${val.toFixed(2)}</div>
+        <div class="rt-info">${r['Tipo']||''} · ${km} km · ${fd(r['Fecha Servicio']||'')}</div>
+      </div>
+      ${editBtn}
+    </div>
+    ${actions}
+  </div>`;
+}
+
+async function doApprove(id){
+  try{ const r=await api({action:'aprobarRuta',id,admin:session.usuario}); if(r.ok){toast('✓ Aprobada');setView('aprobar');}else toast('Error'); }catch(e){toast('Error de conexión');}
+}
+async function doReject(id,btn){
+  const inp=document.getElementById('ri-'+id);
+  if(inp.style.display!=='block'){ inp.style.display='block'; inp.focus(); btn.textContent='Confirmar rechazo'; return; }
+  try{ const r=await api({action:'rechazarRuta',id,admin:session.usuario,notas:inp.value||''}); if(r.ok){toast('Rechazada');setView('aprobar');}else toast('Error'); }catch(e){toast('Error de conexión');}
+}
+
+function editRuta(id){
+  const rutas=window._allRutas||[];
+  const r=rutas.find(x=>x['ID']===id); if(!r)return;
+  const overlay=document.createElement('div');
+  overlay.id='edit-overlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:400;display:flex;align-items:center;justify-content:center;padding:20px';
+  const vehOpts=['Camioneta Nissan','Camioneta Mazda','Camioneta Poer','Moto Minecore'].map(v=>`<option value="${v}"${r['Vehiculo']===v?' selected':''}>${v}</option>`).join('');
+  const estOpts=['Pendiente','Aprobada','Rechazada'].map(v=>`<option value="${v}"${r['Estado']===v?' selected':''}>${v}</option>`).join('');
+  overlay.innerHTML=`<div style="background:var(--surface);border-radius:var(--radius-lg);padding:20px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto">
+    <div style="font-size:16px;font-weight:700;margin-bottom:16px">✏️ Editar ruta</div>
+    <div class="field-group"><label class="field-label">Estado</label><select class="field-sel" id="e-estado">${estOpts}</select></div>
+    <div class="field-group"><label class="field-label">Vehículo</label><select class="field-sel" id="e-veh">${vehOpts}</select></div>
+    <div class="field-group"><label class="field-label">KM</label><input class="field-input" type="number" id="e-km" value="${r['KM']||0}" step="0.1"></div>
+    <div class="field-group"><label class="field-label">Origen</label><input class="field-input" id="e-origen" value="${r['Origen']||''}"></div>
+    <div class="field-group"><label class="field-label">Destino</label><input class="field-input" id="e-destino" value="${r['Destino']||''}"></div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button onclick="document.getElementById('edit-overlay').remove()" style="flex:1;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:14px">Cancelar</button>
+      <button onclick="saveEditRuta('${id}')" style="flex:1;padding:12px;background:var(--brand);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-size:14px;font-weight:700">Guardar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function saveEditRuta(id){
+  const veh=document.getElementById('e-veh').value;
+  const km=parseFloat(document.getElementById('e-km').value)||0;
+  const rate=VEH_RATE[veh]||parseFloat(cfg.precio_km||0.40);
+  const valor=(km*rate).toFixed(2);
+  try{
+    const r=await api({action:'editarRuta',id,
+      estado:document.getElementById('e-estado').value,
+      vehiculo:veh, km, valor,
+      origen:document.getElementById('e-origen').value,
+      destino:document.getElementById('e-destino').value,
+      admin:session.usuario});
+    document.getElementById('edit-overlay').remove();
+    if(r.ok){ toast('✓ Ruta actualizada'); setView(activeView); } else toast('Error: '+(r.error||''));
+  }catch(e){toast('Error de conexión');}
+}
+
+// ─── FILTER HELPERS ──────────────────────────────────────────────────────────
+function filtDateBtns(prefix, current){
+  const m=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const pd=getPeriodoDates(0), pa=getPeriodoDates(-1);
+  const fi0=new Date(pd.fi+'T12:00:00'), ff0=new Date(pd.ff+'T12:00:00');
+  const fi1=new Date(pa.fi+'T12:00:00'), ff1=new Date(pa.ff+'T12:00:00');
+  const pLabel=`26 ${m[fi0.getMonth()]} → 25 ${m[ff0.getMonth()]}`;
+  const aLabel=`26 ${m[fi1.getMonth()]} → 25 ${m[ff1.getMonth()]}`;
+  const btns=[
+    {id:'hoy',label:'Hoy'},{id:'ayer',label:'Ayer'},{id:'7dias',label:'7 días'},
+    {id:'periodo',label:`Período (${pLabel})`},{id:'anterior',label:`← Anterior (${aLabel})`},
+    {id:'todo',label:'Todo'}
+  ];
+  return btns.map(b=>`<button class="filt-btn${current===b.id?' active':''}" id="${prefix}-btn-${b.id}" onclick="${prefix}SetFiltro('${b.id}')">${b.label}</button>`).join('');
+}
+
+function applyDateFiltro(filtro, prefix){
+  const hoy=new Date(), hs=hoy.toISOString().split('T')[0];
+  let fi,ff;
+  if(filtro==='hoy'){fi=hs;ff=hs;}
+  else if(filtro==='ayer'){const a=new Date(hoy);a.setDate(hoy.getDate()-1);const as=a.toISOString().split('T')[0];fi=as;ff=as;}
+  else if(filtro==='7dias'){const s=new Date(hoy);s.setDate(hoy.getDate()-6);fi=s.toISOString().split('T')[0];ff=hs;}
+  else if(filtro==='periodo'){const d=getPeriodoDates(0);fi=d.fi;ff=d.ff;}
+  else if(filtro==='anterior'){const d=getPeriodoDates(-1);fi=d.fi;ff=d.ff;}
+  else{fi='2020-01-01';ff='2099-12-31';}
+  const fiEl=document.getElementById(prefix+'-fi');
+  const ffEl=document.getElementById(prefix+'-ff');
+  if(fiEl)fiEl.value=fi;
+  if(ffEl)ffEl.value=ff;
+  document.querySelectorAll(`[id^="${prefix}-btn-"]`).forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById(`${prefix}-btn-${filtro}`);
+  if(btn)btn.classList.add('active');
+  return{fi,ff};
+}
+
+function filterByDate(rutas, fi, ff){
+  const d1=new Date(fi+'T00:00:00'), d2=new Date(ff+'T23:59:59');
+  return rutas.filter(r=>{
+    const d=parseDateStr(r['Fecha Servicio']||r['Fecha Solicitud']||'');
+    return d&&d>=d1&&d<=d2;
+  });
+}
+
+// ─── VIEW: NUEVA RUTA ────────────────────────────────────────────────────────
+function vNueva(c){
+  originLL=null; paradas=[]; routeKm=0;
+  markers.forEach(m=>m&&m.setMap&&m.setMap(null)); markers=[];
+  const userFavs=favs.filter(f=>f.usuario===session.usuario);
+  c.innerHTML=`
+  <div class="page-title">Nueva ruta</div>
+  <div class="card" style="padding:12px">
+    <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Origen</div>
+    <button class="btn-gps" onclick="usarGPS()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linecap="round" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+      Usar mi ubicación actual
+    </button>
+    <div class="field-group" style="margin-bottom:10px">
+      <input class="field-input" id="inp-origen" value="${MINECORE_ADDR}" style="font-size:13px;padding:9px 12px">
+    </div>
+    <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Destinos / Paradas</div>
+    ${userFavs.length?`<div style="font-size:11px;color:var(--text2);margin-bottom:6px">★ Favoritos:</div><div style="margin-bottom:8px">${userFavs.map((f,i)=>`<span class="fav-chip" onclick="usarFav(${i})">${f.nombre} <span onclick="event.stopPropagation();delFav(${i})" style="color:var(--text3)">×</span></span>`).join('')}</div>`:''}
+    <div id="paradas-cont"></div>
+    <button class="btn-add-parada" onclick="addParada()">+ Agregar parada</button>
+    <div class="map-wrap"><div id="map"></div><div class="map-hint" id="map-hint">Toca el mapa para marcar destino</div></div>
+    <div class="km-box" id="km-box">
+      <div class="km-row"><div class="km-lbl">Total a cobrar</div><div class="km-val" id="km-val">$0.00</div></div>
+      <div class="km-sub" id="km-sub"></div>
+    </div>
+    <button class="btn-gps" style="margin-top:4px" onclick="guardarFav()">★ Guardar último destino como favorito</button>
+  </div>
+  <div class="card">
+    <div class="field-group"><label class="field-label">Vehículo</label>
+      <select class="field-sel" id="f-veh" onchange="updVehPrice()">
+        <option value="Camioneta Nissan">🚙 Camioneta Nissan</option>
+        <option value="Camioneta Mazda">🚙 Camioneta Mazda</option>
+        <option value="Camioneta Poer">🚙 Camioneta Poer</option>
+        <option value="Moto Minecore">🏍 Moto Minecore</option>
+      </select>
+    </div>
+    <div class="field-group"><label class="field-label">Tipo de servicio</label>
+      <select class="field-sel" id="f-tipo">
+        <option value="Entrega">📦 Entrega</option>
+        <option value="Despacho">🔄 Despacho / Retiro</option>
+        <option value="Diligencia">📋 Diligencia</option>
+      </select>
+    </div>
+    <div class="field-group"><label class="field-label">Fecha del servicio</label>
+      <input class="field-input" type="date" id="f-fecha" value="${today()}">
+    </div>
+    ${session.rol==='admin'?`<div class="field-group"><label class="field-label">Para usuario</label>
+      <select class="field-sel" id="f-usuario">
+        ${allUsers.filter(u=>u.activo==='SI'||(u.activo===undefined)).map(u=>'<option value="'+u.usuario+'">'+u.usuario+' — '+u.nombre+'</option>').join('')}
+      </select></div>`:''}
+    <div class="field-group"><label class="field-label">Motivo</label>
+      <input class="field-input" id="f-motivo" placeholder="Ej: Entrega de brocas de perforación">
+    </div>
+    <button class="btn-submit" onclick="enviarRuta()" id="btn-enviar">Enviar solicitud</button>
+  </div>`;
+  // Set default vehicle based on user
+  const vehPorUsuario={'MPL':'Camioneta Mazda','OPM':'Camioneta Poer'};
+  const defVeh=vehPorUsuario[session.usuario]||'Camioneta Nissan';
+  document.getElementById('f-veh').value=defVeh;
+  addParada();
+  initMap();
+}
+
+function updVehPrice(){
+  const veh=document.getElementById('f-veh')?.value||'';
+  const rate=VEH_RATE[veh]||parseFloat(cfg.precio_km||0.40);
+  if(routeKm>0){
+    document.getElementById('km-val').textContent='$'+(routeKm*rate).toFixed(2);
+    document.getElementById('km-sub').textContent=`${routeKm} km × $${rate.toFixed(2)}/km`;
+  }
+}
+
+function addParada(){
+  const cont=document.getElementById('paradas-cont'); if(!cont)return;
+  const idx=paradas.length;
+  paradas.push({addr:'',ll:null});
+  const div=document.createElement('div'); div.className='parada-row'; div.id='pr-'+idx;
+  div.innerHTML=`<div class="parada-num">${idx+1}</div><input class="parada-inp" id="pi-${idx}" placeholder="Buscar dirección..."><button class="btn-del" onclick="delParada(${idx})">×</button>`;
+  cont.appendChild(div);
+  if(mReady&&window.google){
+    const inp=document.getElementById('pi-'+idx);
+    if(inp){
+      const ac=new google.maps.places.Autocomplete(inp,{componentRestrictions:{country:'ec'},fields:['geometry','formatted_address','name']});
+      ac.addListener('place_changed',()=>{
+        const p=ac.getPlace(); if(!p.geometry)return;
+        const name=p.name||p.formatted_address;
+        const addr=p.formatted_address;
+        paradas[idx]={addr:`${name} — ${addr}`,ll:{lat:p.geometry.location.lat(),lng:p.geometry.location.lng()}};
+        calcRoute();
+      });
+    }
+  }
+}
+
+function delParada(idx){
+  paradas.splice(idx,1);
+  const cont=document.getElementById('paradas-cont'); if(!cont)return;
+  cont.innerHTML='';
+  const saved=[...paradas]; paradas=[];
+  saved.forEach(p=>{
+    const i=paradas.length;
+    paradas.push(p);
+    const div=document.createElement('div'); div.className='parada-row'; div.id='pr-'+i;
+    div.innerHTML=`<div class="parada-num">${i+1}</div><input class="parada-inp" id="pi-${i}" placeholder="Buscar dirección..." value="${p.addr.split(' — ')[0]||p.addr}"><button class="btn-del" onclick="delParada(${i})">×</button>`;
+    cont.appendChild(div);
+    if(mReady&&window.google){
+      const inp=document.getElementById('pi-'+i);
+      if(inp){
+        const ac=new google.maps.places.Autocomplete(inp,{componentRestrictions:{country:'ec'},fields:['geometry','formatted_address','name']});
+        ac.addListener('place_changed',()=>{
+          const pl=ac.getPlace(); if(!pl.geometry)return;
+          paradas[i]={addr:`${pl.name||pl.formatted_address} — ${pl.formatted_address}`,ll:{lat:pl.geometry.location.lat(),lng:pl.geometry.location.lng()}};
+          calcRoute();
+        });
+      }
+    }
+  });
+  calcRoute();
+}
+
+function usarFav(idx){
+  const userFavs=favs.filter(f=>f.usuario===session.usuario);
+  const fav=userFavs[idx]; if(!fav)return;
+  const i=paradas.length; addParada();
+  setTimeout(()=>{
+    paradas[i]={addr:fav.addr,ll:fav.ll};
+    const inp=document.getElementById('pi-'+i);
+    if(inp) inp.value=fav.addr.split(' — ')[0]||fav.addr;
+    calcRoute();
+  },100);
+}
+
+function delFav(idx){
+  const userFavs=favs.filter(f=>f.usuario===session.usuario);
+  const fav=userFavs[idx];
+  favs=favs.filter(f=>!(f.usuario===session.usuario&&f.nombre===fav.nombre));
+  try{localStorage.setItem('mc_favs',JSON.stringify(favs));}catch(e){}
+  setView('nueva');
+}
+
+function guardarFav(){
+  const valid=paradas.filter(p=>p.ll);
+  if(!valid.length){toast('Agrega al menos un destino');return;}
+  const last=valid[valid.length-1];
+  const nombre=prompt('Nombre para el favorito:',last.addr.split(' — ')[0]||last.addr);
+  if(!nombre)return;
+  const userFavs=favs.filter(f=>f.usuario===session.usuario);
+  if(userFavs.length>=10){toast('Máximo 10 favoritos');return;}
+  favs.push({usuario:session.usuario,nombre,addr:last.addr,ll:last.ll});
+  try{localStorage.setItem('mc_favs',JSON.stringify(favs));}catch(e){}
+  toast('★ Favorito guardado');
+}
+
+function usarGPS(){
+  if(!navigator.geolocation){toast('GPS no disponible');return;}
+  toast('Obteniendo ubicación...');
+  navigator.geolocation.getCurrentPosition(pos=>{
+    originLL={lat:pos.coords.latitude,lng:pos.coords.longitude};
+    if(geocoder) geocoder.geocode({location:originLL},(res,st)=>{
+      if(st==='OK'&&res[0]){
+        const inp=document.getElementById('inp-origen');
+        if(inp) inp.value=res[0].formatted_address;
+      }
+    });
+    if(window._originMarker) window._originMarker.setPosition(originLL);
+    if(gmap) gmap.panTo(originLL);
+    toast('✓ Ubicación obtenida');
+    calcRoute();
+  },()=>toast('No se pudo obtener ubicación'));
+}
+
+function initMap(){
+  if(!mReady||!window.google){setTimeout(initMap,300);return;}
+  gmap=new google.maps.Map(document.getElementById('map'),{
+    center:MINECORE_LL,zoom:13,disableDefaultUI:true,zoomControl:true,
+    styles:[{featureType:'poi',elementType:'labels',stylers:[{visibility:'off'}]}]
+  });
+  dirSvc=new google.maps.DirectionsService();
+  dirRen=new google.maps.DirectionsRenderer({suppressMarkers:true,polylineOptions:{strokeColor:'#E8FF00',strokeWeight:4,strokeOpacity:.9}});
+  dirRen.setMap(gmap);
+  geocoder=new google.maps.Geocoder();
+  originLL=MINECORE_LL;
+  window._originMarker=new google.maps.Marker({position:MINECORE_LL,map:gmap,icon:{path:google.maps.SymbolPath.CIRCLE,scale:9,fillColor:'#1D9E75',fillOpacity:1,strokeColor:'#fff',strokeWeight:2}});
+  const inpOrigen=document.getElementById('inp-origen');
+  if(inpOrigen){
+    const acO=new google.maps.places.Autocomplete(inpOrigen,{componentRestrictions:{country:'ec'},fields:['geometry','formatted_address']});
+    acO.addListener('place_changed',()=>{
+      const p=acO.getPlace(); if(!p.geometry)return;
+      originLL={lat:p.geometry.location.lat(),lng:p.geometry.location.lng()};
+      window._originMarker.setPosition(originLL);
+      gmap.panTo(originLL);
+      calcRoute();
+    });
+  }
+  // Setup autocomplete for existing paradas
+  paradas.forEach((_,i)=>{
+    const inp=document.getElementById('pi-'+i);
+    if(inp&&!inp._acSetup){
+      inp._acSetup=true;
+      const ac=new google.maps.places.Autocomplete(inp,{componentRestrictions:{country:'ec'},fields:['geometry','formatted_address','name']});
+      ac.addListener('place_changed',()=>{
+        const p=ac.getPlace(); if(!p.geometry)return;
+        paradas[i]={addr:`${p.name||p.formatted_address} — ${p.formatted_address}`,ll:{lat:p.geometry.location.lat(),lng:p.geometry.location.lng()}};
+        calcRoute();
+      });
+    }
+  });
+  gmap.addListener('click',e=>{
+    const ll=e.latLng;
+    const free=paradas.findIndex(p=>!p.ll);
+    const idx=free>=0?free:Math.max(0,paradas.length-1);
+    paradas[idx]={addr:'',ll:{lat:ll.lat(),lng:ll.lng()}};
+    geocoder.geocode({location:ll},(res,st)=>{
+      if(st==='OK'&&res[0]){
+        const name=res[0].address_components?.[1]?.short_name||res[0].formatted_address.split(',')[0];
+        paradas[idx].addr=`${name} — ${res[0].formatted_address}`;
+        const inp=document.getElementById('pi-'+idx);
+        if(inp) inp.value=name;
+      }
+    });
+    calcRoute();
+  });
+}
+
+function calcRoute(){
+  const valid=paradas.filter(p=>p.ll);
+  if(!originLL||!valid.length)return;
+  markers.forEach(m=>m&&m.setMap&&m.setMap(null)); markers=[];
+  dirSvc.route({
+    origin:originLL,
+    destination:valid[valid.length-1].ll,
+    waypoints:valid.slice(0,-1).map(p=>({location:p.ll,stopover:true})),
+    travelMode:google.maps.TravelMode.DRIVING,
+    provideRouteAlternatives:true
+  },(result,status)=>{
+    if(status!=='OK')return;
+    // Pick shortest route
+    const sorted=[...result.routes].sort((a,b)=>{
+      const da=a.legs.reduce((s,l)=>s+l.distance.value,0);
+      const db=b.legs.reduce((s,l)=>s+l.distance.value,0);
+      return da-db;
+    });
+    const best=sorted[0];
+    dirRen.setDirections({...result,routes:[best]});
+    let totalM=0,totalS=0;
+    best.legs.forEach(l=>{totalM+=l.distance.value;totalS+=l.duration.value;});
+    routeKm=Math.round(totalM/100)/10;
+    const veh=document.getElementById('f-veh')?.value||'Camioneta Nissan';
+    const rate=VEH_RATE[veh]||parseFloat(cfg.precio_km||0.40);
+    const val=(routeKm*rate).toFixed(2);
+    const hrs=Math.floor(totalS/3600),mins=Math.floor((totalS%3600)/60);
+    const dur=hrs>0?`${hrs}h ${mins}min`:`${mins} min`;
+    const box=document.getElementById('km-box');
+    if(box){box.style.display='block';document.getElementById('km-val').textContent='$'+val;document.getElementById('km-sub').textContent=`${routeKm} km · ${dur} · $${rate.toFixed(2)}/km`;}
+    const hint=document.getElementById('map-hint');if(hint)hint.style.opacity='0';
+    // Markers
+    valid.forEach((p,i)=>{
+      const m=new google.maps.Marker({position:p.ll,map:gmap,
+        label:{text:String(i+1),color:'#2D3142',fontWeight:'bold',fontSize:'12px'},
+        icon:{path:google.maps.SymbolPath.CIRCLE,scale:10,fillColor:'#E8FF00',fillOpacity:1,strokeColor:'#2D3142',strokeWeight:2}
+      });
+      markers.push(m);
+    });
+    const bounds=new google.maps.LatLngBounds();
+    best.legs.forEach(l=>{bounds.extend(l.start_location);bounds.extend(l.end_location);});
+    gmap.fitBounds(bounds,{top:20,right:20,bottom:20,left:20});
+  });
+}
+
+async function enviarRuta(){
+  const valid=paradas.filter(p=>p.ll);
+  if(!valid.length){toast('Agrega al menos un destino');return;}
+  if(!routeKm){toast('Calcula la ruta primero');return;}
+  const veh=document.getElementById('f-veh').value;
+  const rate=VEH_RATE[veh]||parseFloat(cfg.precio_km||0.40);
+  const btn=document.getElementById('btn-enviar');btn.textContent='Enviando...';btn.disabled=true;
+  const origen=document.getElementById('inp-origen').value||MINECORE_ADDR;
+  const destino=valid.map(p=>p.addr).join(' → ');
+  try{
+    const r=await api({action:'crearRuta',usuario:(session.rol==='admin'&&document.getElementById('f-usuario')?document.getElementById('f-usuario').value:session.usuario),origen,destino,km:routeKm,
+      vehiculo:veh,precioKm:rate,tipo:document.getElementById('f-tipo').value,
+      fechaServicio:document.getElementById('f-fecha').value,
+      motivo:document.getElementById('f-motivo').value||'Sin descripción'});
+    if(r.ok){toast('✓ Solicitud enviada');setView('mis-rutas');}
+    else toast('Error: '+(r.error||''));
+  }catch(e){toast('Error de conexión');}
+  btn.textContent='Enviar solicitud';btn.disabled=false;
+}
+
+// ─── VIEW: MIS RUTAS (CHOFER) ────────────────────────────────────────────────
+async function vMisRutas(c){
+  c.innerHTML=spin();
+  try{
+    const r=await api({action:'getRutas',rol:session.rol,usuario:session.usuario});
+    const rutas=r.rutas||[];
+    window._allRutas=rutas;
+    c.innerHTML=`<div class="page-title">Mis rutas</div>
+    <div class="tab-row">
+      <div class="tab active" onclick="filtMR(this,'')">Todas</div>
+      <div class="tab" onclick="filtMR(this,'Pendiente')">Pendientes</div>
+      <div class="tab" onclick="filtMR(this,'Aprobada')">Aprobadas</div>
+      <div class="tab" onclick="filtMR(this,'Rechazada')">Rechazadas</div>
+    </div>
+    <div id="mr-list">${rutas.length?rutas.map(r=>rutaTicket(r,false)).join(''):empty('Sin rutas aún')}</div>`;
+  }catch(e){c.innerHTML=errMsg();}
+}
+function filtMR(el,est){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
+  const f=est?(window._allRutas||[]).filter(r=>r['Estado']===est):(window._allRutas||[]);
+  document.getElementById('mr-list').innerHTML=f.length?f.map(r=>rutaTicket(r,false)).join(''):empty('Sin rutas en esta categoría');
+}
+
+// ─── VIEW: MI CUENTA ─────────────────────────────────────────────────────────
+async function vCuenta(c){
+  c.innerHTML=spin();
+  try{
+    const r=await api({action:'getRutas',rol:'admin'});
+    const todas=(r.rutas||[]).filter(rt=>{
+      if(rt['Estado']!=='Aprobada')return false;
+      const veh=String(rt['Vehiculo']||'').trim();
+      const owner=VEH_OWNER[veh];
+      if(owner) return owner===session.usuario;
+      return rt['Usuario']===session.usuario;
+    });
+    window._cuentaRutas=todas;
+    const pd=getPeriodoDates(0);
+    window._cFi=pd.fi; window._cFf=pd.ff; window._cFiltro='periodo';
+    renderCuenta(c);
+  }catch(e){c.innerHTML=errMsg();}
+}
+
+function renderCuenta(c){
+  const filtro=window._cFiltro||'periodo';
+  const fi=window._cFi||getPeriodoDates(0).fi, ff=window._cFf||getPeriodoDates(0).ff;
+  const rutas=filterByDate(window._cuentaRutas||[],fi,ff);
+  const totalKm=Math.round(rutas.reduce((s,r)=>s+parseFloat(r['KM']||0),0)*10)/10;
+  const totalUsd=Math.round(rutas.reduce((s,r)=>s+parseFloat(r['Valor ($)']||0),0)*100)/100;
+  const meses=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const fi0=new Date(fi+'T12:00:00'), ff0=new Date(ff+'T12:00:00');
+  const pd=getPeriodoDates(0), pa=getPeriodoDates(-1);
+  const pLabel=`26 ${meses[new Date(pd.fi+'T12:00:00').getMonth()]} → 25 ${meses[new Date(pd.ff+'T12:00:00').getMonth()]}`;
+  const aLabel=`26 ${meses[new Date(pa.fi+'T12:00:00').getMonth()]} → 25 ${meses[new Date(pa.ff+'T12:00:00').getMonth()]}`;
+  const label=fi===ff?`${fi0.getDate()} ${meses[fi0.getMonth()]} ${fi0.getFullYear()}`:`${fi0.getDate()} ${meses[fi0.getMonth()]} → ${ff0.getDate()} ${meses[ff0.getMonth()]} ${ff0.getFullYear()}`;
+  c.innerHTML=`
+  <div class="page-title">Mi cuenta</div>
+  <div class="filter-bar">
+    <div class="filter-label">Período</div>
+    <div class="filter-btns">
+      ${['hoy','ayer','7dias','periodo','anterior','todo'].map(id=>{
+        const labels={hoy:'Hoy',ayer:'Ayer','7dias':'7 días',periodo:`Período (${pLabel})`,anterior:`← Anterior (${aLabel})`,todo:'Todo'};
+        return `<button class="filt-btn${filtro===id?' active':''}" id="c-btn-${id}" onclick="cSetFiltro('${id}')">${labels[id]}</button>`;
+      }).join('')}
+    </div>
+    <div class="date-row">
+      <input type="date" id="c-fi" value="${fi}">
+      <span style="color:var(--text3)">→</span>
+      <input type="date" id="c-ff" value="${ff}">
+      <button class="btn-ok" onclick="cApply()">OK</button>
+    </div>
+  </div>
+  <div class="corte-hero">
+    <div class="corte-hero-lbl">Total a cobrar</div>
+    <div class="corte-hero-amt">$${totalUsd.toFixed(2)}</div>
+    <div class="corte-hero-sub">${label}</div>
+  </div>
+  <div class="corte-stats">
+    <div class="corte-stat"><div class="corte-stat-val">${rutas.length}</div><div class="corte-stat-lbl">Rutas</div></div>
+    <div class="corte-stat"><div class="corte-stat-val">${totalKm}</div><div class="corte-stat-lbl">KM</div></div>
+    <div class="corte-stat"><div class="corte-stat-val">$${rutas.length?(totalUsd/rutas.length).toFixed(2):'0.00'}</div><div class="corte-stat-lbl">Prom.</div></div>
+  </div>
+  <div class="card">
+    ${rutas.length?rutas.map(r=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:.5px solid var(--border)">
+        <div>
+          <div style="font-size:13px;font-weight:600">${placeName(r['Destino']||'—')}</div>
+          <div style="font-size:11px;color:var(--text2)">${fd(r['Fecha Servicio']||'')} · ${r['KM']} km${r['Vehiculo']?' · '+r['Vehiculo']:''}</div>
+        </div>
+        <div style="font-size:14px;font-weight:700">$${parseFloat(r['Valor ($)']).toFixed(2)}</div>
+      </div>`).join(''):empty('Sin rutas en este período')}
+  </div>`;
+}
+function cSetFiltro(f){ window._cFiltro=f; const d=applyDateFiltro(f,'c'); window._cFi=d.fi; window._cFf=d.ff; renderCuenta(document.getElementById('content')); }
+function cApply(){ window._cFi=document.getElementById('c-fi').value; window._cFf=document.getElementById('c-ff').value; window._cFiltro='custom'; document.querySelectorAll('[id^="c-btn-"]').forEach(b=>b.classList.remove('active')); renderCuenta(document.getElementById('content')); }
+
+// ─── VIEW: APROBAR ────────────────────────────────────────────────────────────
+async function vAprobar(c){
+  c.innerHTML=spin();
+  try{
+    const r=await api({action:'getRutas',rol:'admin',estado:'Pendiente'});
+    const rutas=r.rutas||[];
+    window._allRutas=rutas;
+    c.innerHTML=`<div class="page-title">Por aprobar</div>
+    <div class="page-sub">${rutas.length} pendiente${rutas.length!==1?'s':''}</div>
+    ${rutas.length?`<button onclick="aprobarTodo()" style="width:100%;padding:12px;background:var(--brand);color:#fff;border:none;border-radius:var(--radius);font-size:14px;font-weight:700;cursor:pointer;margin-bottom:12px">✓ Aprobar todo</button>`:''}
+    ${rutas.length?rutas.map(r=>rutaTicket(r,true)).join(''):empty('Sin solicitudes pendientes ✓')}`;
+  }catch(e){c.innerHTML=errMsg();}
+}
+async function aprobarTodo(){
+  const pendientes=(window._allRutas||[]).filter(r=>r['Estado']==='Pendiente');
+  for(const r of pendientes){
+    try{ await api({action:'aprobarRuta',id:r['ID'],admin:session.usuario}); }catch(e){}
+  }
+  toast('✓ Todas aprobadas');setView('aprobar');
+}
+
+// ─── VIEW: HISTORIAL ──────────────────────────────────────────────────────────
+async function vHistorial(c){
+  c.innerHTML=spin();
+  try{
+    const r=await api({action:'getRutas',rol:'admin'});
+    window._histRutas=r.rutas||[];
+    const pd=getPeriodoDates(0);
+    window._hFi=pd.fi; window._hFf=pd.ff; window._hFiltro='periodo';
+    window._hEstado=''; window._hSearch='';
+    renderHistorial(c);
+  }catch(e){c.innerHTML=errMsg();}
+}
+
+function renderHistorial(c){
+  const filtro=window._hFiltro||'periodo';
+  const fi=window._hFi||getPeriodoDates(0).fi, ff=window._hFf||getPeriodoDates(0).ff;
+  const meses=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const pd=getPeriodoDates(0), pa=getPeriodoDates(-1);
+  const pLabel=`26 ${meses[new Date(pd.fi+'T12:00:00').getMonth()]} → 25 ${meses[new Date(pd.ff+'T12:00:00').getMonth()]}`;
+  const aLabel=`26 ${meses[new Date(pa.fi+'T12:00:00').getMonth()]} → 25 ${meses[new Date(pa.ff+'T12:00:00').getMonth()]}`;
+  c.innerHTML=`
+  <div class="page-title">Historial</div>
+  <div class="filter-bar">
+    <div class="filter-label">Período</div>
+    <div class="filter-btns">
+      ${['hoy','ayer','7dias','periodo','anterior','todo'].map(id=>{
+        const labels={hoy:'Hoy',ayer:'Ayer','7dias':'7 días',periodo:`Período (${pLabel})`,anterior:`← Anterior (${aLabel})`,todo:'Todo'};
+        return `<button class="filt-btn${filtro===id?' active':''}" id="h-btn-${id}" onclick="hSetFiltro('${id}')">${labels[id]}</button>`;
+      }).join('')}
+    </div>
+    <div class="date-row" style="margin-bottom:10px">
+      <input type="date" id="h-fi" value="${fi}">
+      <span style="color:var(--text3)">→</span>
+      <input type="date" id="h-ff" value="${ff}">
+      <button class="btn-ok" onclick="hApply()">OK</button>
+    </div>
+    <input class="search-box" id="h-search" placeholder="🔍 Buscar por usuario, origen, destino, vehículo..." oninput="hRender()" value="${window._hSearch||''}">
+    <div class="filter-btns">
+      ${['','Pendiente','Aprobada','Rechazada'].map(e=>{
+        const lbl=e||'Todas'; const isCur=window._hEstado===e;
+        return `<button class="cnt-btn${isCur?' active':''}" onclick="hSetEstado('${e}',this)">${lbl}</button>`;
+      }).join('')}
+    </div>
+  </div>
+  <div id="h-list"></div>`;
+  hRender();
+}
+
+function hSetFiltro(f){ window._hFiltro=f; const d=applyDateFiltro(f,'h'); window._hFi=d.fi; window._hFf=d.ff; hRender(); }
+function hApply(){ window._hFi=document.getElementById('h-fi').value; window._hFf=document.getElementById('h-ff').value; window._hFiltro='custom'; document.querySelectorAll('[id^="h-btn-"]').forEach(b=>b.classList.remove('active')); hRender(); }
+function hSetEstado(e,el){ window._hEstado=e; document.querySelectorAll('.cnt-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active'); hRender(); }
+
+function hRender(){
+  const el=document.getElementById('h-list'); if(!el)return;
+  const search=(document.getElementById('h-search')?.value||'').toLowerCase().trim();
+  window._hSearch=search;
+  const fi=window._hFi||'2020-01-01', ff=window._hFf||'2099-12-31';
+  const est=window._hEstado||'';
+  let rutas=filterByDate(window._histRutas||[],fi,ff);
+  if(est) rutas=rutas.filter(r=>r['Estado']===est);
+  if(search) rutas=rutas.filter(r=>[r['Usuario'],r['Origen'],r['Destino'],r['Vehiculo'],r['Motivo'],r['Tipo']].join(' ').toLowerCase().includes(search));
+  window._allRutas=window._histRutas;
+  el.innerHTML=`<div style="font-size:12px;color:var(--text3);margin-bottom:8px">${rutas.length} ruta${rutas.length!==1?'s':''}</div>`
+    +(rutas.length?rutas.map(r=>rutaTicket(r,true)).join(''):empty('Sin rutas para este filtro'));
+}
+
+// ─── VIEW: CORTE ──────────────────────────────────────────────────────────────
+async function vCorte(c){
+  c.innerHTML=spin();
+  try{
+    const r=await api({action:'getRutas',rol:'admin'});
+    const todas=(r.rutas||[]).filter(x=>x['Estado']==='Aprobada');
+    // Non-admin: only show routes for vehicles they own
+    const isAdmin=session.rol==='admin';
+    const myVehs=isAdmin?null:Object.keys(VEH_OWNER).filter(v=>VEH_OWNER[v]===session.usuario);
+    window._corteRutas=isAdmin?todas:todas.filter(x=>myVehs.includes(String(x['Vehiculo']||'').trim()));
+    const pd=getPeriodoDates(0);
+    window._corFi=pd.fi; window._corFf=pd.ff; window._corFiltro='periodo';
+    renderCorte(c);
+  }catch(e){c.innerHTML=errMsg();}
+}
+
+function renderCorte(c){
+  const filtro=window._corFiltro||'periodo';
+  const fi=window._corFi||getPeriodoDates(0).fi, ff=window._corFf||getPeriodoDates(0).ff;
+  const meses=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const pd=getPeriodoDates(0), pa=getPeriodoDates(-1);
+  const pLabel=`26 ${meses[new Date(pd.fi+'T12:00:00').getMonth()]} → 25 ${meses[new Date(pd.ff+'T12:00:00').getMonth()]}`;
+  const aLabel=`26 ${meses[new Date(pa.fi+'T12:00:00').getMonth()]} → 25 ${meses[new Date(pa.ff+'T12:00:00').getMonth()]}`;
+  const rutas=filterByDate(window._corteRutas||[],fi,ff);
+  const totalKm=Math.round(rutas.reduce((s,r)=>s+parseFloat(r['KM']||0),0)*10)/10;
+  const totalUsd=Math.round(rutas.reduce((s,r)=>s+parseFloat(r['Valor ($)']||0),0)*100)/100;
+  // Desglose por propietario de vehículo
+  const byOwner={};
+  const OWNERS={EFCH:'Esteban Ferlito',MPL:'Martín Pinto',OPM:'Oswaldo Peña'};
+  rutas.forEach(rt=>{
+    const veh=String(rt['Vehiculo']||'').trim();
+    const ownId=VEH_OWNER[veh]; if(!ownId)return;
+    if(!byOwner[ownId])byOwner[ownId]={id:ownId,nombre:OWNERS[ownId]||ownId,km:0,usd:0,vehs:{}};
+    byOwner[ownId].km=Math.round((byOwner[ownId].km+parseFloat(rt['KM']||0))*10)/10;
+    byOwner[ownId].usd=Math.round((byOwner[ownId].usd+parseFloat(rt['Valor ($)']||0))*100)/100;
+    if(!byOwner[ownId].vehs[veh])byOwner[ownId].vehs[veh]={km:0,usd:0,n:0};
+    byOwner[ownId].vehs[veh].km=Math.round((byOwner[ownId].vehs[veh].km+parseFloat(rt['KM']||0))*10)/10;
+    byOwner[ownId].vehs[veh].usd=Math.round((byOwner[ownId].vehs[veh].usd+parseFloat(rt['Valor ($)']||0))*100)/100;
+    byOwner[ownId].vehs[veh].n++;
+  });
+  const ownerList=Object.values(byOwner).sort((a,b)=>b.usd-a.usd);
+  const fi0=new Date(fi+'T12:00:00'), ff0=new Date(ff+'T12:00:00');
+  const label=fi===ff?`${fi0.getDate()} ${meses[fi0.getMonth()]} ${fi0.getFullYear()}`:`${fi0.getDate()} ${meses[fi0.getMonth()]} → ${ff0.getDate()} ${meses[ff0.getMonth()]} ${ff0.getFullYear()}`;
+  c.innerHTML=`
+  <div class="page-title">Corte mensual</div>
+  <div class="filter-bar">
+    <div class="filter-label">Período</div>
+    <div class="filter-btns">
+      ${['hoy','ayer','7dias','periodo','anterior','todo'].map(id=>{
+        const labels={hoy:'Hoy',ayer:'Ayer','7dias':'7 días',periodo:`Período (${pLabel})`,anterior:`← Anterior (${aLabel})`,todo:'Todo'};
+        return `<button class="filt-btn${filtro===id?' active':''}" id="cor-btn-${id}" onclick="corSetFiltro('${id}')">${labels[id]}</button>`;
+      }).join('')}
+    </div>
+    <div class="date-row">
+      <input type="date" id="cor-fi" value="${fi}">
+      <span style="color:var(--text3)">→</span>
+      <input type="date" id="cor-ff" value="${ff}">
+      <button class="btn-ok" onclick="corApply()">OK</button>
+    </div>
+  </div>
+  <div class="corte-hero">
+    <div class="corte-hero-lbl">Total a pagar</div>
+    <div class="corte-hero-amt">$${totalUsd.toFixed(2)}</div>
+    <div class="corte-hero-sub">${label}</div>
+  </div>
+  <div class="corte-stats">
+    <div class="corte-stat"><div class="corte-stat-val">${rutas.length}</div><div class="corte-stat-lbl">Rutas</div></div>
+    <div class="corte-stat"><div class="corte-stat-val">${totalKm}</div><div class="corte-stat-lbl">KM</div></div>
+    <div class="corte-stat"><div class="corte-stat-val">$${parseFloat(cfg.precio_km||0.40).toFixed(2)}</div><div class="corte-stat-lbl">$/km</div></div>
+  </div>
+  <button class="btn-export" onclick="cerrarCorte('${label}')">📊 Cerrar corte y guardar en Sheets</button>
+  <div class="card">
+    <div style="font-size:13px;font-weight:700;margin-bottom:14px">💰 Desglose por propietario</div>
+    ${ownerList.map(o=>{
+      const co=col(o.id);
+      const vLines=Object.entries(o.vehs).map(([v,d])=>`
+        <div class="veh-row"><div class="veh-name">${v} · ${d.km} km · ${d.n} ruta${d.n!==1?'s':''}</div><div class="veh-val">$${d.usd.toFixed(2)}</div></div>`).join('');
+      return `<div class="owner-card">
+        <div class="owner-top">
+          <div class="owner-left">
+            <div class="owner-av" style="background:${co.bg};color:${co.tx}">${o.id}</div>
+            <div><div class="owner-name">${o.nombre}</div><div class="owner-km">${o.km} km total</div></div>
+          </div>
+          <div class="owner-total">$${o.usd.toFixed(2)}</div>
+        </div>${vLines}
+      </div>`;
+    }).join('')||empty('Sin rutas con vehículo asignado')}
+  </div>
+  <div class="card">
+    <div style="font-size:13px;font-weight:700;margin-bottom:10px">Detalle de rutas (${rutas.length})</div>
+    ${rutas.length?rutas.map(r=>`
+      <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:.5px solid var(--border)">
+        <div>
+          <div style="font-size:13px;font-weight:600">${placeName(r['Destino']||'—')}</div>
+          <div style="font-size:11px;color:var(--text2)">${fd(r['Fecha Servicio']||'')} · ${r['KM']} km · ${r['Usuario']}${r['Vehiculo']?' · '+r['Vehiculo']:''}</div>
+        </div>
+        <div style="font-size:14px;font-weight:700">$${parseFloat(r['Valor ($)']).toFixed(2)}</div>
+      </div>`).join(''):empty('Sin rutas en este período')}
+  </div>`;
+}
+function corSetFiltro(f){ window._corFiltro=f; const d=applyDateFiltro(f,'cor'); window._corFi=d.fi; window._corFf=d.ff; renderCorte(document.getElementById('content')); }
+function corApply(){ window._corFi=document.getElementById('cor-fi').value; window._corFf=document.getElementById('cor-ff').value; window._corFiltro='custom'; document.querySelectorAll('[id^="cor-btn-"]').forEach(b=>b.classList.remove('active')); renderCorte(document.getElementById('content')); }
+async function cerrarCorte(periodo){ if(!confirm(`¿Cerrar el corte?\n${periodo}`))return; try{ const r=await api({action:'cerrarCorte',periodo,admin:session.usuario}); if(r.ok)toast('✓ Corte cerrado'); else toast('Error'); }catch(e){toast('Error de conexión');} }
+
+// ─── VIEW: USUARIOS ───────────────────────────────────────────────────────────
+async function vUsuarios(c){
+  c.innerHTML=spin();
+  try{
+    const r=await api({action:'getUsuarios'}); const us=r.usuarios||[]; allUsers=us;
+    c.innerHTML=`<div class="page-title">Usuarios</div><div class="page-sub">Gestión de accesos</div>
+    <div class="card">${us.map(u=>{const co=col(u.usuario);return`<div class="uitem">
+      <div class="uitem-av" style="background:${co.bg};color:${co.tx}">${u.usuario}</div>
+      <div class="uitem-info"><div class="uitem-name">${u.nombre}</div><div class="uitem-meta">${u.rol==='admin'?'Administrador':'Chofer'}</div></div>
+      <div style="display:flex;gap:4px">
+        <button class="btn-icon" onclick="editUser('${u.usuario}','${u.nombre}','${u.rol}')">✏️</button>
+        ${u.usuario!==session.usuario?`<button class="btn-icon" onclick="delUser('${u.usuario}','${u.nombre}')">🗑️</button>`:''}
+      </div></div>`;}).join('')}
+    <button class="btn-add-user" onclick="addUser()">+ Agregar usuario</button></div>`;
+  }catch(e){c.innerHTML=errMsg();}
+}
+async function editUser(uid,nombre,rol){
+  const n=prompt('Nombre completo:',nombre);if(!n)return;
+  const r=confirm('¿Es Administrador?\n(Cancelar = Chofer)')?'admin':'chofer';
+  const p=prompt('Nuevo PIN de 4 dígitos:\n(Vacío para no cambiar)');
+  const payload={action:'editarUsuario',usuario:uid,nombre:n,rol:r};
+  if(p&&p.length===4&&!isNaN(p))payload.pin=p;
+  try{const res=await api(payload);if(res.ok){toast('✓ Actualizado');vUsuarios(document.getElementById('content'));}else toast('Error');}catch(e){toast('Error de conexión');}
+}
+async function delUser(uid,nombre){
+  if(!confirm(`¿Eliminar a ${nombre}?`))return;
+  try{const r=await api({action:'eliminarUsuario',usuario:uid});if(r.ok){toast(`${nombre} eliminado`);vUsuarios(document.getElementById('content'));}else toast('Error');}catch(e){toast('Error de conexión');}
+}
+async function addUser(){
+  const u=prompt('Iniciales (ej: JML):');if(!u?.trim())return;
+  const n=prompt('Nombre completo:');if(!n?.trim())return;
+  const r=confirm('¿Es Administrador?')?'admin':'chofer';
+  const p=prompt('PIN de 4 dígitos:');if(!p||p.length!==4||isNaN(p)){toast('PIN inválido');return;}
+  try{const res=await api({action:'crearUsuario',usuario:u.trim().toUpperCase(),nombre:n.trim(),rol:r,pin:p});if(res.ok){toast('✓ Agregado');vUsuarios(document.getElementById('content'));}else toast('Error: '+(res.error||''));}catch(e){toast('Error de conexión');}
+}
+
+// ─── VIEW: CONFIG ─────────────────────────────────────────────────────────────
+async function vConfig(c){
+  c.innerHTML=spin();
+  try{
+    const r=await api({action:'getConfig'}); const cf=r.config||{};
+    c.innerHTML=`<div class="page-title">Configuración</div><div class="page-sub">Parámetros del sistema</div>
+    <div class="card">
+      <div class="cfg-row">
+        <div><div class="cfg-label">Precio por KM</div><div class="cfg-sub">Se aplica a todas las rutas aprobadas</div></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="cfg-val">$${parseFloat(cf.precio_km||0.40).toFixed(2)}</div>
+          <button onclick="editPrecio()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">Editar</button>
+        </div>
+      </div>
+      <div class="cfg-row">
+        <div><div class="cfg-label">Período de corte</div><div class="cfg-sub">Ciclo de facturación</div></div>
+        <div class="cfg-val">26 → 25</div>
+      </div>
+      <div class="cfg-row">
+        <div><div class="cfg-label">Moto Minecore</div><div class="cfg-sub">Tarifa especial</div></div>
+        <div class="cfg-val">$0.15/km</div>
+      </div>
+    </div>`;
+  }catch(e){c.innerHTML=errMsg();}
+}
+async function editPrecio(){
+  const n=prompt('Nuevo precio por KM (USD):');if(!n)return;
+  const v=parseFloat(n);if(isNaN(v)||v<=0){toast('Inválido');return;}
+  try{const r=await api({action:'updateConfig',clave:'precio_km',valor:v.toFixed(2)});if(r.ok){cfg.precio_km=v;toast('✓ Precio actualizado');vConfig(document.getElementById('content'));}else toast('Error');}catch(e){toast('Error de conexión');}
+}
+
+// ─── CAJA CHICA ───────────────────────────────────────────────────────────────
+async function vBalance(c){
+  c.innerHTML=spin();
+  try{
+    const r=await api({action:'getBalanceCaja'});
+    let balances=r.balances||[];
+    const isAdmin=session.rol==='admin';
+    if(!isAdmin) balances=balances.filter(b=>b.usuario===session.usuario);
+
+    // Totales generales
+    const totalEnt=Math.round(balances.reduce((s,b)=>s+b.entregado,0)*100)/100;
+    const totalGast=Math.round(balances.reduce((s,b)=>s+b.aprobado,0)*100)/100;
+    const totalPend=Math.round(balances.reduce((s,b)=>s+b.pendiente,0)*100)/100;
+    const totalDisp=Math.round((totalEnt-totalGast)*100)/100;
+    const pct=totalEnt>0?Math.min(100,Math.round(totalGast/totalEnt*100)):0;
+    const over=totalGast>totalEnt;
+
+    c.innerHTML=`<div class="page-title">Caja Chica</div>
+    <div class="page-sub">Período: 26 al 25</div>
+
+    <!-- HERO DASHBOARD -->
+    <div style="background:var(--mc-dark);border-radius:var(--radius-lg);padding:20px;margin-bottom:12px;border:1px solid rgba(232,255,0,.2)">
+      <div style="font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Disponible en caja</div>
+      <div style="font-size:42px;font-weight:900;color:${totalDisp>=0?'var(--mc-yellow)':'#E24B4A'};letter-spacing:-1.5px;margin-bottom:4px">$${totalDisp.toFixed(2)}</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:16px">Entregado $${totalEnt.toFixed(2)} — Gastado $${totalGast.toFixed(2)}</div>
+      <!-- Progress bar -->
+      <div style="background:rgba(255,255,255,.1);border-radius:4px;height:6px;margin-bottom:16px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${over?'#E24B4A':'var(--mc-yellow)'};border-radius:4px;transition:width .4s"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+        <div style="background:rgba(255,255,255,.06);border-radius:10px;padding:10px 6px;text-align:center">
+          <div style="font-size:16px;font-weight:800;color:var(--mc-yellow)">$${totalEnt.toFixed(2)}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;margin-top:2px">Entregado</div>
+        </div>
+        <div style="background:rgba(255,255,255,.06);border-radius:10px;padding:10px 6px;text-align:center">
+          <div style="font-size:16px;font-weight:800;color:#fff">$${totalGast.toFixed(2)}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;margin-top:2px">Gastado</div>
+        </div>
+        <div style="background:rgba(255,255,255,.06);border-radius:10px;padding:10px 6px;text-align:center">
+          <div style="font-size:16px;font-weight:800;color:#FFA040">$${totalPend.toFixed(2)}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;margin-top:2px">Pendiente</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POR USUARIO -->
+    ${balances.filter(b=>b.entregado>0||b.aprobado>0||b.pendiente>0).map(b=>{
+      const co=col(b.usuario);
+      const bpct=b.entregado>0?Math.min(100,Math.round(b.aprobado/b.entregado*100)):0;
+      const bover=b.aprobado>b.entregado;
+      return `<div class="balance-card">
+        <div class="bal-user-row">
+          <div class="bal-av" style="background:${co.bg};color:${co.tx}">${b.usuario}</div>
+          <div style="flex:1">
+            <div class="bal-name">${b.nombre}</div>
+            ${b.pendiente>0?`<div style="font-size:11px;color:var(--warn-tx)">⏳ $${b.pendiente.toFixed(2)} pendiente aprobación</div>`:''}
+          </div>
+          <div style="font-size:18px;font-weight:900;color:${(b.disponible>=0)?'var(--ok-tx)':'var(--err-tx)'}">$${b.disponible.toFixed(2)}</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:4px;height:5px;margin-bottom:10px;overflow:hidden">
+          <div style="height:100%;width:${bpct}%;background:${bover?'var(--err-tx)':'var(--brand)'};border-radius:4px"></div>
+        </div>
+        <div class="bal-grid">
+          <div class="bal-stat"><div class="bal-stat-val">$${b.entregado.toFixed(2)}</div><div class="bal-stat-lbl">Entregado</div></div>
+          <div class="bal-stat"><div class="bal-stat-val">$${b.aprobado.toFixed(2)}</div><div class="bal-stat-lbl">Justificado</div></div>
+          <div class="bal-stat"><div class="bal-stat-val ${b.disponible>=0?'pos':'neg'}">$${b.disponible.toFixed(2)}</div><div class="bal-stat-lbl">Disponible</div></div>
+        </div>
+      </div>`;
+    }).join('')||'<div class="empty">Sin movimientos registrados</div>'}`;
+  }catch(e){c.innerHTML=errMsg();}
+}
+
+function renderNuevaEntrega(c){
+  const us=[...allUsers.filter(u=>(u.activo==='SI'||(u.activo===undefined))&&(u.rol||'').toLowerCase()==='chofer'),
+             ...allUsers.filter(u=>(u.activo==='SI'||(u.activo===undefined))&&(u.rol||'').toLowerCase()!=='chofer')];
+  c.innerHTML=`<div class="page-title">Registrar entrega</div><div class="page-sub">Dinero entregado a un colaborador</div>
+  <div class="card">
+    <div class="field-group"><label class="field-label">Para quién</label>
+      <select class="field-sel" id="e-dest">${us.map(u=>`<option value="${u.usuario}">${u.usuario} — ${u.nombre}</option>`).join('')}</select></div>
+    <div class="field-group"><label class="field-label">Monto ($)</label><input class="field-input" type="number" id="e-monto" placeholder="0.00" step="0.01" min="0.01"></div>
+    <div class="field-group"><label class="field-label">Forma</label>
+      <select class="field-sel" id="e-forma"><option value="Transferencia">💳 Transferencia</option><option value="Efectivo">💵 Efectivo</option><option value="Cheque">📄 Cheque</option></select></div>
+    <div class="field-group"><label class="field-label">Descripción</label><input class="field-input" id="e-desc" placeholder="Ej: Anticipo caja chica junio"></div>
+    <label class="field-label">Foto del comprobante (opcional)</label>
+    <div class="photo-zone" onclick="document.getElementById('e-foto').click()">
+      <input type="file" id="e-foto" accept="image/*" onchange="handleFoto(this,'e-prev','e-stat','e-url')">
+      <div style="font-size:28px;margin-bottom:6px">📷</div>
+      <div style="font-size:13px;color:var(--text2)">Tomar foto o subir imagen</div>
+      <img id="e-prev" class="photo-preview">
+      <div class="photo-status" id="e-stat"></div>
+    </div>
+    <input type="hidden" id="e-url">
+    <button class="btn-submit gold" onclick="enviarEntrega()" id="btn-e">Registrar entrega</button>
+  </div>`;
+}
+function vNuevaEntrega(c){ renderNuevaEntrega(c); }
+async function enviarEntrega(){
+  const monto=parseFloat(document.getElementById('e-monto').value);
+  if(!monto||monto<=0){toast('Ingresa el monto');return;}
+  // If a photo was selected but not yet uploaded, block submission
+  const fotoInp=document.getElementById('e-foto');
+  const fotoUrl=document.getElementById('e-url').value;
+  if(fotoInp&&fotoInp.files&&fotoInp.files.length>0&&!fotoUrl){
+    toast('⏳ Espera que la foto termine de subirse');return;
+  }
+  const btn=document.getElementById('btn-e');btn.textContent='Guardando...';btn.disabled=true;
+  try{const r=await api({action:'crearEntrega',admin:session.usuario,usuarioDestino:document.getElementById('e-dest').value,monto,forma:document.getElementById('e-forma').value,descripcion:document.getElementById('e-desc').value||'Sin descripción',fotoUrl:document.getElementById('e-url').value||''});
+  if(r.ok){toast('✓ Entrega registrada');setView('balance');}else toast('Error: '+(r.error||''));}catch(e){toast('Error de conexión');}
+  btn.textContent='Registrar entrega';btn.disabled=false;
+}
+
+async function vAprobarGastos(c){
+  c.innerHTML=spin();
+  try{const r=await api({action:'getGastos',rol:'admin',estado:'Pendiente'});const g=r.gastos||[];
+  window._pendGastos=g;
+  c.innerHTML=`<div class="page-title">Gastos por aprobar</div><div class="page-sub">${g.length} pendiente${g.length!==1?'s':''}</div>
+  ${g.length?`<button onclick="aprobarTodosGastos()" style="width:100%;padding:12px;background:var(--brand);color:#fff;border:none;border-radius:var(--radius);font-size:14px;font-weight:700;cursor:pointer;margin-bottom:12px">✓ Aprobar todos</button>`:''}
+  ${g.length?g.map(x=>gastoH(x,true)).join(''):empty('Sin gastos pendientes ✓')}`;
+  }catch(e){c.innerHTML=errMsg();}
+}
+async function aprobarTodosGastos(){
+  const pend=window._pendGastos||[];
+  for(const g of pend){try{await api({action:'aprobarGasto',id:g['ID'],admin:session.usuario});}catch(e){}}
+  toast('✓ Todos aprobados'); setView('aprobar-gastos');
+}
+
+async function vHistorialCaja(c){
+  c.innerHTML=spin();
+  try{
+    const isAdmin=session.rol==='admin';
+    const[re,rg]=await Promise.all([
+      api({action:'getEntregas',rol:session.rol,usuario:session.usuario}),
+      api({action:'getGastos',  rol:session.rol,usuario:session.usuario})
+    ]);
+    window._cajEnt=re.entregas||[]; window._cajGas=rg.gastos||[];
+    const pd=getPeriodoDates(0);
+    window._cajFi=pd.fi; window._cajFf=pd.ff; window._cajFiltro='periodo'; window._cajTab='e';
+    renderHistCaja(c);
+  }catch(e){c.innerHTML=errMsg();}
+}
+
+function renderHistCaja(c){
+  const filtro=window._cajFiltro||'periodo';
+  const fi=window._cajFi, ff=window._cajFf;
+  const meses=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const pd=getPeriodoDates(0),pa=getPeriodoDates(-1);
+  const pLabel=`26 ${meses[new Date(pd.fi+'T12:00:00').getMonth()]} → 25 ${meses[new Date(pd.ff+'T12:00:00').getMonth()]}`;
+  const aLabel=`26 ${meses[new Date(pa.fi+'T12:00:00').getMonth()]} → 25 ${meses[new Date(pa.ff+'T12:00:00').getMonth()]}`;
+  const tab=window._cajTab||'e';
+
+  // Filter by date
+  const d1=new Date(fi+'T00:00:00'), d2=new Date(ff+'T23:59:59');
+  const filtEnt=(window._cajEnt||[]).filter(e=>{
+    const d=parseDateStr((e['Fecha']||'').toString().split(' ')[0]);
+    return d&&d>=d1&&d<=d2;
+  });
+  const filtGas=(window._cajGas||[]).filter(g=>{
+    const d=parseDateStr((g['Fecha']||'').toString().split(' ')[0]);
+    return d&&d>=d1&&d<=d2;
+  });
+
+  // Summary stats
+  const totalEnt=Math.round(filtEnt.reduce((s,e)=>s+parseFloat(e['Monto ($)']||0),0)*100)/100;
+  const totalGas=Math.round(filtGas.filter(g=>g['Estado']==='Aprobado').reduce((s,g)=>s+parseFloat(g['Monto ($)']||0),0)*100)/100;
+  const totalPend=Math.round(filtGas.filter(g=>g['Estado']==='Pendiente').reduce((s,g)=>s+parseFloat(g['Monto ($)']||0),0)*100)/100;
+  const disp=Math.round((totalEnt-totalGas)*100)/100;
+
+  const fi0=new Date(fi+'T12:00:00'), ff0=new Date(ff+'T12:00:00');
+  const label=fi===ff?`${fi0.getDate()} ${meses[fi0.getMonth()]} ${fi0.getFullYear()}`:`${fi0.getDate()} ${meses[fi0.getMonth()]} → ${ff0.getDate()} ${meses[ff0.getMonth()]} ${ff0.getFullYear()}`;
+
+  c.innerHTML=`
+  <div class="page-title">Historial Caja</div>
+  <div class="filter-bar">
+    <div class="filter-label">Período</div>
+    <div class="filter-btns">
+      ${['hoy','ayer','7dias','periodo','anterior','todo'].map(id=>{
+        const labels={hoy:'Hoy',ayer:'Ayer','7dias':'7 días',periodo:`Período (${pLabel})`,anterior:`← Anterior (${aLabel})`,todo:'Todo'};
+        return `<button class="filt-btn${filtro===id?' active':''}" id="caj-btn-${id}" onclick="cajSetFiltro('${id}')">${labels[id]}</button>`;
+      }).join('')}
+    </div>
+    <div class="date-row">
+      <input type="date" id="caj-fi" value="${fi}">
+      <span style="color:var(--text3)">→</span>
+      <input type="date" id="caj-ff" value="${ff}">
+      <button class="btn-ok" onclick="cajApply()">OK</button>
+    </div>
+  </div>
+
+  <!-- Resumen período -->
+  <div style="background:var(--mc-dark);border-radius:var(--radius-lg);padding:16px;margin-bottom:12px;border:1px solid rgba(232,255,0,.2)">
+    <div style="font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">${label}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div style="background:rgba(255,255,255,.06);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:18px;font-weight:900;color:var(--mc-yellow)">$${totalEnt.toFixed(2)}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;margin-top:2px">Entregado (${filtEnt.length})</div>
+      </div>
+      <div style="background:rgba(255,255,255,.06);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:18px;font-weight:900;color:#fff">$${totalGas.toFixed(2)}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;margin-top:2px">Gastado (${filtGas.filter(g=>g['Estado']==='Aprobado').length})</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div style="background:rgba(255,255,255,.06);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:18px;font-weight:900;color:${disp>=0?'#7DD87A':'#E24B4A'}">$${disp.toFixed(2)}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;margin-top:2px">Disponible</div>
+      </div>
+      <div style="background:rgba(255,255,255,.06);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:18px;font-weight:900;color:#FFA040">$${totalPend.toFixed(2)}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;margin-top:2px">Pendiente (${filtGas.filter(g=>g['Estado']==='Pendiente').length})</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tab-row">
+    <div class="tab${tab==='e'?' active':''}" onclick="cajSetTab('e',this)">Entregas (${filtEnt.length})</div>
+    <div class="tab${tab==='g'?' active':''}" onclick="cajSetTab('g',this)">Gastos (${filtGas.length})</div>
+  </div>
+  <div id="caj-list"></div>`;
+
+  cajRenderList(tab, filtEnt, filtGas);
+}
+
+function cajSetFiltro(f){
+  window._cajFiltro=f;
+  const d=applyDateFiltro(f,'caj');
+  window._cajFi=d.fi; window._cajFf=d.ff;
+  renderHistCaja(document.getElementById('content'));
+}
+function cajApply(){
+  window._cajFi=document.getElementById('caj-fi').value;
+  window._cajFf=document.getElementById('caj-ff').value;
+  window._cajFiltro='custom';
+  document.querySelectorAll('[id^="caj-btn-"]').forEach(b=>b.classList.remove('active'));
+  renderHistCaja(document.getElementById('content'));
+}
+function cajSetTab(t,el){
+  window._cajTab=t;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');
+  const fi=window._cajFi, ff=window._cajFf;
+  const d1=new Date(fi+'T00:00:00'), d2=new Date(ff+'T23:59:59');
+  const filtEnt=(window._cajEnt||[]).filter(e=>{const d=parseDateStr((e['Fecha']||'').toString().split(' ')[0]);return d&&d>=d1&&d<=d2;});
+  const filtGas=(window._cajGas||[]).filter(g=>{const d=parseDateStr((g['Fecha']||'').toString().split(' ')[0]);return d&&d>=d1&&d<=d2;});
+  cajRenderList(t, filtEnt, filtGas);
+}
+function cajRenderList(tab, filtEnt, filtGas){
+  const el=document.getElementById('caj-list'); if(!el)return;
+  if(tab==='e') el.innerHTML=filtEnt.length?entregasH(filtEnt):empty('Sin entregas en este período');
+  else el.innerHTML=filtGas.length?filtGas.map(g=>gastoH(g,false)).join(''):empty('Sin gastos en este período');
+}
+
+async function vMisGastos(c){
+  c.innerHTML=spin();
+  try{const r=await api({action:'getGastos',rol:'chofer',usuario:session.usuario});const g=r.gastos||[];
+  window._misGas=g;
+  c.innerHTML=`<div class="page-title">Mis gastos</div>
+  <div class="tab-row">
+    <div class="tab active" onclick="filtG(this,'')">Todos</div>
+    <div class="tab" onclick="filtG(this,'Pendiente')">Pendientes</div>
+    <div class="tab" onclick="filtG(this,'Aprobado')">Aprobados</div>
+  </div>
+  <div id="gas-list">${g.length?g.map(x=>gastoH(x,false)).join(''):empty('Sin gastos registrados')}</div>`;
+  }catch(e){c.innerHTML=errMsg();}
+}
+function filtG(el,est){ document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');const f=est?(window._misGas||[]).filter(g=>g['Estado']===est):(window._misGas||[]);document.getElementById('gas-list').innerHTML=f.length?f.map(x=>gastoH(x,false)).join(''):empty('Sin gastos'); }
+
+function vNuevoGasto(c){
+  c.innerHTML=`<div class="page-title">Registrar gasto</div><div class="page-sub">Sube la factura para aprobación</div>
+  <div class="card">
+    <div class="field-group"><label class="field-label">Monto ($)</label><input class="field-input" type="number" id="g-monto" placeholder="0.00" step="0.01" min="0.01"></div>
+    <div class="field-group"><label class="field-label">Categoría</label>
+      <select class="field-sel" id="g-cat"><option value="Alimentación">🍽 Alimentación</option><option value="Combustible">⛽ Combustible</option><option value="Materiales">🔧 Materiales</option><option value="Transporte">🚌 Transporte</option><option value="Otros">📦 Otros</option></select></div>
+    <div class="field-group"><label class="field-label">Descripción</label><input class="field-input" id="g-desc" placeholder="Ej: Almuerzo en cliente norte"></div>
+    <label class="field-label">Foto de la factura</label>
+    <div class="photo-zone" onclick="document.getElementById('g-foto').click()">
+      <input type="file" id="g-foto" accept="image/*" onchange="handleFoto(this,'g-prev','g-stat','g-url')">
+      <div style="font-size:28px;margin-bottom:6px">🧾</div>
+      <div style="font-size:13px;color:var(--text2)">Tomar foto de la factura</div>
+      <img id="g-prev" class="photo-preview">
+      <div class="photo-status" id="g-stat"></div>
+    </div>
+    <input type="hidden" id="g-url">
+    <button class="btn-submit gold" onclick="enviarGasto()" id="btn-g">Enviar para aprobación</button>
+  </div>`;
+}
+async function enviarGasto(){
+  const monto=parseFloat(document.getElementById('g-monto').value);
+  if(!monto||monto<=0){toast('Ingresa el monto');return;}
+  // If a photo was selected but not yet uploaded, block submission
+  const stat=document.getElementById('g-stat');
+  const fotoInp=document.getElementById('g-foto');
+  const fotoUrl=document.getElementById('g-url').value;
+  if(fotoInp&&fotoInp.files&&fotoInp.files.length>0&&!fotoUrl){
+    toast('⏳ Espera que la foto termine de subirse');return;
+  }
+  const btn=document.getElementById('btn-g');btn.textContent='Enviando...';btn.disabled=true;
+  try{const r=await api({action:'crearGasto',usuario:session.usuario,monto,categoria:document.getElementById('g-cat').value,descripcion:document.getElementById('g-desc').value||'Sin descripción',fotoUrl:document.getElementById('g-url').value||''});
+  if(r.ok){toast('✓ Gasto enviado');setView('mis-gastos');}else toast('Error: '+(r.error||''));}catch(e){toast('Error de conexión');}
+  btn.textContent='Enviar para aprobación';btn.disabled=false;
+}
+
+async function vMisEntregas(c){
+  c.innerHTML=spin();
+  try{const r=await api({action:'getEntregas',rol:'chofer',usuario:session.usuario});const e=r.entregas||[];
+  const total=e.reduce((s,x)=>s+parseFloat(x['Monto ($)']||0),0);
+  c.innerHTML=`<div class="page-title">Dinero recibido</div>
+  <div class="card" style="background:var(--gold-light);border-color:var(--gold);margin-bottom:14px">
+    <div style="font-size:11px;color:var(--gold);font-weight:700;text-transform:uppercase;margin-bottom:4px">Total recibido</div>
+    <div style="font-size:28px;font-weight:900;color:var(--gold)">$${total.toFixed(2)}</div>
+  </div>
+  ${e.length?entregasH(e):empty('Sin entregas registradas')}`;
+  }catch(e){c.innerHTML=errMsg();}
+}
+
+function entregasH(ent){
+  if(!ent.length)return empty('Sin entregas');
+  return ent.map(e=>{
+    const fotoUrl=e['Foto URL']||e['FotoURL']||'';
+    const fotoOk=fotoUrl&&fotoUrl!=='undefined'&&fotoUrl.startsWith('http');
+    return `<div class="caja-item">
+    <div class="caja-hdr"><div class="caja-desc">${e['Descripción']||e['Descripcion']||'Sin descripción'}</div><div class="caja-monto" style="color:var(--gold)">$${parseFloat(e['Monto ($)']||0).toFixed(2)}</div></div>
+    <div class="caja-meta">Para: <strong>${e['Usuario Destino']}</strong> · ${e['Forma de Entrega']||''} · ${fd((e['Fecha']||'').split(' ')[0])}</div>
+    ${fotoOk?`<a href="${fotoUrl}" target="_blank" class="caja-link" style="display:inline-flex;align-items:center;gap:6px;margin-top:6px;padding:6px 12px;background:var(--gold-light);border-radius:20px;font-size:12px;font-weight:600;color:var(--gold);text-decoration:none">📎 Ver comprobante →</a>`
+    :'<div style="font-size:11px;color:var(--text3);margin-top:4px">Sin comprobante adjunto</div>'}
+  </div>`;
+  }).join('');
+}
+
+function gastoH(g,isAdmin){
+  const est=g['Estado']||'Pendiente', bc=badgeClass(est==='Aprobado'?'Aprobada':est==='Rechazado'?'Rechazada':est);
+  const acc=isAdmin&&est==='Pendiente'?`<div class="action-row"><button class="btn-reject" onclick="rejG('${g['ID']}')">Rechazar</button><button class="btn-approve" onclick="aprG('${g['ID']}')">✓ Aprobar</button></div>`:'';
+  const fotoUrl=g['Foto Factura URL']||g['Foto URL']||g['FotoURL']||'';
+  const fotoOk=fotoUrl&&fotoUrl!=='undefined'&&fotoUrl.startsWith('http');
+  return `<div class="caja-item">
+    <div class="caja-hdr"><div class="caja-desc">${g['Descripción']||g['Descripcion']||'Sin descripción'}</div><span class="badge ${bc}">${est}</span></div>
+    <div class="caja-monto" style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px">$${parseFloat(g['Monto ($)']||0).toFixed(2)}</div>
+    <div class="caja-meta">${g['Categoría']||g['Categoria']||''} · ${g['Usuario']} · ${fd((g['Fecha']||'').split(' ')[0])}</div>
+    ${fotoOk?`<a href="${fotoUrl}" target="_blank" class="caja-link" style="display:inline-flex;align-items:center;gap:6px;margin-top:6px;padding:6px 12px;background:var(--brand-light);border-radius:20px;font-size:12px;font-weight:600;color:var(--brand-dark);text-decoration:none">📎 Ver factura →</a>`
+    :'<div style="font-size:11px;color:var(--text3);margin-top:4px">Sin foto adjunta</div>'}
+    ${acc}</div>`;
+}
+async function aprG(id){try{const r=await api({action:'aprobarGasto',id,admin:session.usuario});if(r.ok){toast('✓ Aprobado');setView('aprobar-gastos');}else toast('Error');}catch(e){toast('Error de conexión');}}
+async function rejG(id){try{const r=await api({action:'rechazarGasto',id,admin:session.usuario});if(r.ok){toast('Rechazado');setView('aprobar-gastos');}else toast('Error');}catch(e){toast('Error de conexión');}}
+
+// ─── PHOTO UPLOAD ─────────────────────────────────────────────────────────────
+async function handleFoto(input,prevId,statId,urlId){
+  const file=input.files[0]; if(!file)return;
+  const prev=document.getElementById(prevId), stat=document.getElementById(statId), urlInp=document.getElementById(urlId);
+  prev.src=URL.createObjectURL(file); prev.style.display='block';
+  stat.style.display='block'; stat.style.color='var(--text2)'; stat.textContent='Comprimiendo imagen...';
+  // Disable ALL submit buttons while uploading
+  const btns=document.querySelectorAll('.btn-submit');
+  btns.forEach(b=>{b._wasDisabled=b.disabled;b.disabled=true;b.style.opacity='0.4';});
+  urlInp.value=''; // Clear previous URL
+  try{
+    const b64=await comprimirImagen(file,1200,0.75);
+    stat.textContent='Subiendo foto a Drive...';
+    const r=await api({action:'savePhoto',base64:b64,mimeType:'image/jpeg',nombre:file.name||'foto.jpg'});
+    if(r.ok){
+      urlInp.value=r.url;
+      stat.textContent='✓ Foto subida correctamente';
+      stat.style.color='var(--brand)';
+    } else {
+      stat.textContent='❌ Error al subir: '+(r.error||'intenta de nuevo');
+      stat.style.color='var(--err-tx)';
+    }
+  }catch(e){
+    stat.textContent='❌ Error de conexión al subir foto';
+    stat.style.color='var(--err-tx)';
+  } finally {
+    // Re-enable submit buttons
+    btns.forEach(b=>{b.disabled=b._wasDisabled||false;b.style.opacity='';});
+  }
+}
+
+function comprimirImagen(file, maxW, quality){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    img.onload=()=>{
+      let w=img.width, h=img.height;
+      if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
+      const canvas=document.createElement('canvas');
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      const data=canvas.toDataURL('image/jpeg',quality);
+      res(data.split(',')[1]);
+    };
+    img.onerror=rej;
+    img.src=URL.createObjectURL(file);
+  });
+}
+
+// ─── HOME QUICK ACTIONS ─────────────────────────────────────────────────────
+async function renderHomeActions(){
+  const isAdmin=session.rol==='admin';
+  const actEl=document.getElementById('home-actions');
+  const secEl=document.getElementById('home-secondary');
+  if(!actEl||!secEl)return;
+
+  if(isAdmin){
+    actEl.innerHTML=`
+      <button onclick="openMod('rutas','nueva')" style="width:100%;padding:16px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
+        <div style="width:46px;height:46px;border-radius:13px;background:var(--brand);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🚗</div>
+        <div style="flex:1"><div style="font-size:15px;font-weight:700;color:var(--text)">Nueva Ruta</div><div style="font-size:12px;color:var(--text2);margin-top:2px">Registrar entrega o servicio</div></div>
+        <div style="font-size:22px;color:var(--text3)">›</div>
+      </button>
+      <button onclick="openMod('caja','nueva-entrega')" style="width:100%;padding:16px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
+        <div style="width:46px;height:46px;border-radius:13px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">💵</div>
+        <div style="flex:1"><div style="font-size:15px;font-weight:700;color:var(--text)">Entregar Dinero</div><div style="font-size:12px;color:var(--text2);margin-top:2px">Entregar caja chica a colaborador</div></div>
+        <div style="font-size:22px;color:var(--text3)">›</div>
+      </button>
+      <button onclick="openMod('caja','nuevo-gasto')" style="width:100%;padding:16px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
+        <div style="width:46px;height:46px;border-radius:13px;background:#3B5EA6;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">📷</div>
+        <div style="flex:1"><div style="font-size:15px;font-weight:700;color:var(--text)">Registrar Gasto</div><div style="font-size:12px;color:var(--text2);margin-top:2px">Subir factura para aprobación</div></div>
+        <div style="font-size:22px;color:var(--text3)">›</div>
+      </button>`;
+    secEl.innerHTML=`
+      <button onclick="openMod('rutas','aprobar')" style="width:100%;padding:14px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
+        <div style="width:44px;height:44px;border-radius:13px;background:#0D5C3A;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🚛</div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--text)">Aprobar Rutas</div><div style="font-size:12px;color:var(--text2);margin-top:1px">Ver solicitudes pendientes</div></div>
+        <div style="display:flex;align-items:center;gap:8px"><span id="badge-rutas" style="display:none;background:#E24B4A;color:#fff;font-size:11px;font-weight:800;border-radius:20px;padding:2px 8px"></span><div style="font-size:22px;color:var(--text3)">›</div></div>
+      </button>
+      <button onclick="openMod('rutas','historial')" style="width:100%;padding:14px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
+        <div style="width:44px;height:44px;border-radius:13px;background:#2C4A7C;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📋</div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--text)">Historial Rutas</div><div style="font-size:12px;color:var(--text2);margin-top:1px">Todas las rutas registradas</div></div>
+        <div style="font-size:22px;color:var(--text3)">›</div>
+      </button>
+      <button onclick="openMod('caja','aprobar-gastos')" style="width:100%;padding:14px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
+        <div style="width:44px;height:44px;border-radius:13px;background:#5C3A0D;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🧾</div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--text)">Aprobar Gastos</div><div style="font-size:12px;color:var(--text2);margin-top:1px">Gastos pendientes de caja</div></div>
+        <div style="display:flex;align-items:center;gap:8px"><span id="badge-gastos" style="display:none;background:#E24B4A;color:#fff;font-size:11px;font-weight:800;border-radius:20px;padding:2px 8px"></span><div style="font-size:22px;color:var(--text3)">›</div></div>
+      </button>
+      <button onclick="openMod('caja','historial-caja')" style="width:100%;padding:14px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
+        <div style="width:44px;height:44px;border-radius:13px;background:#3A2C5C;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📒</div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--text)">Historial Caja</div><div style="font-size:12px;color:var(--text2);margin-top:1px">Entregas y gastos registrados</div></div>
+        <div style="font-size:22px;color:var(--text3)">›</div>
+      </button>`;
+  } else {
+    actEl.innerHTML=`
+      <button onclick="openMod('rutas','nueva')" style="width:100%;padding:16px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
+        <div style="width:46px;height:46px;border-radius:13px;background:var(--brand);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🚗</div>
+        <div style="flex:1"><div style="font-size:15px;font-weight:700;color:var(--text)">Nueva Ruta</div><div style="font-size:12px;color:var(--text2);margin-top:2px">Registrar entrega o servicio</div></div>
+        <div style="font-size:22px;color:var(--text3)">›</div>
+      </button>
+      <button onclick="openMod('caja','nuevo-gasto')" style="width:100%;padding:16px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
+        <div style="width:46px;height:46px;border-radius:13px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">📷</div>
+        <div style="flex:1"><div style="font-size:15px;font-weight:700;color:var(--text)">Registrar Gasto</div><div style="font-size:12px;color:var(--text2);margin-top:2px">Subir factura para aprobación</div></div>
+        <div style="font-size:22px;color:var(--text3)">›</div>
+      </button>`;
+    secEl.innerHTML=`
+      <button onclick="openMod('rutas','mis-rutas')" style="width:100%;padding:14px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
+        <div style="width:44px;height:44px;border-radius:13px;background:#2C4A7C;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📋</div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--text)">Mis Rutas</div><div style="font-size:12px;color:var(--text2);margin-top:1px">Ver mis solicitudes</div></div>
+        <div style="font-size:22px;color:var(--text3)">›</div>
+      </button>
+      <button onclick="openMod('rutas','cuenta')" style="width:100%;padding:14px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
+        <div style="width:44px;height:44px;border-radius:13px;background:#0D5C3A;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">💰</div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--text)">Mi Cuenta</div><div style="font-size:12px;color:var(--text2);margin-top:1px">Total KM y cobros del período</div></div>
+        <div style="font-size:22px;color:var(--text3)">›</div>
+      </button>
+      <button onclick="openMod('caja','balance')" style="width:100%;padding:14px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
+        <div style="width:44px;height:44px;border-radius:13px;background:#5C3A0D;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">💳</div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--text)">Mi Caja</div><div style="font-size:12px;color:var(--text2);margin-top:1px">Balance y disponible</div></div>
+        <div style="font-size:22px;color:var(--text3)">›</div>
+      </button>
+      <button onclick="openMod('caja','historial-caja')" style="width:100%;padding:14px 18px;background:var(--surface);border:.5px solid var(--border);border-radius:16px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left">
+        <div style="width:44px;height:44px;border-radius:13px;background:#3A2C5C;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📒</div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--text)">Historial Caja</div><div style="font-size:12px;color:var(--text2);margin-top:1px">Entregas y gastos</div></div>
+        <div style="font-size:22px;color:var(--text3)">›</div>
+      </button>`;
+  }
+
+  if(!isAdmin) return;
+  Promise.all([
+    api({action:'getRutas',rol:'admin',estado:'Pendiente'}),
+    api({action:'getGastos',rol:'admin',estado:'Pendiente'})
+  ]).then(([rr,rg])=>{
+    const nr=(rr.rutas||[]).length,ng=(rg.gastos||[]).length;
+    const br=document.getElementById('badge-rutas');
+    const bg=document.getElementById('badge-gastos');
+    if(br&&nr>0){br.textContent=nr;br.style.display='inline-block';}
+    if(bg&&ng>0){bg.textContent=ng;bg.style.display='inline-block';}
+  }).catch(()=>{});
+}
+
