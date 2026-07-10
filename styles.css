@@ -274,3 +274,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;backg
 .fab-item .fab-lbl{color:#fff;font-size:14px;font-weight:700}
 .fab-item.fab-hi{background:#E8FF00}
 .fab-item.fab-hi .fab-lbl{color:#161926}
+
+/* ── Home v8: nav inferior + actividad ── */
+.hnav{position:fixed;left:0;right:0;bottom:0;background:#1E2333;border-top:.5px solid rgba(255,255,255,.08);display:grid;grid-template-columns:repeat(4,1fr);padding:10px 0 24px;z-index:280}
+.hnav.c3{grid-template-columns:repeat(3,1fr)}
+.hnav-item{background:none;border:none;text-align:center;cursor:pointer;padding:0}
+.hnav-item svg{width:21px;height:21px;stroke:rgba(255,255,255,.4);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.hnav-lbl{font-size:10px;margin-top:3px;color:rgba(255,255,255,.4)}
+.hnav-item.on svg{stroke:#E8FF00}
+.hnav-item.on .hnav-lbl{color:#E8FF00}
+.act-list{margin-top:2px}
+.act-row{display:flex;justify-content:space-between;align-items:center;padding:9px 2px;border-bottom:.5px solid rgba(255,255,255,.06)}
+.act-row:last-child{border-bottom:none}
+.act-txt{font-size:12px;color:rgba(255,255,255,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-right:10px}
+.act-val{font-size:12px;color:rgba(255,255,255,.45);flex-shrink:0;font-weight:600}
+.fab{bottom:100px}
+.fab-actions{bottom:170px}

@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Minecore">
 <title>Minecore App</title>
-<link rel="stylesheet" href="styles.css?v=8">
+<link rel="stylesheet" href="styles.css?v=9">
 </head>
 <body>
 
@@ -69,8 +69,8 @@
       <div id="home-av" style="width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900"></div>
     </div>
   </div>
-  <div style="padding:0 24px 24px">
-    <div id="greet-name" style="font-size:28px;font-weight:900;color:#fff;letter-spacing:-.5px"></div>
+  <div style="padding:0 24px 16px">
+    <div id="greet-name" style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-.3px"></div>
     <div id="home-uname" style="font-size:13px;color:rgba(255,255,255,.4);margin-top:3px"></div>
   </div>
   <!-- Home v7: dashboard -->
@@ -80,6 +80,8 @@
     <div id="home-metrics" class="hm-grid"></div>
     <div class="home-label">Ver y gestionar</div>
     <div id="home-grid" class="hg-grid"></div>
+    <div class="home-label" style="margin-top:18px" id="home-act-label">Actividad reciente</div>
+    <div id="home-activity" class="act-list"></div>
     <button onclick="logout()" style="width:100%;margin-top:24px;padding:12px;background:none;border:1px solid rgba(255,255,255,.12);border-radius:var(--radius);font-size:13px;color:rgba(255,255,255,.35);cursor:pointer">Cerrar sesión</button>
     <div id="fab-menu" class="fab-menu" style="display:none" onclick="toggleFab(false)">
       <div class="fab-actions">
@@ -89,6 +91,24 @@
       </div>
     </div>
     <button id="fab-btn" class="fab" onclick="toggleFab()">+</button>
+    <nav class="hnav" id="home-nav">
+      <button class="hnav-item on">
+        <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg>
+        <div class="hnav-lbl">Inicio</div>
+      </button>
+      <button class="hnav-item" onclick="openMod('rutas')">
+        <svg viewBox="0 0 24 24"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h8.5a3.5 3.5 0 0 0 0-7h-9a3.5 3.5 0 0 1 0-7H16"/></svg>
+        <div class="hnav-lbl">Rutas</div>
+      </button>
+      <button class="hnav-item" onclick="openMod('caja')">
+        <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M16 12h.01M2 10h20"/></svg>
+        <div class="hnav-lbl">Caja</div>
+      </button>
+      <button class="hnav-item" id="hnav-config" onclick="openMod('rutas','config')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <div class="hnav-lbl">Config</div>
+      </button>
+    </nav>
   </div>
 </div>
 
@@ -105,6 +125,6 @@
 
 <div class="toast" id="toast"></div>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD89tboX5JzwLTm7EcdAI1I_Xeq3vZy0kE&libraries=places,geometry&callback=mapsReady" async defer></script>
-<script src="app.js?v=8"></script>
+<script src="app.js?v=9"></script>
 </body>
 </html>

@@ -1460,6 +1460,9 @@ async function renderHomeActions(){
 
   const fabDin=document.getElementById('fab-dinero');
   if(fabDin) fabDin.style.display=isAdmin?'flex':'none';
+  const cfgTab=document.getElementById('hnav-config');
+  const navEl=document.getElementById('home-nav');
+  if(cfgTab&&navEl){ cfgTab.style.display=isAdmin?'block':'none'; navEl.classList.toggle('c3',!isAdmin); }
 
   function hgBtn(mod,view,t,s){
     return `<button class="hg-item" onclick="openMod('${mod}','${view}')"><div class="hg-t">${t}</div><div class="hg-s">${s}</div></button>`;
@@ -1537,6 +1540,25 @@ async function renderHomeActions(){
       let rows='';
       if(!tieneHoy) rows+=attnRow('rutas','nueva','No has registrado rutas hoy');
       attnEl.innerHTML=rows?('<div class="attn-card"><div class="attn-title">Recordatorio</div>'+rows+'</div>'):'';
+    }
+    // Actividad reciente: últimas 4 rutas
+    const actEl=document.getElementById('home-activity');
+    const actLbl=document.getElementById('home-act-label');
+    if(actEl){
+      const rec=rutas.slice(0,4);
+      if(rec.length){
+        if(actLbl)actLbl.style.display='block';
+        actEl.innerHTML=rec.map(r=>{
+          const dest=placeName(r['Destino']||'—');
+          const est=r['Estado']||'Pendiente';
+          const dot=est==='Aprobada'?'#5DCAA5':est==='Rechazada'?'#F09595':'#FAC775';
+          const val=parseFloat(r['Valor ($)']||0);
+          return '<div class="act-row"><span class="act-txt"><span style="color:'+dot+'">●</span> '+dest+'</span><span class="act-val">$'+val.toFixed(2)+'</span></div>';
+        }).join('');
+      } else {
+        if(actLbl)actLbl.style.display='none';
+        actEl.innerHTML='';
+      }
     }
   }catch(e){
     metEl.innerHTML=
