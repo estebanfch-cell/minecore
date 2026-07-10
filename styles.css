@@ -290,3 +290,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;backg
 .act-val{font-size:12px;color:rgba(255,255,255,.45);flex-shrink:0;font-weight:600}
 .fab{bottom:100px}
 .fab-actions{bottom:170px}
+
+/* ── Chips de navegación en módulos (reemplaza barra de 6 tabs) ── */
+#bottom-nav{position:static;background:var(--bg);border-top:none;padding:0;display:block;height:auto;box-shadow:none}
+#bottom-nav .nav-btn{display:none}
+.chips{display:flex;gap:8px;padding:12px 16px 4px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.chip{flex-shrink:0;padding:8px 18px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:13px;font-weight:700;cursor:pointer}
+.chip.on{background:#161926;border-color:#161926;color:#E8FF00}
+
+/* ── Carpetas por período ── */
+.pfolder{background:var(--surface);border:.5px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden}
+.pfolder-hdr{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;cursor:pointer}
+.pf-lbl{font-size:14px;font-weight:800;color:var(--text)}
+.pf-sub{font-size:11px;color:var(--text3);margin-top:3px}
+.pf-actions{display:flex;align-items:center;gap:10px;flex-shrink:0;margin-left:10px}
+.pf-pdf{padding:7px 12px;background:#161926;color:#E8FF00;border:none;border-radius:9px;font-size:11px;font-weight:800;cursor:pointer}
+.pf-chev{color:var(--text3);font-size:13px}
+.pfolder-body{padding:0 12px 12px;border-top:.5px solid var(--border)}
+.pf-mini{font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin:12px 4px 8px}
