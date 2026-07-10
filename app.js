@@ -199,11 +199,11 @@ function renderNav(){
   const CHIPS={
     rutas:{
       admin:[{id:'aprobar',label:'Aprobar'},{id:'historial',label:'Historial'},{id:'corte',label:'Corte'}],
-      chofer:[{id:'mis-rutas',label:'Mis rutas'},{id:'cuenta',label:'Mi cuenta'}]
+      chofer:[{id:'mis-rutas',label:'Mis rutas'},{id:'historial',label:'Historial'},{id:'cuenta',label:'Mi cuenta'}]
     },
     caja:{
       admin:[{id:'aprobar-gastos',label:'Aprobar'},{id:'historial-caja',label:'Historial'},{id:'balance',label:'Balance'}],
-      chofer:[{id:'mis-gastos',label:'Mis gastos'},{id:'balance',label:'Mi caja'}]
+      chofer:[{id:'mis-gastos',label:'Mis gastos'},{id:'historial-caja',label:'Historial'},{id:'balance',label:'Mi caja'}]
     },
     ajustes:{
       admin:[{id:'config',label:'Config'},{id:'usuarios',label:'Usuarios'}],
@@ -840,7 +840,7 @@ async function aprobarTodo(){
 async function vHistorial(c){
   c.innerHTML=spin();
   try{
-    const r=await api({action:'getRutas',rol:'admin'});
+    const r=await api({action:'getRutas',rol:session.rol,usuario:session.usuario});
     window._histRutas=r.rutas||[];
     const pd=getPeriodoDates(0);
     window._hFi=pd.fi; window._hFf=pd.ff; window._hFiltro='periodo';
