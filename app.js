@@ -22,6 +22,14 @@ function readEmbedCaja(){
 }
 const EMBED_CAJA=readEmbedCaja();
 const RUTAS_VIEWS=new Set(['nueva','mis-rutas','cuenta','aprobar','historial','corte','usuarios','config']);
+const ADMIN_SSO_ORIGIN='https://estebanfch-cell.github.io';
+const ADMIN_USER_ALIASES={
+  esteban:'EFCH','esteban ferlito':'EFCH',efch:'EFCH',
+  martin:'MPL','martin pinto':'MPL',mpl:'MPL',
+  oswaldo:'OPM','oswaldo pena':'OPM',opm:'OPM',
+  angel:'AG','angel guachamin':'AG',ag:'AG'
+};
+let embedSsoDone=false, embedSsoApplying=false, resolveEmbedSsoWait=null;
 
 // Hardcoded users (login works offline)
 const DEFAULT_USERS = [
@@ -64,6 +72,155 @@ async function api(data){
   return r.json();
 }
 
+// ─── EMBED SSO (Admin iframe only) ────────────────────────────────────────────
+function normUserKey(s){
+  return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/\s+/g,' ');
+}
+function isAllowedSsoOrigin(origin){
+  return origin===ADMIN_SSO_ORIGIN || origin===location.origin;
+}
+function cajaUserList(){
+  return (allUsers&&allUsers.length)?allUsers:DEFAULT_USERS;
+}
+function findCajaUser(usuario, nombre){
+  const users=cajaUserList();
+  const uRaw=String(usuario||'').trim();
+  const nRaw=String(nombre||'').trim();
+  const uNorm=normUserKey(uRaw);
+  const nNorm=normUserKey(nRaw);
+  let hit=users.find(u=>u.usuario===uRaw || normUserKey(u.usuario)===uNorm);
+  if(hit) return hit;
+  hit=users.find(u=>normUserKey(u.nombre)===nNorm || (nNorm&&normUserKey(u.nombre)===uNorm) || (uNorm&&normUserKey(u.nombre)===nNorm));
+  if(hit) return hit;
+  const alias=ADMIN_USER_ALIASES[uNorm]||ADMIN_USER_ALIASES[nNorm];
+  if(alias){
+    hit=users.find(u=>u.usuario===alias);
+    if(hit) return hit;
+    return {usuario:alias, nombre:nRaw||uRaw||alias, rol:'chofer', activo:'SI'};
+  }
+  if(uNorm){
+    hit=users.find(u=>{
+      const nm=normUserKey(u.nombre);
+      return nm===uNorm || nm.startsWith(uNorm+' ') || uNorm.startsWith(nm.split(' ')[0]);
+    });
+    if(hit) return hit;
+  }
+  return null;
+}
+function consumeEmbedSso(){
+  try{
+    const raw=localStorage.getItem('mc_embed_sso');
+    if(!raw) return null;
+    localStorage.removeItem('mc_embed_sso');
+    const p=JSON.parse(raw);
+    if(!p||p.ok!==true) return null;
+    if(p.ts!=null && p.ts!==''){
+      const ts=Number(p.ts)||Date.parse(p.ts);
+      if(!Number.isFinite(ts) || Math.abs(Date.now()-ts)>5*60*1000) return null;
+    }else if(!p.usuario || !p.nombre || !p.rol){
+      return null;
+    }
+    if(!p.usuario && !p.nombre) return null;
+    return p;
+  }catch(e){ return null; }
+}
+function readAdminPin(){
+  try{ return String(localStorage.getItem('mc_pin')||'').trim(); }catch(e){ return ''; }
+}
+function readAdminSharedSso(){
+  try{
+    if(window.self===window.top) return null;
+    const usuario=localStorage.getItem('mc_user_name')||'';
+    let profile={};
+    try{ profile=JSON.parse(localStorage.getItem('mc_profile')||'{}'); }catch(e){}
+    const nombre=profile.nombre||usuario;
+    const rol=profile.rol||'';
+    if(!usuario && !nombre) return null;
+    const mapped=findCajaUser(usuario, nombre);
+    if(!mapped) return null;
+    const pin=readAdminPin();
+    return {ok:true, usuario:mapped.usuario, nombre:mapped.nombre||nombre, rol:mapped.rol||rol, pin};
+  }catch(e){ return null; }
+}
+function signalEmbedSso(){
+  embedSsoDone=true;
+  if(resolveEmbedSsoWait){ const r=resolveEmbedSsoWait; resolveEmbedSsoWait=null; r(true); }
+}
+function hideSplashNow(){
+  const s=document.getElementById('splash');
+  if(!s) return;
+  s.classList.add('hide');
+  s.style.display='none';
+}
+function showEmbedLogin(){
+  const s=document.getElementById('splash');
+  if(s) s.classList.add('hide');
+  setTimeout(()=>{
+    hideSplashNow();
+    loadUsers();
+    show('scr-users');
+  },200);
+}
+async function loginWithPinOrLocal(usuario, nombre, rol, pin){
+  const localSess={ok:true, usuario, nombre, rol:(rol||'chofer').toLowerCase()};
+  if(pin){
+    try{
+      const r=await Promise.race([
+        api({action:'login', usuario, pin}),
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),4000))
+      ]);
+      if(r&&r.ok){
+        r.rol=(r.rol||localSess.rol).toLowerCase();
+        return r;
+      }
+    }catch(e){}
+  }
+  return localSess;
+}
+async function applyEmbedSso(payload){
+  if(!EMBED_CAJA || !payload || embedSsoDone || session || embedSsoApplying) return !!session;
+  const mapped=findCajaUser(payload.usuario, payload.nombre);
+  const usuario=(mapped&&mapped.usuario)||String(payload.usuario||'').trim().toUpperCase();
+  if(!usuario) return false;
+  embedSsoApplying=true;
+  const nombre=(mapped&&mapped.nombre)||payload.nombre||usuario;
+  const rol=((mapped&&mapped.rol)||payload.rol||'chofer').toLowerCase();
+  const pin=String(payload.pin||readAdminPin()||'').trim();
+  try{
+    session=await loginWithPinOrLocal(usuario, nombre, rol, pin);
+    sessionStorage.setItem('mcSess',JSON.stringify(session));
+    hideSplashNow();
+    hideAll();
+    bootHome();
+    signalEmbedSso();
+    return true;
+  }finally{
+    embedSsoApplying=false;
+  }
+}
+function onAdminSsoMessage(ev){
+  if(!EMBED_CAJA || embedSsoDone || session) return;
+  if(!isAllowedSsoOrigin(ev.origin)) return;
+  const d=ev.data;
+  if(!d || d.type!=='mc-admin-sso') return;
+  applyEmbedSso(d);
+}
+async function tryEmbedSsoBoot(){
+  const fromKey=consumeEmbedSso();
+  if(fromKey && await applyEmbedSso(fromKey)) return true;
+  const fromAdmin=readAdminSharedSso();
+  if(fromAdmin && await applyEmbedSso(fromAdmin)) return true;
+  if(embedSsoDone || session) return true;
+  const late=await new Promise(resolve=>{
+    resolveEmbedSsoWait=resolve;
+    setTimeout(()=>{
+      if(resolveEmbedSsoWait===resolve){ resolveEmbedSsoWait=null; resolve(!!(embedSsoDone||session)); }
+    },700);
+  });
+  return !!(late||embedSsoDone||session);
+}
+if(EMBED_CAJA) window.addEventListener('message', onAdminSsoMessage);
+
 // ─── BOOT ─────────────────────────────────────────────────────────────────────
 function mapsReady(){ mReady=true; }
 
@@ -71,7 +228,9 @@ window.onload=()=>{
   if(EMBED_CAJA) applyEmbedShell();
   const saved=sessionStorage.getItem('mcSess');
   if(saved){ session=JSON.parse(saved); setTimeout(bootHome,EMBED_CAJA?200:700); }
-  else{
+  else if(EMBED_CAJA){
+    tryEmbedSsoBoot().then(ok=>{ if(!ok) showEmbedLogin(); });
+  }else{
     setTimeout(()=>{
       document.getElementById('splash').classList.add('hide');
       setTimeout(()=>{
@@ -79,7 +238,7 @@ window.onload=()=>{
         loadUsers();
         show('scr-users');
       },400);
-    },EMBED_CAJA?400:1400);
+    },1400);
   }
   // Try to load updated users from server
   api({action:'getUsuarios'}).then(r=>{ if(r.ok&&r.usuarios) allUsers=r.usuarios; renderGrid(); }).catch(()=>{});
@@ -161,6 +320,7 @@ function applyEmbedShell(){
   document.querySelectorAll('#fab-menu .fab-item, #home-nav .hnav-item').forEach(el=>{
     if((el.getAttribute('onclick')||'').includes('rutas')) el.classList.add('embed-hide-rutas');
   });
+  document.querySelectorAll('[onclick="logout()"]').forEach(el=>{ el.style.display='none'; });
 }
 
 function openMod(mod, targetView){
@@ -183,7 +343,14 @@ function goHome(){
   if(EMBED_CAJA){ openMod('caja'); return; }
   hideAll(); show('scr-home');
 }
-function logout(){ sessionStorage.removeItem('mcSess'); session=null; pinBuf=''; hideAll(); renderGrid(); show('scr-users'); }
+function logout(){
+  if(EMBED_CAJA){
+    toast('Sesión gestionada desde Admin');
+    if(session) openMod('caja');
+    return;
+  }
+  sessionStorage.removeItem('mcSess'); session=null; pinBuf=''; hideAll(); renderGrid(); show('scr-users');
+}
 
 // ─── NAV ──────────────────────────────────────────────────────────────────────
 const NAV={
