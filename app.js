@@ -13,6 +13,16 @@ const VEH_OWNER = {
 };
 const VEH_RATE = {'Moto Minecore': 0.15};
 
+// Embed: ?embed=1 | ?embed=caja | ?embed=* &mod=caja → Caja Chica only (iframe)
+function readEmbedCaja(){
+  const q=new URLSearchParams(location.search);
+  const embed=(q.get('embed')||'').toLowerCase();
+  const mod=(q.get('mod')||'').toLowerCase();
+  return embed==='1' || embed==='caja' || (!!embed && mod==='caja');
+}
+const EMBED_CAJA=readEmbedCaja();
+const RUTAS_VIEWS=new Set(['nueva','mis-rutas','cuenta','aprobar','historial','corte','usuarios','config']);
+
 // Hardcoded users (login works offline)
 const DEFAULT_USERS = [
   {usuario:'EFCH', nombre:'Esteban Ferlito', rol:'admin', pin:'2765', activo:'SI'},
@@ -58,8 +68,9 @@ async function api(data){
 function mapsReady(){ mReady=true; }
 
 window.onload=()=>{
+  if(EMBED_CAJA) applyEmbedShell();
   const saved=sessionStorage.getItem('mcSess');
-  if(saved){ session=JSON.parse(saved); setTimeout(bootHome,700); }
+  if(saved){ session=JSON.parse(saved); setTimeout(bootHome,EMBED_CAJA?200:700); }
   else{
     setTimeout(()=>{
       document.getElementById('splash').classList.add('hide');
@@ -68,7 +79,7 @@ window.onload=()=>{
         loadUsers();
         show('scr-users');
       },400);
-    },1400);
+    },EMBED_CAJA?400:1400);
   }
   // Try to load updated users from server
   api({action:'getUsuarios'}).then(r=>{ if(r.ok&&r.usuarios) allUsers=r.usuarios; renderGrid(); }).catch(()=>{});
@@ -140,11 +151,23 @@ function bootHome(){
   ha.style.background=c.bg; ha.style.color=c.tx; ha.textContent=session.usuario;
   try{const _pd=getPeriodoDates(0);const _M=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];const _d1=new Date(_pd.fi+'T12:00:00'),_d2=new Date(_pd.ff+'T12:00:00');document.getElementById('home-uname').textContent='Período '+_d1.getDate()+' '+_M[_d1.getMonth()]+' → '+_d2.getDate()+' '+_M[_d2.getMonth()];}catch(e){document.getElementById('home-uname').textContent='';}
   document.getElementById('greet-name').textContent='Hola, '+session.nombre.split(' ')[0]+'!';
+  if(EMBED_CAJA){ openMod('caja'); return; }
   hideAll(); show('scr-home');
   setTimeout(renderHomeActions,50);
 }
 
+function applyEmbedShell(){
+  document.body.classList.add('embed-caja');
+  document.querySelectorAll('#fab-menu .fab-item, #home-nav .hnav-item').forEach(el=>{
+    if((el.getAttribute('onclick')||'').includes('rutas')) el.classList.add('embed-hide-rutas');
+  });
+}
+
 function openMod(mod, targetView){
+  if(EMBED_CAJA && (mod==='rutas' || RUTAS_VIEWS.has(targetView))){
+    mod='caja';
+    targetView=undefined;
+  }
   currentMod=mod; hideAll(); show('app');
   document.getElementById('topbar-dot').className='topbar-dot '+mod;
   document.getElementById('topbar-title').textContent=mod==='rutas'?'Rutas':'Caja Chica';
@@ -157,6 +180,7 @@ function openMod(mod, targetView){
 }
 
 function goHome(){
+  if(EMBED_CAJA){ openMod('caja'); return; }
   hideAll(); show('scr-home');
 }
 function logout(){ sessionStorage.removeItem('mcSess'); session=null; pinBuf=''; hideAll(); renderGrid(); show('scr-users'); }
@@ -220,6 +244,7 @@ function renderNav(){
 }
 
 function setView(v){
+  if(EMBED_CAJA && RUTAS_VIEWS.has(v)) v='balance';
   activeView=v; renderNav();
   const c=document.getElementById('content');
   const views={
@@ -1481,6 +1506,7 @@ function toggleFab(force){
 
 function fabGo(mod,view){
   toggleFab(false);
+  if(EMBED_CAJA && mod==='rutas'){ openMod('caja'); return; }
   openMod(mod,view);
 }
 
