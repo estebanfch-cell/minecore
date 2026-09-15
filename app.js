@@ -1,6 +1,7 @@
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwey092-gmFNWsJQmJVSZ9aiSVNxMCFUhfcu_3hyotGNtc6219atTs-y3dApG3JtWw/exec';
+const ADMIN_API_URL = 'https://script.google.com/macros/s/AKfycbyfoS1EX0V9YdqN35jiJ7CDMkxpkX5Gd0XQZJxQAxTiM76vjAoVXyEam2Vzo_WNihZQ/exec';
 const MINECORE_LL = {lat:-0.1940519, lng:-78.4841933};
 const MINECORE_ADDR = 'Minecore S.A.S — Alpallana E7-212, Quito';
 
@@ -55,19 +56,32 @@ try{ favs=JSON.parse(localStorage.getItem('mc_favs')||'[]'); }catch(e){}
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 async function api(data){
-  if(data.action==='savePhoto'){
-    // Use POST for large payloads (base64 images)
-    const r=await fetch(SCRIPT_URL,{
-      method:'POST',
-      body:JSON.stringify(data),
-      redirect:'follow'
+  if (typeof EMBED !== 'undefined' && EMBED) {
+    const user = (localStorage.getItem('mc_user_name')||'');
+    const pin = (localStorage.getItem('mc_pin')||sessionStorage.getItem('mc_bridge_pin')||'');
+    const mcAction = data.action;
+    const body = { action: 'mcBridge', mcAction: mcAction, user: user, pin: pin, mcPayload: data };
+    Object.keys(data).forEach(k=>{ if(k!=='action') body[k]=data[k]; });
+    const r = await fetch(ADMIN_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(body),
+      redirect: 'follow',
+      credentials: 'omit'
     });
-    return r.json();
+    const txt = await r.text();
+    try { return JSON.parse(txt); } catch(e){ return { ok:false, error:'Admin bridge no-JSON' }; }
+  }
+  if(data.action==='savePhoto'){
+    const r=await fetch(SCRIPT_URL,{ method:'POST', body:JSON.stringify(data), redirect:'follow', credentials:'omit' });
+    const txt=await r.text();
+    try { return JSON.parse(txt); } catch(e){ return { ok:false, error:'Caja API no-JSON' }; }
   }
   const p=new URLSearchParams();
   Object.entries(data).forEach(([k,v])=>p.append(k,String(v)));
-  const r=await fetch(SCRIPT_URL+'?'+p.toString(),{redirect:'follow'});
-  return r.json();
+  const r=await fetch(SCRIPT_URL+'?'+p.toString(),{redirect:'follow', credentials:'omit'});
+  const txt=await r.text();
+  try { return JSON.parse(txt); } catch(e){ return { ok:false, error:'Caja API no-JSON' }; }
 }
 
 // ─── EMBED SSO (Admin iframe only) ────────────────────────────────────────────
@@ -184,6 +198,12 @@ async function applyEmbedSso(payload){
   const nombre=(mapped&&mapped.nombre)||payload.nombre||usuario;
   const rol=((mapped&&mapped.rol)||payload.rol||'chofer').toLowerCase();
   const pin=String(payload.pin||readAdminPin()||'').trim();
+  if(payload.pin){
+    try{ sessionStorage.setItem('mc_bridge_pin', String(payload.pin)); }catch(e){}
+    if(String(payload.pin).trim()){
+      try{ localStorage.setItem('mc_pin', String(payload.pin)); }catch(e){}
+    }
+  }
   try{
     session=await loginWithPinOrLocal(usuario, nombre, rol, pin);
     sessionStorage.setItem('mcSess',JSON.stringify(session));
