@@ -13,15 +13,13 @@ const VEH_OWNER = {
 };
 const VEH_RATE = {'Moto Minecore': 0.15};
 
-// Embed: ?embed=1 | ?embed=caja | ?embed=* &mod=caja → Caja Chica only (iframe)
-function readEmbedCaja(){
+// Embed: ?embed=1 (Admin iframe) → full app + SSO, skip PIN
+function readEmbed(){
   const q=new URLSearchParams(location.search);
   const embed=(q.get('embed')||'').toLowerCase();
-  const mod=(q.get('mod')||'').toLowerCase();
-  return embed==='1' || embed==='caja' || (!!embed && mod==='caja');
+  return !!embed && embed!=='0' && embed!=='false';
 }
-const EMBED_CAJA=readEmbedCaja();
-const RUTAS_VIEWS=new Set(['nueva','mis-rutas','cuenta','aprobar','historial','corte','usuarios','config']);
+const EMBED=readEmbed();
 const ADMIN_SSO_ORIGIN='https://estebanfch-cell.github.io';
 const ADMIN_USER_ALIASES={
   esteban:'EFCH','esteban ferlito':'EFCH',efch:'EFCH',
@@ -178,7 +176,7 @@ async function loginWithPinOrLocal(usuario, nombre, rol, pin){
   return localSess;
 }
 async function applyEmbedSso(payload){
-  if(!EMBED_CAJA || !payload || embedSsoDone || session || embedSsoApplying) return !!session;
+  if(!EMBED || !payload || embedSsoDone || session || embedSsoApplying) return !!session;
   const mapped=findCajaUser(payload.usuario, payload.nombre);
   const usuario=(mapped&&mapped.usuario)||String(payload.usuario||'').trim().toUpperCase();
   if(!usuario) return false;
@@ -199,7 +197,7 @@ async function applyEmbedSso(payload){
   }
 }
 function onAdminSsoMessage(ev){
-  if(!EMBED_CAJA || embedSsoDone || session) return;
+  if(!EMBED || embedSsoDone || session) return;
   if(!isAllowedSsoOrigin(ev.origin)) return;
   const d=ev.data;
   if(!d || d.type!=='mc-admin-sso') return;
@@ -219,16 +217,16 @@ async function tryEmbedSsoBoot(){
   });
   return !!(late||embedSsoDone||session);
 }
-if(EMBED_CAJA) window.addEventListener('message', onAdminSsoMessage);
+if(EMBED) window.addEventListener('message', onAdminSsoMessage);
 
 // ─── BOOT ─────────────────────────────────────────────────────────────────────
 function mapsReady(){ mReady=true; }
 
 window.onload=()=>{
-  if(EMBED_CAJA) applyEmbedShell();
+  if(EMBED) applyEmbedShell();
   const saved=sessionStorage.getItem('mcSess');
-  if(saved){ session=JSON.parse(saved); setTimeout(bootHome,EMBED_CAJA?200:700); }
-  else if(EMBED_CAJA){
+  if(saved){ session=JSON.parse(saved); setTimeout(bootHome,EMBED?200:700); }
+  else if(EMBED){
     tryEmbedSsoBoot().then(ok=>{ if(!ok) showEmbedLogin(); });
   }else{
     setTimeout(()=>{
@@ -310,24 +308,16 @@ function bootHome(){
   ha.style.background=c.bg; ha.style.color=c.tx; ha.textContent=session.usuario;
   try{const _pd=getPeriodoDates(0);const _M=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];const _d1=new Date(_pd.fi+'T12:00:00'),_d2=new Date(_pd.ff+'T12:00:00');document.getElementById('home-uname').textContent='Período '+_d1.getDate()+' '+_M[_d1.getMonth()]+' → '+_d2.getDate()+' '+_M[_d2.getMonth()];}catch(e){document.getElementById('home-uname').textContent='';}
   document.getElementById('greet-name').textContent='Hola, '+session.nombre.split(' ')[0]+'!';
-  if(EMBED_CAJA){ openMod('caja'); return; }
   hideAll(); show('scr-home');
   setTimeout(renderHomeActions,50);
 }
 
 function applyEmbedShell(){
-  document.body.classList.add('embed-caja');
-  document.querySelectorAll('#fab-menu .fab-item, #home-nav .hnav-item').forEach(el=>{
-    if((el.getAttribute('onclick')||'').includes('rutas')) el.classList.add('embed-hide-rutas');
-  });
+  document.body.classList.add('embed-full');
   document.querySelectorAll('[onclick="logout()"]').forEach(el=>{ el.style.display='none'; });
 }
 
 function openMod(mod, targetView){
-  if(EMBED_CAJA && (mod==='rutas' || RUTAS_VIEWS.has(targetView))){
-    mod='caja';
-    targetView=undefined;
-  }
   currentMod=mod; hideAll(); show('app');
   document.getElementById('topbar-dot').className='topbar-dot '+mod;
   document.getElementById('topbar-title').textContent=mod==='rutas'?'Rutas':'Caja Chica';
@@ -340,13 +330,11 @@ function openMod(mod, targetView){
 }
 
 function goHome(){
-  if(EMBED_CAJA){ openMod('caja'); return; }
   hideAll(); show('scr-home');
 }
 function logout(){
-  if(EMBED_CAJA){
+  if(EMBED){
     toast('Sesión gestionada desde Admin');
-    if(session) openMod('caja');
     return;
   }
   sessionStorage.removeItem('mcSess'); session=null; pinBuf=''; hideAll(); renderGrid(); show('scr-users');
@@ -411,7 +399,6 @@ function renderNav(){
 }
 
 function setView(v){
-  if(EMBED_CAJA && RUTAS_VIEWS.has(v)) v='balance';
   activeView=v; renderNav();
   const c=document.getElementById('content');
   const views={
@@ -1673,7 +1660,6 @@ function toggleFab(force){
 
 function fabGo(mod,view){
   toggleFab(false);
-  if(EMBED_CAJA && mod==='rutas'){ openMod('caja'); return; }
   openMod(mod,view);
 }
 

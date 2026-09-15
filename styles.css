@@ -309,8 +309,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;backg
 .pfolder-body{padding:0 12px 12px;border-top:.5px solid var(--border)}
 .pf-mini{font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin:12px 4px 8px}
 
-/* Embed: Caja Chica only — hide Rutas entry points and home back */
-body.embed-caja .embed-hide-rutas,
-body.embed-caja .topbar-back{display:none!important}
-body.embed-caja #splash .splash-title{font-size:22px;letter-spacing:3px}
-body.embed-caja #splash .splash-sub{opacity:.7}
+/* Embed: full app in Admin iframe — logout chrome hidden via JS */
+body.embed-full #splash .splash-title{font-size:22px;letter-spacing:3px}
+body.embed-full #splash .splash-sub{opacity:.7}
