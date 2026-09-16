@@ -131,7 +131,7 @@ export function Miner({ agent, selected }) {
         zIndexRange={[18, 0]}
         style={{ pointerEvents: "auto" }}
       >
-        <button className={`id-tag ${agent.status} ${selected ? "is-on" : ""}`} type="button" onClick={open}>
+        <button className={`id-tag notranslate ${agent.status} ${selected ? "is-on" : ""}`} type="button" translate="no" onClick={open}>
           <span className="dot" aria-hidden="true" />
           <span className="nm">{agent.name}</span>
           <span className="role">{agent.role}</span>

@@ -43,7 +43,7 @@ export function Dossier({ agent }) {
         aria-label="Cerrar ficha"
         onClick={() => selectAgent(null)}
       />
-      <aside className="dossier notranslate" role="dialog" aria-modal="true" aria-label={`Ficha ${agent.name}`}>
+      <aside className="dossier notranslate" role="dialog" aria-modal="true" aria-label={`Ficha ${agent.name}`} translate="no">
         <button className="dossier-close" type="button" onClick={() => selectAgent(null)}>
           Cerrar
         </button>
@@ -60,7 +60,8 @@ export function Dossier({ agent }) {
         <section>
           <h3>Quién es</h3>
           <p>
-            <strong>{agent.name}</strong> · {bio.title}. Canal: {agent.role}.
+            <strong>{agent.name}</strong> es el agente de {agent.role} en el piso Minecore
+            ({bio.title}).
           </p>
         </section>
 

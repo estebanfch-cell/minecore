@@ -75,7 +75,7 @@ export function snapshotAgents() {
 }
 
 function pushHistory(cur, patch) {
-  const note = patch.activity || patch.bubble;
+  const note = patch.activity;
   if (!note) return cur.history || [];
   const last = (cur.history || [])[0];
   if (last && last.text === note) return cur.history;

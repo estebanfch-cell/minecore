@@ -48,11 +48,11 @@ export function Office({ agents, meeting, selectedId }) {
         enablePan={false}
         autoRotate={!selectedId}
         autoRotateSpeed={0.18}
-        minPolarAngle={0.42}
-        maxPolarAngle={0.88}
+        minPolarAngle={0.62}
+        maxPolarAngle={1.05}
         minDistance={14}
         maxDistance={26}
-        target={[0, 0.35, 0.2]}
+        target={[0, 0.25, 0.5]}
       />
     </>
   );

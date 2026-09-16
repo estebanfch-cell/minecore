@@ -23,7 +23,7 @@ export default function App() {
         <Canvas
           shadows
           dpr={[1, 1.75]}
-          camera={{ position: [15.4, 17.2, 15.8], fov: 32, near: 0.1, far: 90 }}
+          camera={{ position: [16.8, 12.4, 17.6], fov: 34, near: 0.1, far: 90 }}
           gl={{ antialias: true, alpha: false }}
           onPointerMissed={() => selectAgent(null)}
         >

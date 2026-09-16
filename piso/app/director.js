@@ -71,10 +71,11 @@ export function startLive() {
   patchState({ mode: "live", meeting: false });
   resetAllHome();
   setTicker("Modo EN VIVO — heartbeats + handoffs suaves");
+  const started = Date.now();
   liveTimer = setInterval(() => {
     cyclePopupsLive();
-    if (Math.random() < 0.35) liveHandoff();
-  }, 5000);
+    if (Date.now() - started > 14000 && Math.random() < 0.28) liveHandoff();
+  }, 6000);
 }
 
 export async function runDemo() {

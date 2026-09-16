@@ -9,23 +9,23 @@ export function Platform({ meeting }) {
   return (
     <group>
       <mesh position={[0, -0.28, 0]} castShadow receiveShadow>
-        <cylinderGeometry args={[9.55, 9.85, 0.52, 6]} />
+        <cylinderGeometry args={[10.35, 10.65, 0.52, 6]} />
         <meshStandardMaterial color="#101612" roughness={0.78} metalness={0.08} />
       </mesh>
       <mesh position={[0, -0.01, 0]} receiveShadow>
-        <cylinderGeometry args={[9.4, 9.4, 0.05, 6]} />
+        <cylinderGeometry args={[10.2, 10.2, 0.05, 6]} />
         <meshStandardMaterial color="#1c2620" roughness={0.7} />
       </mesh>
       <mesh position={[0, -0.06, 0]}>
-        <cylinderGeometry args={[9.72, 9.72, 0.08, 6]} />
+        <cylinderGeometry args={[10.52, 10.52, 0.08, 6]} />
         <meshStandardMaterial color={LIME} emissive={LIME} emissiveIntensity={1.05} />
       </mesh>
       <pointLight position={[0, -0.1, 0]} color={LIME} intensity={0.8} distance={14} />
       <mesh rotation={[-Math.PI / 2, 0, Math.PI / 6]} position={[0, 0.02, 0]} receiveShadow>
-        <circleGeometry args={[9.1, 6]} />
+        <circleGeometry args={[9.9, 6]} />
         <meshStandardMaterial color="#2a362f" roughness={0.82} />
       </mesh>
-      <gridHelper args={[15.2, 16, "#3d5a30", "#2a3a28"]} position={[0, 0.03, 0]} />
+      <gridHelper args={[16.8, 16, "#3d5a30", "#2a3a28"]} position={[0, 0.03, 0]} />
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.035, 0.15]}>
         <circleGeometry args={[1.45, 40]} />

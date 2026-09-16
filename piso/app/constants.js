@@ -32,23 +32,23 @@ export const POPUP_META = {
 
 /** Sit / stand home in world XZ. Desks sit just behind (−Z). Wide grid so labels do not stack. */
 export const HOMES = {
-  manuelito: { x: -5.4, z: -3.6 },
-  cote: { x: 0, z: -3.6 },
-  law: { x: 5.4, z: -3.6 },
-  secre: { x: -5.4, z: 1.7 },
-  finance: { x: 0, z: 1.7 },
-  marketing: { x: 5.4, z: 1.7 },
-  "stock-devops": { x: 0, z: 6.5 },
+  manuelito: { x: -5.8, z: -4.4 },
+  cote: { x: 0, z: -4.4 },
+  law: { x: 5.8, z: -4.4 },
+  secre: { x: -5.8, z: 3.4 },
+  finance: { x: 0, z: 3.4 },
+  marketing: { x: 5.8, z: 3.4 },
+  "stock-devops": { x: 0, z: 8.0 },
 };
 
 export const DESKS = {
-  manuelito: { x: -5.4, z: -4.5 },
-  cote: { x: 0, z: -4.5 },
-  law: { x: 5.4, z: -4.5 },
-  secre: { x: -5.4, z: 0.8 },
-  finance: { x: 0, z: 0.8 },
-  marketing: { x: 5.4, z: 0.8 },
-  "stock-devops": { x: 0, z: 5.6 },
+  manuelito: { x: -5.8, z: -5.3 },
+  cote: { x: 0, z: -5.3 },
+  law: { x: 5.8, z: -5.3 },
+  secre: { x: -5.8, z: 2.5 },
+  finance: { x: 0, z: 2.5 },
+  marketing: { x: 5.8, z: 2.5 },
+  "stock-devops": { x: 0, z: 7.1 },
 };
 
 export const MEETING_SPOTS = [
