@@ -119,21 +119,27 @@ export function Miner({ agent }) {
     root.current.position.copy(display.current);
 
     const moving = dist > 0.06 || agent.walking;
+    const seated = !moving && !agent.meeting;
     const t = performance.now() / 1000;
     const walk = moving ? Math.sin(t * 9) : 0;
-    const type = !moving && agent.typing ? Math.sin(t * 14) : 0;
+    const type = seated && agent.typing ? Math.sin(t * 14) : 0;
 
     if (leftLeg.current && rightLeg.current) {
-      leftLeg.current.rotation.x = moving ? walk * 0.7 : 0.08;
-      rightLeg.current.rotation.x = moving ? -walk * 0.7 : 0.08;
+      leftLeg.current.rotation.x = moving ? walk * 0.7 : seated ? 1.15 : 0.08;
+      rightLeg.current.rotation.x = moving ? -walk * 0.7 : seated ? 1.15 : 0.08;
     }
     if (leftArm.current && rightArm.current) {
       leftArm.current.rotation.x = moving ? -walk * 0.55 : 1.15 + type * 0.18;
       rightArm.current.rotation.x = moving ? walk * 0.55 : 1.05 - type * 0.22;
     }
     if (body.current) {
-      body.current.position.y = moving ? 0.72 + Math.abs(walk) * 0.04 : 0.7 + (agent.typing ? Math.abs(type) * 0.012 : 0);
+      body.current.position.y = moving
+        ? 0.72 + Math.abs(walk) * 0.04
+        : seated
+          ? 0.58 + Math.abs(type) * 0.01
+          : 0.7;
     }
+    root.current.position.y = seated ? -0.02 : 0;
 
     const dx = target.x - display.current.x;
     const dz = target.z - display.current.z;
@@ -283,9 +289,10 @@ export function Miner({ agent }) {
 
       <Accessory kind={look.accessory} walking={agent.walking} />
 
-      <Html position={[0, 2.02, 0]} center distanceFactor={10} zIndexRange={[20, 0]}>
+      <Html position={[0.15, 1.72, 0.2]} center distanceFactor={11} zIndexRange={[20, 0]}>
         <div className="agent-tag">
           <div className="nm">{agent.name}</div>
+          <div className="role">{agent.role}</div>
           <span className={`chip ${agent.status}`}>{agent.status}</span>
         </div>
       </Html>

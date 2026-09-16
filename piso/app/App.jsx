@@ -23,10 +23,10 @@ export default function App() {
         <Canvas
           shadows
           dpr={[1, 1.75]}
-          camera={{ position: [9.2, 7.6, 9.8], fov: 38, near: 0.1, far: 80 }}
+          camera={{ position: [10.4, 12.6, 10.8], fov: 30, near: 0.1, far: 80 }}
           gl={{ antialias: true, alpha: false }}
         >
-          <Office agents={state.agents} meeting={state.meeting} />
+          <Office agents={state.agents} meeting={state.meeting} handoff={state.handoff} />
         </Canvas>
       </div>
       <Hud />

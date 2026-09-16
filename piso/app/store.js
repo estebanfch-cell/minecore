@@ -29,6 +29,7 @@ function createInitial() {
     mode: "live",
     ticker: "Esperando heartbeats…",
     meeting: false,
+    handoff: null,
   };
 }
 
@@ -123,6 +124,10 @@ export function resetAllHome() {
       bubble: null,
     };
   }
-  state = { ...state, agents, meeting: false };
+  state = { ...state, agents, meeting: false, handoff: null };
   emit();
+}
+
+export function setHandoff(from, to) {
+  patchState({ handoff: from && to ? { from, to } : null });
 }

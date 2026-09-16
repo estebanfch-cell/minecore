@@ -1,186 +1,49 @@
-import { useMemo } from "react";
-import * as THREE from "three";
 import { LIME } from "../constants.js";
 import { MonitorScreen } from "./MonitorScreen.jsx";
 
-const DESK = "#4a6758";
-const DESK_EDGE = "#6a8a74";
-const METAL = "#3a4540";
+const DESK_TOP = "#efe8dc";
+const DESK_EDGE = "#d9d0c2";
+const LEG = "#1b1d20";
 
-export function OfficeRoom({ meeting }) {
-  const gridTex = useMemo(() => makeGridTexture(), []);
-
+export function Platform({ meeting }) {
   return (
     <group>
-      <mesh position={[0, -0.08, 0.35]} receiveShadow>
-        <boxGeometry args={[18.4, 0.16, 14.2]} />
-        <meshStandardMaterial color="#3d5649" roughness={0.85} />
+      <mesh position={[0, -0.22, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[6.55, 6.7, 0.38, 6]} />
+        <meshStandardMaterial color="#141a16" roughness={0.78} metalness={0.08} />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0.35]} receiveShadow>
-        <planeGeometry args={[17.8, 13.6]} />
-        <meshStandardMaterial color="#5a7a68" map={gridTex} roughness={0.72} metalness={0.04} />
+      <mesh position={[0, -0.01, 0]} receiveShadow>
+        <cylinderGeometry args={[6.42, 6.42, 0.05, 6]} />
+        <meshStandardMaterial color="#1c2620" roughness={0.7} />
       </mesh>
-      <gridHelper args={[17.6, 22, "#c8ff5a", "#6a8a40"]} position={[0, 0.03, 0.35]} />
-      <mesh position={[0, 0.04, -6.65]}>
-        <boxGeometry args={[18.2, 0.08, 0.1]} />
-        <meshStandardMaterial color={LIME} emissive={LIME} emissiveIntensity={1.1} />
+      <mesh position={[0, -0.04, 0]}>
+        <cylinderGeometry args={[6.62, 6.62, 0.06, 6]} />
+        <meshStandardMaterial color={LIME} emissive={LIME} emissiveIntensity={0.85} />
       </mesh>
-      <mesh position={[-9.05, 0.04, 0.35]}>
-        <boxGeometry args={[0.1, 0.08, 14]} />
-        <meshStandardMaterial color={LIME} emissive={LIME} emissiveIntensity={0.8} />
+      <mesh rotation={[-Math.PI / 2, 0, Math.PI / 6]} position={[0, 0.02, 0]} receiveShadow>
+        <circleGeometry args={[6.15, 6]} />
+        <meshStandardMaterial color="#24302a" roughness={0.82} />
       </mesh>
-      <mesh position={[9.05, 0.04, 0.35]}>
-        <boxGeometry args={[0.1, 0.08, 14]} />
-        <meshStandardMaterial color={LIME} emissive={LIME} emissiveIntensity={0.8} />
-      </mesh>
-      <mesh position={[0, 0.04, 7.3]}>
-        <boxGeometry args={[18.2, 0.08, 0.1]} />
-        <meshStandardMaterial color={LIME} emissive={LIME} emissiveIntensity={0.55} />
-      </mesh>
+      <gridHelper args={[10.4, 16, "#3d5a30", "#2a3a28"]} position={[0, 0.03, 0]} />
 
-      <mesh position={[0, 2.15, -6.45]} receiveShadow>
-        <boxGeometry args={[18.2, 4.3, 0.22]} />
-        <meshStandardMaterial color="#3a5046" roughness={0.72} />
-      </mesh>
-      <mesh position={[-9.05, 2.15, 0.35]} receiveShadow>
-        <boxGeometry args={[0.22, 4.3, 13.8]} />
-        <meshStandardMaterial color="#3a5046" roughness={0.72} />
-      </mesh>
-      <mesh position={[9.05, 2.15, 0.35]} receiveShadow>
-        <boxGeometry args={[0.22, 4.3, 13.8]} />
-        <meshStandardMaterial color="#3a5046" roughness={0.72} />
-      </mesh>
-
-      {[-5.5, 0, 5.5].map((x) => (
-        <group key={x}>
-          <mesh position={[x, 3.85, -0.2]}>
-            <boxGeometry args={[2.4, 0.08, 0.55]} />
-            <meshStandardMaterial color="#d8ff7a" emissive={LIME} emissiveIntensity={1.6} />
-          </mesh>
-          <pointLight position={[x, 3.5, -0.2]} color={LIME} intensity={0.55} distance={8} />
-        </group>
-      ))}
-
-      <mesh position={[0, 3.55, -6.28]}>
-        <boxGeometry args={[10.4, 0.06, 0.06]} />
-        <meshStandardMaterial color={LIME} emissive={LIME} emissiveIntensity={1.4} />
-      </mesh>
-      <mesh position={[0, 0.04, -6.28]}>
-        <boxGeometry args={[12, 0.05, 0.05]} />
-        <meshStandardMaterial color={LIME} emissive={LIME} emissiveIntensity={0.8} />
-      </mesh>
-
-      <BrandWall />
-      <MeetingPad active={meeting} />
-      <Plant position={[-8.1, 0, -5.6]} />
-      <Plant position={[8.1, 0, -5.6]} />
-      <ServerRack position={[-8.05, 0, 5.4]} />
-      <ServerRack position={[8.05, 0, 5.4]} />
-    </group>
-  );
-}
-
-function BrandWall() {
-  const sign = useMemo(() => {
-    const c = document.createElement("canvas");
-    c.width = 1024;
-    c.height = 256;
-    const ctx = c.getContext("2d");
-    ctx.fillStyle = "#0b1612";
-    ctx.fillRect(0, 0, 1024, 256);
-    ctx.fillStyle = LIME;
-    ctx.font = "800 92px Segoe UI, sans-serif";
-    ctx.fillText("MINECORE", 220, 130);
-    ctx.fillStyle = "#8aa090";
-    ctx.font = "600 28px Segoe UI, sans-serif";
-    ctx.fillText("PISO OPERATIVO  ·  AGENTES EN VIVO", 220, 188);
-    const tex = new THREE.CanvasTexture(c);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    return tex;
-  }, []);
-
-  return (
-    <group position={[0, 2.55, -6.28]}>
-      <mesh>
-        <planeGeometry args={[3.8, 0.95]} />
-        <meshBasicMaterial map={sign} toneMapped={false} />
-      </mesh>
-      <mesh position={[-1.45, 0.02, 0.04]}>
-        <cylinderGeometry args={[0.28, 0.28, 0.05, 6]} />
-        <meshStandardMaterial color={LIME} emissive={LIME} emissiveIntensity={0.7} />
-      </mesh>
-      <mesh position={[-1.45, 0.04, 0.07]}>
-        <boxGeometry args={[0.08, 0.18, 0.02]} />
-        <meshStandardMaterial color="#0a1208" />
-      </mesh>
-    </group>
-  );
-}
-
-function MeetingPad({ active }) {
-  return (
-    <group position={[0, 0.02, 0.05]}>
-      <mesh rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[2.15, 48]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.035, 0.15]}>
+        <circleGeometry args={[1.45, 40]} />
         <meshStandardMaterial
-          color="#15241c"
+          color="#18241c"
           emissive={LIME}
-          emissiveIntensity={active ? 0.22 : 0.05}
-          roughness={0.7}
+          emissiveIntensity={meeting ? 0.28 : 0.04}
         />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
-        <ringGeometry args={[2.05, 2.18, 48]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.045, 0.15]}>
+        <ringGeometry args={[1.38, 1.5, 40]} />
         <meshStandardMaterial
           color={LIME}
           emissive={LIME}
-          emissiveIntensity={active ? 2.2 : 0.35}
+          emissiveIntensity={meeting ? 1.8 : 0.25}
           transparent
-          opacity={active ? 1 : 0.45}
+          opacity={meeting ? 1 : 0.4}
         />
       </mesh>
-      {active && (
-        <mesh position={[0, 0.04, 0]}>
-          <cylinderGeometry args={[0.55, 0.55, 0.06, 20]} />
-          <meshStandardMaterial color="#1a2822" />
-        </mesh>
-      )}
-    </group>
-  );
-}
-
-function Plant({ position }) {
-  return (
-    <group position={position}>
-      <mesh position={[0, 0.18, 0]}>
-        <cylinderGeometry args={[0.16, 0.2, 0.36, 10]} />
-        <meshStandardMaterial color="#3a2a1c" />
-      </mesh>
-      <mesh position={[0, 0.55, 0]}>
-        <sphereGeometry args={[0.28, 10, 10]} />
-        <meshStandardMaterial color="#2f6b38" />
-      </mesh>
-    </group>
-  );
-}
-
-function ServerRack({ position }) {
-  return (
-    <group position={position}>
-      <mesh position={[0, 0.85, 0]} castShadow>
-        <boxGeometry args={[0.55, 1.7, 0.45]} />
-        <meshStandardMaterial color="#161c1a" metalness={0.3} roughness={0.45} />
-      </mesh>
-      {[0.35, 0.55, 0.75, 0.95, 1.15].map((y, i) => (
-        <mesh key={y} position={[0.22, y, 0.0]}>
-          <boxGeometry args={[0.04, 0.06, 0.3]} />
-          <meshStandardMaterial
-            color={i % 2 ? LIME : "#5dffa8"}
-            emissive={i % 2 ? LIME : "#5dffa8"}
-            emissiveIntensity={0.6}
-          />
-        </mesh>
-      ))}
     </group>
   );
 }
@@ -188,89 +51,56 @@ function ServerRack({ position }) {
 export function Desk({ x, z, kind, popup }) {
   return (
     <group position={[x, 0, z]}>
-      <mesh position={[0, 0.72, 0]} castShadow receiveShadow>
-        <boxGeometry args={[1.85, 0.08, 0.92]} />
-        <meshStandardMaterial color={DESK} roughness={0.55} />
+      <mesh position={[0, 0.62, 0]} castShadow receiveShadow>
+        <boxGeometry args={[1.55, 0.05, 0.78]} />
+        <meshStandardMaterial color={DESK_TOP} roughness={0.45} />
       </mesh>
-      <mesh position={[0, 0.77, 0]}>
-        <boxGeometry args={[1.85, 0.015, 0.92]} />
+      <mesh position={[0, 0.59, 0]}>
+        <boxGeometry args={[1.55, 0.02, 0.78]} />
         <meshStandardMaterial color={DESK_EDGE} />
       </mesh>
-      <mesh position={[0, 0.735, 0.46]}>
-        <boxGeometry args={[1.85, 0.03, 0.02]} />
-        <meshStandardMaterial color={LIME} emissive={LIME} emissiveIntensity={0.7} />
-      </mesh>
       {[
-        [-0.8, -0.38],
-        [0.8, -0.38],
-        [-0.8, 0.38],
-        [0.8, 0.38],
+        [-0.68, -0.3],
+        [0.68, -0.3],
+        [-0.68, 0.3],
+        [0.68, 0.3],
       ].map(([lx, lz], i) => (
-        <mesh key={i} position={[lx, 0.36, lz]}>
-          <boxGeometry args={[0.08, 0.72, 0.08]} />
-          <meshStandardMaterial color={METAL} metalness={0.35} roughness={0.45} />
+        <mesh key={i} position={[lx, 0.3, lz]}>
+          <boxGeometry args={[0.045, 0.6, 0.045]} />
+          <meshStandardMaterial color={LEG} metalness={0.25} roughness={0.45} />
         </mesh>
       ))}
 
-      <mesh position={[0, 1.12, -0.28]}>
-        <boxGeometry args={[1.12, 0.72, 0.06]} />
-        <meshStandardMaterial color="#243640" metalness={0.2} roughness={0.4} />
+      <mesh position={[0, 0.98, -0.26]}>
+        <boxGeometry args={[0.92, 0.58, 0.04]} />
+        <meshStandardMaterial color="#15191c" metalness={0.35} roughness={0.35} />
       </mesh>
-      <mesh position={[0, 0.72, -0.22]}>
-        <boxGeometry args={[0.14, 0.16, 0.08]} />
-        <meshStandardMaterial color="#243640" />
+      <mesh position={[0, 0.66, -0.22]}>
+        <boxGeometry args={[0.1, 0.12, 0.06]} />
+        <meshStandardMaterial color="#15191c" />
       </mesh>
-      <MonitorScreen kind={kind} text={popup} />
+      <MonitorScreen kind={kind} text={popup} position={[0, 0.98, -0.235]} />
+      <pointLight position={[0, 0.95, 0.05]} color="#9ad8ff" intensity={0.55} distance={1.6} />
 
-      <mesh position={[0, 0.78, 0.12]} castShadow>
-        <boxGeometry args={[0.52, 0.025, 0.18]} />
-        <meshStandardMaterial color="#1a1f22" />
-      </mesh>
-      <mesh position={[0.38, 0.78, 0.18]}>
-        <cylinderGeometry args={[0.03, 0.03, 0.02, 10]} />
-        <meshStandardMaterial color="#111" />
+      <mesh position={[0, 0.655, 0.08]}>
+        <boxGeometry args={[0.42, 0.015, 0.16]} />
+        <meshStandardMaterial color="#2a2e32" />
       </mesh>
 
-      <group position={[0, 0, 0.72]}>
-        <mesh position={[0, 0.42, 0]} castShadow>
-          <boxGeometry args={[0.42, 0.08, 0.42]} />
-          <meshStandardMaterial color="#22302a" />
+      <group position={[0, 0, 0.62]}>
+        <mesh position={[0, 0.34, 0]} castShadow>
+          <boxGeometry args={[0.36, 0.05, 0.36]} />
+          <meshStandardMaterial color="#ece6da" />
         </mesh>
-        <mesh position={[0, 0.22, 0]}>
-          <boxGeometry args={[0.08, 0.36, 0.08]} />
-          <meshStandardMaterial color={METAL} />
+        <mesh position={[0, 0.17, 0]}>
+          <boxGeometry args={[0.05, 0.3, 0.05]} />
+          <meshStandardMaterial color={LEG} />
         </mesh>
-        <mesh position={[0, 0.68, -0.16]} rotation={[0.25, 0, 0]}>
-          <boxGeometry args={[0.42, 0.36, 0.05]} />
-          <meshStandardMaterial color="#1b2621" />
+        <mesh position={[0, 0.55, -0.12]} rotation={[0.28, 0, 0]}>
+          <boxGeometry args={[0.36, 0.28, 0.035]} />
+          <meshStandardMaterial color="#e4ddd0" />
         </mesh>
       </group>
     </group>
   );
-}
-
-function makeGridTexture() {
-  const c = document.createElement("canvas");
-  c.width = 512;
-  c.height = 512;
-  const ctx = c.getContext("2d");
-  ctx.fillStyle = "#547666";
-  ctx.fillRect(0, 0, 512, 512);
-  ctx.strokeStyle = "rgba(184,255,60,0.72)";
-  ctx.lineWidth = 4;
-  for (let i = 0; i <= 512; i += 32) {
-    ctx.beginPath();
-    ctx.moveTo(i, 0);
-    ctx.lineTo(i, 512);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(0, i);
-    ctx.lineTo(512, i);
-    ctx.stroke();
-  }
-  const tex = new THREE.CanvasTexture(c);
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  tex.repeat.set(8, 6);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  return tex;
 }

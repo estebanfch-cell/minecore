@@ -1,5 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { AGENTS } from "./constants.js";
+import { AGENTS, APPS } from "./constants.js";
 import { getState, subscribe } from "./store.js";
 import { runDemo, startLive } from "./director.js";
 
@@ -35,8 +35,13 @@ export function Hud() {
           <span className="logo-mark">M</span>
           <div>
             <strong>MINECORE</strong>
-            <span className="sub">Piso operativo · 3D</span>
+            <span className="sub">Piso operativo</span>
           </div>
+        </div>
+        <div className="app-rail">
+          {APPS.map((app) => (
+            <span className="app-pill" key={app.id}>{app.label}</span>
+          ))}
         </div>
         <div className="clock">{clock}</div>
         <div className="modes">
@@ -57,7 +62,21 @@ export function Hud() {
         </div>
       </div>
 
-      <aside className="roster notranslate">
+      <aside className="side-panel left-panel notranslate">
+        <div className="panel-kicker">WORKFORCE</div>
+        <div className="panel-title">{state.mode === "demo" ? "Demo" : "En vivo"}</div>
+        {AGENTS.map((a) => {
+          const s = state.agents[a.id];
+          return (
+            <div className="dot-row" key={a.id}>
+              <span className={`led ${s.status}`} />
+              <span>{a.name}</span>
+            </div>
+          );
+        })}
+      </aside>
+
+      <aside className="side-panel roster notranslate">
         {AGENTS.map((a) => {
           const s = state.agents[a.id];
           return (
@@ -73,8 +92,8 @@ export function Hud() {
         })}
       </aside>
 
-      <div className="ticker notranslate">
-        <strong>FEED</strong> {state.ticker}
+      <div className="caption notranslate">
+        {state.meeting ? "Stand-up · piso operativo" : state.ticker}
       </div>
     </>
   );

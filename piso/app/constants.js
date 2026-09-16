@@ -32,33 +32,51 @@ export const POPUP_META = {
 
 /** Sit / stand home in world XZ. Desks sit just behind (−Z). */
 export const HOMES = {
-  manuelito: { x: -5.35, z: -3.35 },
-  cote: { x: 0, z: -3.35 },
-  law: { x: 5.35, z: -3.35 },
-  secre: { x: -5.35, z: 1.95 },
-  finance: { x: 0, z: 1.95 },
-  marketing: { x: 5.35, z: 1.95 },
-  "stock-devops": { x: 0, z: 5.45 },
+  manuelito: { x: -2.55, z: -1.55 },
+  cote: { x: 0, z: -1.55 },
+  law: { x: 2.55, z: -1.55 },
+  secre: { x: -2.55, z: 0.85 },
+  finance: { x: 0, z: 0.85 },
+  marketing: { x: 2.55, z: 0.85 },
+  "stock-devops": { x: 0, z: 3.15 },
 };
 
 export const DESKS = {
-  manuelito: { x: -5.35, z: -4.25 },
-  cote: { x: 0, z: -4.25 },
-  law: { x: 5.35, z: -4.25 },
-  secre: { x: -5.35, z: 1.05 },
-  finance: { x: 0, z: 1.05 },
-  marketing: { x: 5.35, z: 1.05 },
-  "stock-devops": { x: 0, z: 4.55 },
+  manuelito: { x: -2.55, z: -2.25 },
+  cote: { x: 0, z: -2.25 },
+  law: { x: 2.55, z: -2.25 },
+  secre: { x: -2.55, z: 0.15 },
+  finance: { x: 0, z: 0.15 },
+  marketing: { x: 2.55, z: 0.15 },
+  "stock-devops": { x: 0, z: 2.45 },
 };
 
 export const MEETING_SPOTS = [
-  { x: -1.55, z: -0.55 },
-  { x: -0.55, z: -1.45 },
-  { x: 0.55, z: -1.45 },
-  { x: 1.55, z: -0.55 },
-  { x: 1.15, z: 0.75 },
-  { x: 0.0, z: 1.35 },
-  { x: -1.15, z: 0.75 },
+  { x: -1.15, z: -0.35 },
+  { x: -0.4, z: -1.05 },
+  { x: 0.4, z: -1.05 },
+  { x: 1.15, z: -0.35 },
+  { x: 0.85, z: 0.55 },
+  { x: 0.0, z: 1.05 },
+  { x: -0.85, z: 0.55 },
+];
+
+export const WORKFLOW_EDGES = [
+  ["cote", "manuelito"],
+  ["secre", "finance"],
+  ["law", "secre"],
+  ["stock-devops", "marketing"],
+  ["finance", "marketing"],
+  ["manuelito", "secre"],
+];
+
+export const APPS = [
+  { id: "wa", label: "WhatsApp" },
+  { id: "gmail", label: "Gmail" },
+  { id: "sri", label: "SRI" },
+  { id: "inflow", label: "inFlow" },
+  { id: "gh", label: "GitHub" },
+  { id: "liq", label: "liq.minecore.ec" },
 ];
 
 export const LOOKS = {

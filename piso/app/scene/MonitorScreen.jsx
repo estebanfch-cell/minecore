@@ -9,45 +9,16 @@ function paint(canvas, kind, text) {
   const h = canvas.height;
   const meta = POPUP_META[kind] || { app: "App", accent: "#b8ff3c", host: "minecore" };
 
-  ctx.fillStyle = "#07141c";
+  ctx.fillStyle = "#071018";
   ctx.fillRect(0, 0, w, h);
-
-  ctx.fillStyle = "#0e1c24";
-  ctx.fillRect(0, 0, w, 36);
   ctx.fillStyle = meta.accent;
-  ctx.beginPath();
-  ctx.arc(18, 18, 6, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = "#e8f0e6";
-  ctx.font = "700 16px Segoe UI, sans-serif";
-  ctx.fillText(meta.app, 32, 23);
-
-  ctx.fillStyle = "rgba(255,255,255,0.08)";
-  roundRect(ctx, 12, 48, w - 24, 70, 8);
-  ctx.fill();
-  ctx.fillStyle = meta.accent;
-  ctx.fillRect(12, 48, 4, 70);
-
-  ctx.fillStyle = "#e8f0e6";
-  ctx.font = "600 18px Segoe UI, sans-serif";
-  wrapText(ctx, text || "—", 24, 78, w - 48, 22);
-
+  ctx.fillRect(0, 0, w, 8);
+  ctx.fillStyle = "#d8e6e0";
+  ctx.font = "700 28px Segoe UI, sans-serif";
+  ctx.fillText(meta.app, 22, 52);
   ctx.fillStyle = "#8aa090";
-  ctx.font = "12px Segoe UI, sans-serif";
-  ctx.fillText(meta.host, 16, h - 14);
-
-  ctx.fillStyle = "#b8ff3c";
-  ctx.fillRect(w - 18, h - 22, 8, 12);
-}
-
-function roundRect(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
+  ctx.font = "18px Segoe UI, sans-serif";
+  wrapText(ctx, text || "—", 22, 92, w - 44, 26);
 }
 
 function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
@@ -70,7 +41,7 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
   if (rows < 2) ctx.fillText(line, x, yy);
 }
 
-export function MonitorScreen({ kind, text, position = [0, 1.18, -0.18] }) {
+export function MonitorScreen({ kind, text, position = [0, 0.98, -0.235] }) {
   const { canvas, texture } = useMemo(() => {
     const canvas = document.createElement("canvas");
     canvas.width = 512;
@@ -85,17 +56,21 @@ export function MonitorScreen({ kind, text, position = [0, 1.18, -0.18] }) {
     texture.needsUpdate = true;
   }, [canvas, texture, kind, text]);
 
-  const meta = POPUP_META[kind] || { app: "App", accent: "#b8ff3c", host: "" };
+  const meta = POPUP_META[kind] || { app: "App", accent: "#b8ff3c" };
 
   return (
     <group position={position}>
       <mesh>
-        <planeGeometry args={[1.05, 0.66]} />
+        <planeGeometry args={[0.84, 0.52]} />
         <meshBasicMaterial map={texture} toneMapped={false} />
       </mesh>
-      <Html position={[0.15, 0.58, 0.08]} center distanceFactor={11} zIndexRange={[15, 0]}>
+      <mesh position={[0, 0, 0.01]}>
+        <planeGeometry args={[0.84, 0.52]} />
+        <meshBasicMaterial color={meta.accent} transparent opacity={0.08} toneMapped={false} />
+      </mesh>
+      <Html position={[0.55, 0.42, 0.04]} center distanceFactor={12} zIndexRange={[12, 0]}>
         <div className="float-app">
-          <header style={{ background: `${meta.accent}22`, color: meta.accent }}>
+          <header style={{ color: meta.accent }}>
             <span className="dot" style={{ background: meta.accent }} />
             {meta.app}
           </header>
