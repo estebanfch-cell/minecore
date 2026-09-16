@@ -43,39 +43,14 @@ function cyclePopupsLive() {
   });
 }
 
-async function liveHandoff() {
-  const pairs = [
-    ["secre", "finance", "Te paso Kluane"],
-    ["cote", "manuelito", "Pedí montos a Majo"],
-    ["stock-devops", "marketing", "Deploy listo?"],
-    ["law", "secre", "PDF pendiente"],
-  ];
-  const [from, to, msg] = pairs[Math.floor(Math.random() * pairs.length)];
-  const dest = HOMES[to];
-  setTicker(`Handoff: ${from} → ${to}`);
-  setHandoff(from, to);
-  walkTo(from, dest.x + 1.15, dest.z + 0.15, msg);
-  await sleep(1600);
-  if (getState().mode !== "live") return;
-  setAgent(from, { bubble: null, walking: false, typing: true });
-  setAgent(to, { bubble: "Recibido ✓" });
-  await sleep(1200);
-  if (getState().mode !== "live") return;
-  setAgent(to, { bubble: null });
-  setHandoff(null, null);
-  goHome(from);
-}
-
 export function startLive() {
   clearTimers();
   patchState({ mode: "live", meeting: false });
   resetAllHome();
-  setTicker("Modo EN VIVO — heartbeats + handoffs suaves");
-  const started = Date.now();
+  setTicker("Modo EN VIVO — heartbeats en la ficha");
   liveTimer = setInterval(() => {
     cyclePopupsLive();
-    if (Date.now() - started > 14000 && Math.random() < 0.28) liveHandoff();
-  }, 6000);
+  }, 8000);
 }
 
 export async function runDemo() {

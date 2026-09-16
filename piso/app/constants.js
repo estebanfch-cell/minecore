@@ -35,20 +35,20 @@ export const HOMES = {
   manuelito: { x: -5.8, z: -4.4 },
   cote: { x: 0, z: -4.4 },
   law: { x: 5.8, z: -4.4 },
-  secre: { x: -5.8, z: 3.4 },
-  finance: { x: 0, z: 3.4 },
-  marketing: { x: 5.8, z: 3.4 },
-  "stock-devops": { x: 0, z: 8.0 },
+  secre: { x: -5.8, z: 4.0 },
+  finance: { x: 0, z: 4.0 },
+  marketing: { x: 5.8, z: 4.0 },
+  "stock-devops": { x: 0, z: 8.4 },
 };
 
 export const DESKS = {
   manuelito: { x: -5.8, z: -5.3 },
   cote: { x: 0, z: -5.3 },
   law: { x: 5.8, z: -5.3 },
-  secre: { x: -5.8, z: 2.5 },
-  finance: { x: 0, z: 2.5 },
-  marketing: { x: 5.8, z: 2.5 },
-  "stock-devops": { x: 0, z: 7.1 },
+  secre: { x: -5.8, z: 3.1 },
+  finance: { x: 0, z: 3.1 },
+  marketing: { x: 5.8, z: 3.1 },
+  "stock-devops": { x: 0, z: 7.5 },
 };
 
 export const MEETING_SPOTS = [
