@@ -54,7 +54,7 @@ async function liveHandoff() {
   const dest = HOMES[to];
   setTicker(`Handoff: ${from} → ${to}`);
   setHandoff(from, to);
-  walkTo(from, dest.x + 0.75, dest.z + 0.1, msg);
+  walkTo(from, dest.x + 1.15, dest.z + 0.15, msg);
   await sleep(1600);
   if (getState().mode !== "live") return;
   setAgent(from, { bubble: null, walking: false, typing: true });
@@ -100,7 +100,7 @@ export async function runDemo() {
 
   setTicker("DEMO — handoffs SECRE→FINANCE, COTE→MANUELITO");
   setHandoff("secre", "finance");
-  walkTo("secre", HOMES.finance.x + 0.75, HOMES.finance.z, "OK_aplicar?");
+  walkTo("secre", HOMES.finance.x + 1.15, HOMES.finance.z, "OK_aplicar?");
   await sleep(1400, token);
   if (token.aborted) return;
   setAgent("secre", { bubble: null });
@@ -109,7 +109,7 @@ export async function runDemo() {
   setHandoff("cote", "manuelito");
   await sleep(800, token);
 
-  walkTo("cote", HOMES.manuelito.x + 0.75, HOMES.manuelito.z, "Avisá a Majo");
+  walkTo("cote", HOMES.manuelito.x + 1.15, HOMES.manuelito.z, "Avisá a Majo");
   await sleep(1400, token);
   if (token.aborted) return;
   setAgent("cote", { bubble: null });

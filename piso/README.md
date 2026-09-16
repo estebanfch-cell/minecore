@@ -6,12 +6,12 @@ Animated isometric office for the seven Minecore agents. Replaces the old flat 2
 
 ## What’s on the floor
 
-- Isometric diorama: raised hex platform, lime rim (`#b8ff3c`), 7 cream desks
-- Low-poly miners with white hard hats seated at desks (manuelito, cote, law, secre, finance, marketing, stock-devops)
+- Calm isometric diorama: raised hex platform, lime rim (`#b8ff3c`), wide desk grid
+- Seven agents (manuelito, cote, law, secre, finance, marketing, stock-devops)
+- Identity labels only (name + role + status color). No activity bubbles over avatars
+- Click / tap an agent to open a side **ficha**: quién es, misión, historial, siguiente
 - Idle typing, walk tweens / handoffs, Demo stand-up in the center
-- Monitor glow + navy task cards: WhatsApp / Gmail / SRI / inFlow / GitHub / liq.minecore.ec
-- Workflow lines between agents; navy HUD panels
-- Spanish HUD: **En vivo** / **Demo**
+- Spanish HUD: **En vivo** / **Demo**. Live activity stays in the dossier, not on the 3D floor
 - Slow isometric pan (drag to look around)
 
 ## Develop
