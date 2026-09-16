@@ -209,3 +209,23 @@ export const STATUS_COLOR = {
   pending: "#ffd35c",
   blocked: "#ff6b6b",
 };
+
+/** Nudge labels off the sprite so chips stay readable. */
+export const TAG_OFFSET = {
+  manuelito: [-0.7, 0.15],
+  cote: [0.7, 0.15],
+  law: [0.72, 0.15],
+  secre: [-0.72, 0.1],
+  finance: [0.72, 0.1],
+  marketing: [0.74, 0.1],
+  "stock-devops": [-0.7, 0.12],
+};
+
+export function actionVerb(agent) {
+  if (!agent) return "Espera";
+  if (agent.meeting) return "Reunión";
+  if (agent.walking) return "Camina";
+  if (agent.bubble) return "Entrega";
+  if (agent.typing) return "Escribe";
+  return "Espera";
+}

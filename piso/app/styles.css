@@ -133,12 +133,20 @@ html { translate: no; }
 .dot-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: .03em;
   color: var(--muted);
   margin-bottom: 6px;
+}
+.dot-row em {
+  margin-left: auto;
+  font-style: normal;
+  font-size: 8px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--lime);
 }
 .led {
   width: 8px; height: 8px; border-radius: 50%;
@@ -181,6 +189,14 @@ html { translate: no; }
   letter-spacing: .04em;
   color: var(--lime);
 }
+.roster-card .verb,
+.agent-tag .verb {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #d6ff7a;
+}
 .roster-card .activity {
   font-size: 10px;
   color: var(--text);
@@ -221,15 +237,17 @@ html { translate: no; }
 .agent-tag {
   pointer-events: none;
   transform: translate(-50%, -100%);
-  background: rgba(14,22,32,.92);
-  border: 1px solid rgba(184,255,60,.2);
+  background: rgba(14,22,32,.94);
+  border: 1px solid rgba(184,255,60,.28);
   border-radius: 10px;
   padding: 5px 8px;
-  min-width: 92px;
+  min-width: 98px;
   text-align: left;
   font-family: "Segoe UI", system-ui, sans-serif;
   box-shadow: 0 8px 20px rgba(0,0,0,.35);
 }
+.agent-tag.is-walk { border-color: #b8ff3c; }
+.agent-tag.is-meet { border-color: #5dffa8; }
 .agent-tag .nm {
   color: #f4f7fb;
   font-size: 10px;

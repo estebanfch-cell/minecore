@@ -68,7 +68,7 @@ export function MonitorScreen({ kind, text, position = [0, 0.98, -0.235] }) {
         <planeGeometry args={[0.84, 0.52]} />
         <meshBasicMaterial color={meta.accent} transparent opacity={0.08} toneMapped={false} />
       </mesh>
-      <Html position={[0.55, 0.42, 0.04]} center distanceFactor={12} zIndexRange={[12, 0]}>
+      <Html position={[0.82, 0.38, 0.06]} center distanceFactor={13} zIndexRange={[12, 0]}>
         <div className="float-app">
           <header style={{ color: meta.accent }}>
             <span className="dot" style={{ background: meta.accent }} />
