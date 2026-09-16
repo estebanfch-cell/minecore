@@ -203,9 +203,10 @@ html { translate: no; }
   margin: 8px 48px 18px 0;
 }
 .dossier-head img {
-  width: 120px;
-  height: 120px;
-  object-fit: contain;
+  width: 128px;
+  height: 128px;
+  object-fit: cover;
+  object-position: center 12%;
   background: #f4f1ea;
   border-radius: 14px;
   flex-shrink: 0;
