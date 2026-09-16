@@ -3,43 +3,62 @@ import * as THREE from "three";
 import { LIME } from "../constants.js";
 import { MonitorScreen } from "./MonitorScreen.jsx";
 
-const DESK = "#1a2822";
-const DESK_EDGE = "#2d4638";
-const METAL = "#2a3230";
+const DESK = "#4a6758";
+const DESK_EDGE = "#6a8a74";
+const METAL = "#3a4540";
 
 export function OfficeRoom({ meeting }) {
   const gridTex = useMemo(() => makeGridTexture(), []);
 
   return (
     <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0.4]} receiveShadow>
-        <planeGeometry args={[18, 14]} />
-        <meshStandardMaterial color="#121a17" map={gridTex} roughness={0.92} metalness={0.05} />
+      <mesh position={[0, -0.08, 0.35]} receiveShadow>
+        <boxGeometry args={[18.4, 0.16, 14.2]} />
+        <meshStandardMaterial color="#3d5649" roughness={0.85} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0.35]} receiveShadow>
+        <planeGeometry args={[17.8, 13.6]} />
+        <meshStandardMaterial color="#5a7a68" map={gridTex} roughness={0.72} metalness={0.04} />
+      </mesh>
+      <gridHelper args={[17.6, 22, "#c8ff5a", "#6a8a40"]} position={[0, 0.03, 0.35]} />
+      <mesh position={[0, 0.04, -6.65]}>
+        <boxGeometry args={[18.2, 0.08, 0.1]} />
+        <meshStandardMaterial color={LIME} emissive={LIME} emissiveIntensity={1.1} />
+      </mesh>
+      <mesh position={[-9.05, 0.04, 0.35]}>
+        <boxGeometry args={[0.1, 0.08, 14]} />
+        <meshStandardMaterial color={LIME} emissive={LIME} emissiveIntensity={0.8} />
+      </mesh>
+      <mesh position={[9.05, 0.04, 0.35]}>
+        <boxGeometry args={[0.1, 0.08, 14]} />
+        <meshStandardMaterial color={LIME} emissive={LIME} emissiveIntensity={0.8} />
+      </mesh>
+      <mesh position={[0, 0.04, 7.3]}>
+        <boxGeometry args={[18.2, 0.08, 0.1]} />
+        <meshStandardMaterial color={LIME} emissive={LIME} emissiveIntensity={0.55} />
       </mesh>
 
-      <mesh position={[0, 2.2, -6.4]} receiveShadow>
-        <boxGeometry args={[18, 4.4, 0.18]} />
-        <meshStandardMaterial color="#101816" roughness={0.85} />
+      <mesh position={[0, 2.15, -6.45]} receiveShadow>
+        <boxGeometry args={[18.2, 4.3, 0.22]} />
+        <meshStandardMaterial color="#3a5046" roughness={0.72} />
       </mesh>
-      <mesh position={[-8.9, 2.2, 0.3]} receiveShadow>
-        <boxGeometry args={[0.18, 4.4, 13.6]} />
-        <meshStandardMaterial color="#101816" roughness={0.85} />
+      <mesh position={[-9.05, 2.15, 0.35]} receiveShadow>
+        <boxGeometry args={[0.22, 4.3, 13.8]} />
+        <meshStandardMaterial color="#3a5046" roughness={0.72} />
       </mesh>
-      <mesh position={[8.9, 2.2, 0.3]} receiveShadow>
-        <boxGeometry args={[0.18, 4.4, 13.6]} />
-        <meshStandardMaterial color="#101816" roughness={0.85} />
-      </mesh>
-
-      <mesh position={[0, 4.15, -0.2]}>
-        <boxGeometry args={[16.4, 0.08, 12.2]} />
-        <meshStandardMaterial color="#0c1210" roughness={0.8} transparent opacity={0.35} />
+      <mesh position={[9.05, 2.15, 0.35]} receiveShadow>
+        <boxGeometry args={[0.22, 4.3, 13.8]} />
+        <meshStandardMaterial color="#3a5046" roughness={0.72} />
       </mesh>
 
-      {[-6, -2, 2, 6].map((x) => (
-        <mesh key={x} position={[x, 4.05, -0.2]}>
-          <boxGeometry args={[0.12, 0.16, 12]} />
-          <meshStandardMaterial color="#1c2a22" metalness={0.4} roughness={0.4} />
-        </mesh>
+      {[-5.5, 0, 5.5].map((x) => (
+        <group key={x}>
+          <mesh position={[x, 3.85, -0.2]}>
+            <boxGeometry args={[2.4, 0.08, 0.55]} />
+            <meshStandardMaterial color="#d8ff7a" emissive={LIME} emissiveIntensity={1.6} />
+          </mesh>
+          <pointLight position={[x, 3.5, -0.2]} color={LIME} intensity={0.55} distance={8} />
+        </group>
       ))}
 
       <mesh position={[0, 3.55, -6.28]}>
@@ -235,10 +254,10 @@ function makeGridTexture() {
   c.width = 512;
   c.height = 512;
   const ctx = c.getContext("2d");
-  ctx.fillStyle = "#121a17";
+  ctx.fillStyle = "#547666";
   ctx.fillRect(0, 0, 512, 512);
-  ctx.strokeStyle = "rgba(184,255,60,0.10)";
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = "rgba(184,255,60,0.72)";
+  ctx.lineWidth = 4;
   for (let i = 0; i <= 512; i += 32) {
     ctx.beginPath();
     ctx.moveTo(i, 0);

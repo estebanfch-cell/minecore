@@ -7,14 +7,13 @@ import { Miner } from "./Miner.jsx";
 export function Office({ agents, meeting }) {
   return (
     <>
-      <color attach="background" args={["#070c0a"]} />
-      <fog attach="fog" args={["#070c0a", 18, 38]} />
+      <color attach="background" args={["#15211c"]} />
 
-      <hemisphereLight args={["#b8ff3c", "#0a100c", 0.28]} />
-      <ambientLight intensity={0.35} />
+      <hemisphereLight args={["#e8ffc8", "#1a2a22", 0.85]} />
+      <ambientLight intensity={0.72} />
       <directionalLight
-        position={[8, 14, 6]}
-        intensity={1.15}
+        position={[7, 13, 8]}
+        intensity={1.85}
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-12}
@@ -22,9 +21,10 @@ export function Office({ agents, meeting }) {
         shadow-camera-top={12}
         shadow-camera-bottom={-12}
       />
-      <pointLight position={[0, 3.6, 0]} color={LIME} intensity={1.1} distance={16} />
-      <pointLight position={[-5, 3.2, -3]} color="#7ad0ff" intensity={0.35} distance={10} />
-      <pointLight position={[5, 3.2, 3]} color="#7ad0ff" intensity={0.28} distance={10} />
+      <directionalLight position={[-6, 6, -4]} intensity={0.45} color="#9ad4ff" />
+      <pointLight position={[0, 3.4, 0]} color={LIME} intensity={2.4} distance={18} />
+      <pointLight position={[-5, 3.0, -3]} color="#7ad0ff" intensity={0.7} distance={12} />
+      <pointLight position={[5, 3.0, 3]} color="#7ad0ff" intensity={0.55} distance={12} />
 
       <OfficeRoom meeting={meeting} />
 
@@ -44,18 +44,18 @@ export function Office({ agents, meeting }) {
         ))}
       </Suspense>
 
-      <ContactShadows position={[0, 0.01, 0.3]} opacity={0.42} scale={20} blur={2.2} far={6} />
+      <ContactShadows position={[0, 0.015, 0.3]} opacity={0.16} scale={18} blur={1.8} far={4} />
 
       <OrbitControls
         makeDefault
         enablePan={false}
         autoRotate
-        autoRotateSpeed={0.45}
-        minPolarAngle={0.55}
-        maxPolarAngle={1.15}
-        minDistance={10}
-        maxDistance={22}
-        target={[0, 0.6, 0.2]}
+        autoRotateSpeed={0.35}
+        minPolarAngle={0.62}
+        maxPolarAngle={1.05}
+        minDistance={9}
+        maxDistance={16}
+        target={[0, 0.55, 0.15]}
       />
     </>
   );

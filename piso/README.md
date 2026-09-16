@@ -22,7 +22,7 @@ npm install
 npm run dev
 ```
 
-Opens Vite at `http://localhost:5173/`. Source lives in `app/`. Approved v5 portraits are in `public/avatars/`.
+Opens Vite at `http://localhost:5173/minecore/piso/`. Source lives in `app/`. Approved v5 portraits are in `public/avatars/`.
 
 ## Build for GitHub Pages
 
@@ -40,7 +40,7 @@ npm run build
 
 Do **not** point Pages at `piso/dist` (gitignored). After merge, the live URL is `/minecore/piso/`.
 
-`vite.config.js` uses `base: '/minecore/piso/'` for production builds and `base: '/'` for `npm run dev`.
+`vite.config.js` always uses `base: '/minecore/piso/'` so `dev`, `preview`, and Pages share the same asset URLs.
 
 Preview the production build locally:
 

@@ -19,6 +19,7 @@ html, body, #root {
   color: var(--text);
   font-family: "Segoe UI", system-ui, sans-serif;
 }
+html { translate: no; }
 
 .canvas-wrap {
   position: absolute;
@@ -210,7 +211,7 @@ html, body, #root {
 .float-app {
   pointer-events: none;
   transform: translate(-50%, -100%);
-  width: 168px;
+  width: 148px;
   background: rgba(10,16,20,.92);
   border: 1px solid rgba(184,255,60,.28);
   border-radius: 10px;

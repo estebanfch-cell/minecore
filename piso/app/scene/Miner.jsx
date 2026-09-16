@@ -283,10 +283,9 @@ export function Miner({ agent }) {
 
       <Accessory kind={look.accessory} walking={agent.walking} />
 
-      <Html position={[0, 2.05, 0]} center distanceFactor={9} zIndexRange={[20, 0]}>
+      <Html position={[0, 2.02, 0]} center distanceFactor={10} zIndexRange={[20, 0]}>
         <div className="agent-tag">
           <div className="nm">{agent.name}</div>
-          <div className="act">{agent.activity}</div>
           <span className={`chip ${agent.status}`}>{agent.status}</span>
         </div>
       </Html>

@@ -30,7 +30,7 @@ export function Hud() {
 
   return (
     <>
-      <div className="hud">
+      <div className="hud notranslate">
         <div className="brand">
           <span className="logo-mark">M</span>
           <div>
@@ -57,7 +57,7 @@ export function Hud() {
         </div>
       </div>
 
-      <aside className="roster">
+      <aside className="roster notranslate">
         {AGENTS.map((a) => {
           const s = state.agents[a.id];
           return (
@@ -73,7 +73,7 @@ export function Hud() {
         })}
       </aside>
 
-      <div className="ticker">
+      <div className="ticker notranslate">
         <strong>FEED</strong> {state.ticker}
       </div>
     </>
