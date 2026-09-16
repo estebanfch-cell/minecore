@@ -11,6 +11,7 @@ function blankAgent(def) {
     status: "pending",
     popup: POPUPS[def.popupKind][0],
     bubble: null,
+    history: [],
     x: home.x,
     z: home.z,
     typing: true,
@@ -22,7 +23,12 @@ function blankAgent(def) {
 function createInitial() {
   const agents = {};
   AGENTS.forEach((a) => {
-    agents[a.id] = { ...blankAgent(a), ...(SEEDS[a.id] || {}) };
+    const seed = SEEDS[a.id] || {};
+    const base = { ...blankAgent(a), ...seed };
+    if (seed.activity) {
+      base.history = [{ text: seed.activity, at: Date.now() }];
+    }
+    agents[a.id] = base;
   });
   return {
     agents,
@@ -30,6 +36,7 @@ function createInitial() {
     ticker: "Esperando heartbeats…",
     meeting: false,
     handoff: null,
+    selectedId: null,
   };
 }
 
@@ -67,16 +74,28 @@ export function snapshotAgents() {
   return agents;
 }
 
+function pushHistory(cur, patch) {
+  const note = patch.activity;
+  if (!note) return cur.history || [];
+  const last = (cur.history || [])[0];
+  if (last && last.text === note) return cur.history;
+  return [{ text: note, at: Date.now() }, ...(cur.history || [])].slice(0, 8);
+}
+
 export function setAgent(id, patch) {
   const cur = state.agents[id];
   if (!cur) return;
-  const next = { ...cur, ...patch };
+  const next = { ...cur, ...patch, history: pushHistory(cur, patch || {}) };
   state = {
     ...state,
     agents: { ...state.agents, [id]: next },
     ticker: patch.activity ? `${id}: ${patch.activity}` : state.ticker,
   };
   emit();
+}
+
+export function selectAgent(id) {
+  patchState({ selectedId: id || null });
 }
 
 export function setTicker(msg) {

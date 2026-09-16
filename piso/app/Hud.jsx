@@ -1,5 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { AGENTS, APPS } from "./constants.js";
+import { Dossier } from "./Dossier.jsx";
 import { getState, subscribe } from "./store.js";
 import { runDemo, startLive } from "./director.js";
 
@@ -22,6 +22,7 @@ function clockLabel() {
 export function Hud() {
   const state = useStore();
   const [clock, setClock] = useState(clockLabel);
+  const selected = state.selectedId ? state.agents[state.selectedId] : null;
 
   useEffect(() => {
     const t = setInterval(() => setClock(clockLabel()), 1000);
@@ -37,11 +38,6 @@ export function Hud() {
             <strong>MINECORE</strong>
             <span className="sub">Piso operativo</span>
           </div>
-        </div>
-        <div className="app-rail">
-          {APPS.map((app) => (
-            <span className="app-pill" key={app.id}>{app.label}</span>
-          ))}
         </div>
         <div className="clock">{clock}</div>
         <div className="modes">
@@ -62,39 +58,11 @@ export function Hud() {
         </div>
       </div>
 
-      <aside className="side-panel left-panel notranslate">
-        <div className="panel-kicker">WORKFORCE</div>
-        <div className="panel-title">{state.mode === "demo" ? "Demo" : "En vivo"}</div>
-        {AGENTS.map((a) => {
-          const s = state.agents[a.id];
-          return (
-            <div className="dot-row" key={a.id}>
-              <span className={`led ${s.status}`} />
-              <span>{a.name}</span>
-            </div>
-          );
-        })}
-      </aside>
+      {!selected && (
+        <div className="hint notranslate">Toca un agente para ver su ficha</div>
+      )}
 
-      <aside className="side-panel roster notranslate">
-        {AGENTS.map((a) => {
-          const s = state.agents[a.id];
-          return (
-            <div className="roster-card" key={a.id}>
-              <img src={`${import.meta.env.BASE_URL}avatars/${a.id}.jpg`} alt={a.name} />
-              <div>
-                <div className="name">{a.name}</div>
-                <div className="activity">{s.activity}</div>
-                <span className={`chip ${s.status}`}>{s.status}</span>
-              </div>
-            </div>
-          );
-        })}
-      </aside>
-
-      <div className="caption notranslate">
-        {state.meeting ? "Stand-up · piso operativo" : state.ticker}
-      </div>
+      <Dossier agent={selected} />
     </>
   );
 }

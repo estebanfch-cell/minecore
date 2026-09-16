@@ -30,36 +30,81 @@ export const POPUP_META = {
   gh: { app: "GitHub", accent: "#e6edf3", host: "github.com" },
 };
 
-/** Sit / stand home in world XZ. Desks sit just behind (−Z). */
+/** Sit / stand home in world XZ. Desks sit just behind (−Z). Wide grid so labels do not stack. */
 export const HOMES = {
-  manuelito: { x: -2.55, z: -1.55 },
-  cote: { x: 0, z: -1.55 },
-  law: { x: 2.55, z: -1.55 },
-  secre: { x: -2.55, z: 0.85 },
-  finance: { x: 0, z: 0.85 },
-  marketing: { x: 2.55, z: 0.85 },
-  "stock-devops": { x: 0, z: 3.15 },
+  manuelito: { x: -5.8, z: -4.4 },
+  cote: { x: 0, z: -4.4 },
+  law: { x: 5.8, z: -4.4 },
+  secre: { x: -5.8, z: 4.0 },
+  finance: { x: 0, z: 4.0 },
+  marketing: { x: 5.8, z: 4.0 },
+  "stock-devops": { x: 0, z: 8.4 },
 };
 
 export const DESKS = {
-  manuelito: { x: -2.55, z: -2.25 },
-  cote: { x: 0, z: -2.25 },
-  law: { x: 2.55, z: -2.25 },
-  secre: { x: -2.55, z: 0.15 },
-  finance: { x: 0, z: 0.15 },
-  marketing: { x: 2.55, z: 0.15 },
-  "stock-devops": { x: 0, z: 2.45 },
+  manuelito: { x: -5.8, z: -5.3 },
+  cote: { x: 0, z: -5.3 },
+  law: { x: 5.8, z: -5.3 },
+  secre: { x: -5.8, z: 3.1 },
+  finance: { x: 0, z: 3.1 },
+  marketing: { x: 5.8, z: 3.1 },
+  "stock-devops": { x: 0, z: 7.5 },
 };
 
 export const MEETING_SPOTS = [
-  { x: -1.15, z: -0.35 },
-  { x: -0.4, z: -1.05 },
-  { x: 0.4, z: -1.05 },
-  { x: 1.15, z: -0.35 },
-  { x: 0.85, z: 0.55 },
-  { x: 0.0, z: 1.05 },
-  { x: -0.85, z: 0.55 },
+  { x: -1.7, z: -0.5 },
+  { x: -0.6, z: -1.5 },
+  { x: 0.6, z: -1.5 },
+  { x: 1.7, z: -0.5 },
+  { x: 1.25, z: 0.85 },
+  { x: 0.0, z: 1.6 },
+  { x: -1.25, z: 0.85 },
 ];
+
+export const DOSSIERS = {
+  manuelito: {
+    title: "Hub WhatsApp",
+    mission:
+      "Atiende el canal WA de Minecore: recibe PDFs, avisa retenciones y escribe a Majo cuando hay montos.",
+    next: "Esperar reply de Majo y confirmar alerta de retención.",
+  },
+  cote: {
+    title: "Costeo",
+    mission:
+      "Arma el costeo semanal: cruza Gmail, packing list y deja aprobaciones Stratega listas.",
+    next: "Cerrar OC pendiente y cruzar packing list.",
+  },
+  law: {
+    title: "Legal",
+    mission:
+      "Sigue oficios y expedientes (Rumi y demás). Marca PDFs no digitalizados y el impacto.",
+    next: "Digitalizar Oficio 74310716.",
+  },
+  secre: {
+    title: "Retenciones",
+    mission:
+      "Carga retenciones en SRI, sigue al banco y pasa a Finance cuando hay OK_aplicar.",
+    next: "Reintentar SRI y avisar Kluane a Finance.",
+  },
+  finance: {
+    title: "inFlow",
+    mission:
+      "Aplica comprobantes en inFlow, mapea saldos y deja el stamp PAID cuando hay respaldo.",
+    next: "Aplicar el siguiente comprobante en inFlow.",
+  },
+  marketing: {
+    title: "Liquidación",
+    mission:
+      "Publica campañas en liq.minecore.ec, flyers y espera deploys de EFCH.",
+    next: "Publicar flyer cuando el deploy EFCH esté verde.",
+  },
+  "stock-devops": {
+    title: "Ops / GitHub",
+    mission:
+      "CI, PRs, stock sync y que el Admin App quede verde.",
+    next: "Cerrar PR #42 y confirmar stock sync.",
+  },
+};
 
 export const WORKFLOW_EDGES = [
   ["cote", "manuelito"],
@@ -209,3 +254,16 @@ export const STATUS_COLOR = {
   pending: "#ffd35c",
   blocked: "#ff6b6b",
 };
+
+export const STATUS_LABEL = {
+  ok: "ok",
+  pending: "pendiente",
+  blocked: "bloqueado",
+};
+
+export function actionVerb(agent) {
+  if (agent?.meeting) return "En reunión";
+  if (agent?.walking) return "Caminando";
+  if (agent?.typing) return "En el escritorio";
+  return "En el piso";
+}
