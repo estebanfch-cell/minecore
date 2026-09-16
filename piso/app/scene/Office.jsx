@@ -8,13 +8,13 @@ import { Workflow } from "./Workflow.jsx";
 export function Office({ agents, meeting, handoff }) {
   return (
     <>
-      <color attach="background" args={["#0b1014"]} />
+      <color attach="background" args={["#10151c"]} />
 
-      <hemisphereLight args={["#d8e8ff", "#121814", 0.7]} />
-      <ambientLight intensity={0.62} />
+      <hemisphereLight args={["#e8f2ff", "#1a221c", 0.85]} />
+      <ambientLight intensity={0.78} />
       <directionalLight
-        position={[6, 16, 8]}
-        intensity={1.55}
+        position={[5, 14, 7]}
+        intensity={1.7}
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-9}
@@ -22,8 +22,8 @@ export function Office({ agents, meeting, handoff }) {
         shadow-camera-top={9}
         shadow-camera-bottom={-9}
       />
-      <directionalLight position={[-8, 6, -4]} intensity={0.28} color="#8ecbff" />
-      <pointLight position={[0, 4.2, 0]} color={LIME} intensity={1.15} distance={14} />
+      <directionalLight position={[-7, 5, -3]} intensity={0.4} color="#9ad4ff" />
+      <pointLight position={[0, 3.8, 0]} color={LIME} intensity={1.05} distance={13} />
 
       <Platform meeting={meeting} />
 
@@ -45,7 +45,7 @@ export function Office({ agents, meeting, handoff }) {
         ))}
       </Suspense>
 
-      <ContactShadows position={[0, -0.4, 0]} opacity={0.45} scale={18} blur={2.6} far={5} />
+      <ContactShadows position={[0, -0.58, 0]} opacity={0.5} scale={20} blur={2.8} far={6} />
 
       <OrbitControls
         makeDefault

@@ -1,5 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { AGENTS, APPS } from "./constants.js";
+import { AGENTS, APPS, actionVerb } from "./constants.js";
 import { getState, subscribe } from "./store.js";
 import { runDemo, startLive } from "./director.js";
 
@@ -71,6 +71,7 @@ export function Hud() {
             <div className="dot-row" key={a.id}>
               <span className={`led ${s.status}`} />
               <span>{a.name}</span>
+              <em>{actionVerb(s)}</em>
             </div>
           );
         })}
@@ -84,6 +85,7 @@ export function Hud() {
               <img src={`${import.meta.env.BASE_URL}avatars/${a.id}.jpg`} alt={a.name} />
               <div>
                 <div className="name">{a.name}</div>
+                <div className="verb">{actionVerb(s)}</div>
                 <div className="activity">{s.activity}</div>
                 <span className={`chip ${s.status}`}>{s.status}</span>
               </div>
