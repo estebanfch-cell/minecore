@@ -8,21 +8,22 @@ const LEG = "#1b1d20";
 export function Platform({ meeting }) {
   return (
     <group>
-      <mesh position={[0, -0.22, 0]} castShadow receiveShadow>
-        <cylinderGeometry args={[6.55, 6.7, 0.38, 6]} />
-        <meshStandardMaterial color="#141a16" roughness={0.78} metalness={0.08} />
+      <mesh position={[0, -0.28, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[6.55, 6.78, 0.52, 6]} />
+        <meshStandardMaterial color="#101612" roughness={0.78} metalness={0.08} />
       </mesh>
       <mesh position={[0, -0.01, 0]} receiveShadow>
         <cylinderGeometry args={[6.42, 6.42, 0.05, 6]} />
         <meshStandardMaterial color="#1c2620" roughness={0.7} />
       </mesh>
-      <mesh position={[0, -0.04, 0]}>
-        <cylinderGeometry args={[6.62, 6.62, 0.06, 6]} />
-        <meshStandardMaterial color={LIME} emissive={LIME} emissiveIntensity={0.85} />
+      <mesh position={[0, -0.06, 0]}>
+        <cylinderGeometry args={[6.68, 6.68, 0.08, 6]} />
+        <meshStandardMaterial color={LIME} emissive={LIME} emissiveIntensity={1.05} />
       </mesh>
+      <pointLight position={[0, -0.1, 0]} color={LIME} intensity={0.8} distance={10} />
       <mesh rotation={[-Math.PI / 2, 0, Math.PI / 6]} position={[0, 0.02, 0]} receiveShadow>
         <circleGeometry args={[6.15, 6]} />
-        <meshStandardMaterial color="#24302a" roughness={0.82} />
+        <meshStandardMaterial color="#2a362f" roughness={0.82} />
       </mesh>
       <gridHelper args={[10.4, 16, "#3d5a30", "#2a3a28"]} position={[0, 0.03, 0]} />
 

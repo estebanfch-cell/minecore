@@ -21,12 +21,12 @@ export function Workflow({ agents, handoff }) {
             start={start}
             end={end}
             mid={mid}
-            color={active ? LIME : "#4a6a32"}
-            lineWidth={active ? 2.4 : 1}
-            dashed={!active}
-            dashScale={active ? 1 : 8}
+            color={active ? LIME : "#8ab84a"}
+            lineWidth={active ? 3 : 1.6}
+            dashed
+            dashScale={6}
             transparent
-            opacity={active ? 0.95 : 0.35}
+            opacity={active ? 1 : 0.7}
           />
         );
       })}
