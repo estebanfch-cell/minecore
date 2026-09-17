@@ -26,7 +26,8 @@ const ADMIN_USER_ALIASES={
   esteban:'EFCH','esteban ferlito':'EFCH',efch:'EFCH',
   martin:'MPL','martin pinto':'MPL',mpl:'MPL',
   oswaldo:'OPM','oswaldo pena':'OPM',opm:'OPM',
-  angel:'AG','angel guachamin':'AG',ag:'AG'
+  angel:'AG','angel guachamin':'AG',ag:'AG',
+  secre:'SECRE','secre conta':'SECRE',secreconta:'SECRE'
 };
 let embedSsoDone=false, embedSsoApplying=false, resolveEmbedSsoWait=null;
 
@@ -35,7 +36,8 @@ const DEFAULT_USERS = [
   {usuario:'EFCH', nombre:'Esteban Ferlito', rol:'admin', pin:'2765', activo:'SI'},
   {usuario:'MPL',  nombre:'Martín Pinto',    rol:'admin', pin:'1111', activo:'SI'},
   {usuario:'OPM',  nombre:'Oswaldo Peña',    rol:'chofer',pin:'2222', activo:'SI'},
-  {usuario:'AG',   nombre:'Ángel Guachamin', rol:'chofer',pin:'3333', activo:'SI'}
+  {usuario:'AG',   nombre:'Ángel Guachamin', rol:'chofer',pin:'3333', activo:'SI'},
+  {usuario:'SECRE', nombre:'SECRE Conta',    rol:'admin', pin:'',     activo:'SI'}
 ];
 
 const AV_COLORS = {
@@ -121,9 +123,14 @@ function findCajaUser(usuario, nombre){
 }
 function consumeEmbedSso(){
   try{
-    const raw=localStorage.getItem('mc_embed_sso');
-    if(!raw) return null;
-    localStorage.removeItem('mc_embed_sso');
+    let raw=localStorage.getItem('mc_embed_sso');
+    if(raw){
+      localStorage.removeItem('mc_embed_sso');
+      try{ localStorage.setItem('mc_embed_sso_last', raw); }catch(e){}
+    }else{
+      raw=localStorage.getItem('mc_embed_sso_last');
+      if(!raw) return null;
+    }
     const p=JSON.parse(raw);
     if(!p||p.ok!==true) return null;
     if(p.ts!=null && p.ts!==''){
@@ -146,12 +153,19 @@ function readAdminSharedSso(){
     let profile={};
     try{ profile=JSON.parse(localStorage.getItem('mc_profile')||'{}'); }catch(e){}
     const nombre=profile.nombre||usuario;
-    const rol=profile.rol||'';
+    const rol=String(profile.rol||'').toLowerCase();
     if(!usuario && !nombre) return null;
     const mapped=findCajaUser(usuario, nombre);
-    if(!mapped) return null;
     const pin=readAdminPin();
-    return {ok:true, usuario:mapped.usuario, nombre:mapped.nombre||nombre, rol:mapped.rol||rol, pin};
+    if(mapped){
+      const mappedRol=String(mapped.rol||rol||'chofer').toLowerCase();
+      const keepAdmin=(rol==='admin'||mappedRol==='admin')?'admin':(mappedRol||rol||'chofer');
+      return {ok:true, usuario:mapped.usuario, nombre:mapped.nombre||nombre, rol:keepAdmin, pin};
+    }
+    // SECRE / Admin SSO users may not be on Caja sheet — still recover from Admin keys
+    const u=String(usuario||nombre||'').trim().toUpperCase();
+    if(!u) return null;
+    return {ok:true, usuario:u, nombre:nombre||u, rol:(rol||'chofer'), pin};
   }catch(e){ return null; }
 }
 function signalEmbedSso(){
@@ -182,7 +196,10 @@ async function loginWithPinOrLocal(usuario, nombre, rol, pin){
         new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),4000))
       ]);
       if(r&&r.ok){
-        r.rol=(r.rol||localSess.rol).toLowerCase();
+        // Never demote Admin SSO admin if Caja API returns chofer
+        const reqAdmin=String(rol||'').toLowerCase()==='admin';
+        const apiAdmin=String(r.rol||'').toLowerCase()==='admin';
+        r.rol=(reqAdmin||apiAdmin||(typeof EMBED!=='undefined'&&EMBED&&reqAdmin))?'admin':String(r.rol||localSess.rol).toLowerCase();
         return r;
       }
     }catch(e){}
@@ -196,7 +213,10 @@ async function applyEmbedSso(payload){
   if(!usuario) return false;
   embedSsoApplying=true;
   const nombre=(mapped&&mapped.nombre)||payload.nombre||usuario;
-  const rol=((mapped&&mapped.rol)||payload.rol||'chofer').toLowerCase();
+  // Prefer Admin SSO admin; never let Caja sheet/DEFAULT chofer demote admin
+  const rolPayload=String(payload.rol||'').toLowerCase();
+  const rolMapped=String((mapped&&mapped.rol)||'').toLowerCase();
+  const rol=(rolPayload==='admin')?'admin':((rolMapped==='admin')?'admin':(rolPayload||rolMapped||'chofer'));
   const pin=String(payload.pin||readAdminPin()||'').trim();
   if(payload.pin){
     try{ sessionStorage.setItem('mc_bridge_pin', String(payload.pin)); }catch(e){}
