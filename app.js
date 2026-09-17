@@ -478,6 +478,17 @@ function getPeriodoDates(offset){
   }
   return{fi:fi.toISOString().split('T')[0], ff:ff.toISOString().split('T')[0]};
 }
+/** Previous Mon–Sun in local calendar (Mon=1). Used by filtro 'semana'. */
+function getSemanaAnteriorDates(){
+  const hoy=new Date();
+  const dow=hoy.getDay(); // 0=Sun … 6=Sat; Mon=1
+  const daysSinceMon=dow===0?6:dow-1;
+  const thisMon=new Date(hoy.getFullYear(),hoy.getMonth(),hoy.getDate()-daysSinceMon);
+  const prevMon=new Date(thisMon.getFullYear(),thisMon.getMonth(),thisMon.getDate()-7);
+  const prevSun=new Date(prevMon.getFullYear(),prevMon.getMonth(),prevMon.getDate()+6);
+  const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  return{fi:ymd(prevMon),ff:ymd(prevSun)};
+}
 function periodLabel(offset){
   const d=getPeriodoDates(offset);
   const m=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
@@ -609,6 +620,7 @@ function applyDateFiltro(filtro, prefix){
   if(filtro==='hoy'){fi=hs;ff=hs;}
   else if(filtro==='ayer'){const a=new Date(hoy);a.setDate(hoy.getDate()-1);const as=a.toISOString().split('T')[0];fi=as;ff=as;}
   else if(filtro==='7dias'){const s=new Date(hoy);s.setDate(hoy.getDate()-6);fi=s.toISOString().split('T')[0];ff=hs;}
+  else if(filtro==='semana'){const d=getSemanaAnteriorDates();fi=d.fi;ff=d.ff;}
   else if(filtro==='periodo'){const d=getPeriodoDates(0);fi=d.fi;ff=d.ff;}
   else if(filtro==='anterior'){const d=getPeriodoDates(-1);fi=d.fi;ff=d.ff;}
   else{fi='2020-01-01';ff='2099-12-31';}
@@ -978,8 +990,8 @@ function renderCuenta(c){
   <div class="filter-bar">
     <div class="filter-label">Período</div>
     <div class="filter-btns">
-      ${['hoy','ayer','7dias','periodo','anterior','todo'].map(id=>{
-        const labels={hoy:'Hoy',ayer:'Ayer','7dias':'7 días',periodo:`Período (${pLabel})`,anterior:`← Anterior (${aLabel})`,todo:'Todo'};
+      ${['hoy','ayer','7dias','semana','periodo','anterior','todo'].map(id=>{
+        const labels={hoy:'Hoy',ayer:'Ayer','7dias':'7 días',semana:'Semana ant.',periodo:`Período (${pLabel})`,anterior:`← Anterior (${aLabel})`,todo:'Todo'};
         return `<button class="filt-btn${filtro===id?' active':''}" id="c-btn-${id}" onclick="cSetFiltro('${id}')">${labels[id]}</button>`;
       }).join('')}
     </div>
@@ -1062,15 +1074,16 @@ async function vCorte(c){
     const myVehs=isAdmin?null:Object.keys(VEH_OWNER).filter(v=>VEH_OWNER[v]===session.usuario);
     window._corteRutasAll=isAdmin?all0:all0.filter(x=>myVehs.includes(String(x['Vehiculo']||'').trim()));
     window._corteRutas=window._corteRutasAll.filter(x=>x['Estado']==='Aprobada');
-    const pd=getPeriodoDates(0);
-    window._corFi=pd.fi; window._corFf=pd.ff; window._corFiltro='periodo';
+    const sd=getSemanaAnteriorDates();
+    window._corFi=sd.fi; window._corFf=sd.ff; window._corFiltro='semana';
     renderCorte(c);
   }catch(e){c.innerHTML=errMsg();}
 }
 
 function renderCorte(c){
-  const filtro=window._corFiltro||'periodo';
-  const fi=window._corFi||getPeriodoDates(0).fi, ff=window._corFf||getPeriodoDates(0).ff;
+  const filtro=window._corFiltro||'semana';
+  const _sd=getSemanaAnteriorDates();
+  const fi=window._corFi||_sd.fi, ff=window._corFf||_sd.ff;
   const meses=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
   const pd=getPeriodoDates(0), pa=getPeriodoDates(-1);
   const pLabel=`26 ${meses[new Date(pd.fi+'T12:00:00').getMonth()]} → 25 ${meses[new Date(pd.ff+'T12:00:00').getMonth()]}`;
@@ -1096,12 +1109,12 @@ function renderCorte(c){
   const fi0=new Date(fi+'T12:00:00'), ff0=new Date(ff+'T12:00:00');
   const label=fi===ff?`${fi0.getDate()} ${meses[fi0.getMonth()]} ${fi0.getFullYear()}`:`${fi0.getDate()} ${meses[fi0.getMonth()]} → ${ff0.getDate()} ${meses[ff0.getMonth()]} ${ff0.getFullYear()}`;
   c.innerHTML=`
-  <div style="display:flex;align-items:center;justify-content:space-between"><div class="page-title">Corte mensual</div><button onclick="descargarCortePDF()" style="padding:8px 14px;background:#161926;color:#E8FF00;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0">↓ PDF</button></div>
+  <div style="display:flex;align-items:center;justify-content:space-between"><div class="page-title">Corte</div><button onclick="descargarCortePDF(document.getElementById('cor-fi').value,document.getElementById('cor-ff').value)" style="padding:8px 14px;background:#161926;color:#E8FF00;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0">↓ PDF</button></div>
   <div class="filter-bar">
     <div class="filter-label">Período</div>
     <div class="filter-btns">
-      ${['hoy','ayer','7dias','periodo','anterior','todo'].map(id=>{
-        const labels={hoy:'Hoy',ayer:'Ayer','7dias':'7 días',periodo:`Período (${pLabel})`,anterior:`← Anterior (${aLabel})`,todo:'Todo'};
+      ${['hoy','ayer','7dias','semana','periodo','anterior','todo'].map(id=>{
+        const labels={hoy:'Hoy',ayer:'Ayer','7dias':'7 días',semana:'Semana ant.',periodo:`Período (${pLabel})`,anterior:`← Anterior (${aLabel})`,todo:'Todo'};
         return `<button class="filt-btn${filtro===id?' active':''}" id="cor-btn-${id}" onclick="corSetFiltro('${id}')">${labels[id]}</button>`;
       }).join('')}
     </div>
@@ -1364,8 +1377,8 @@ async function vHistorialCaja(c){
       api({action:'getGastos',  rol:session.rol,usuario:session.usuario})
     ]);
     window._cajEnt=re.entregas||[]; window._cajGas=rg.gastos||[];
-    const pd=getPeriodoDates(0);
-    window._cajFi=pd.fi; window._cajFf=pd.ff; window._cajFiltro='periodo'; window._cajTab='e';
+    const sd=getSemanaAnteriorDates();
+    window._cajFi=sd.fi; window._cajFf=sd.ff; window._cajFiltro='semana'; window._cajTab='e';
     renderHistCaja(c);
   }catch(e){c.innerHTML=errMsg();}
 }
@@ -1974,7 +1987,30 @@ function renderHistCaja(c){
   const isAdmin=session.rol==='admin';
   const ent=window._cajEnt||[],gas=window._cajGas||[];
   const getD=x=>parseDateStr(((x['Fecha']||'').toString()).split(' ')[0]);
-  c.innerHTML=`<div class="page-title">Historial Caja</div><div class="page-sub">Carpetas por período de corte</div><div id="hc-list"></div>`;
+  const filtro=window._cajFiltro||'semana';
+  const _sd=getSemanaAnteriorDates();
+  const fi=window._cajFi||_sd.fi, ff=window._cajFf||_sd.ff;
+  const meses=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const pd=getPeriodoDates(0), pa=getPeriodoDates(-1);
+  const pLabel=`26 ${meses[new Date(pd.fi+'T12:00:00').getMonth()]} → 25 ${meses[new Date(pd.ff+'T12:00:00').getMonth()]}`;
+  const aLabel=`26 ${meses[new Date(pa.fi+'T12:00:00').getMonth()]} → 25 ${meses[new Date(pa.ff+'T12:00:00').getMonth()]}`;
+  c.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><div class="page-title">Historial Caja</div><button onclick="descargarCajaPDF(document.getElementById('caj-fi').value,document.getElementById('caj-ff').value)" style="padding:8px 14px;background:#161926;color:#E8FF00;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0">↓ Generar PDF</button></div>
+  <div class="filter-bar">
+    <div class="filter-label">Período</div>
+    <div class="filter-btns">
+      ${['hoy','ayer','7dias','semana','periodo','anterior','todo'].map(id=>{
+        const labels={hoy:'Hoy',ayer:'Ayer','7dias':'7 días',semana:'Semana ant.',periodo:`Período (${pLabel})`,anterior:`← Anterior (${aLabel})`,todo:'Todo'};
+        return `<button class="filt-btn${filtro===id?' active':''}" id="caj-btn-${id}" onclick="cajSetFiltro('${id}')">${labels[id]}</button>`;
+      }).join('')}
+    </div>
+    <div class="date-row">
+      <input type="date" id="caj-fi" value="${fi}">
+      <span style="color:var(--text3)">→</span>
+      <input type="date" id="caj-ff" value="${ff}">
+      <button class="btn-ok" onclick="cajApply()">OK</button>
+    </div>
+  </div>
+  <div class="page-sub">Carpetas por período de corte</div><div id="hc-list"></div>`;
   const list=document.getElementById('hc-list');
   const all=ent.concat(gas);
   if(!all.length){list.innerHTML=empty('Sin movimientos');return;}
