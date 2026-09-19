@@ -21,7 +21,7 @@ function readEmbed(){
   return !!embed && embed!=='0' && embed!=='false';
 }
 const EMBED=readEmbed();
-const ADMIN_SSO_ORIGIN='https://estebanfch-cell.github.io';
+const ADMIN_SSO_ORIGINS=['https://portal.minecore.ec','https://estebanfch-cell.github.io','https://www.portal.minecore.ec'];
 const ADMIN_USER_ALIASES={
   esteban:'EFCH','esteban ferlito':'EFCH',efch:'EFCH',
   martin:'MPL','martin pinto':'MPL',mpl:'MPL',
@@ -91,7 +91,21 @@ function normUserKey(s){
   return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/\s+/g,' ');
 }
 function isAllowedSsoOrigin(origin){
-  return origin===ADMIN_SSO_ORIGIN || origin===location.origin;
+  if(!origin) return false;
+  if(origin===location.origin) return true;
+  try{
+    if(typeof ADMIN_SSO_ORIGINS!=='undefined' && ADMIN_SSO_ORIGINS.indexOf(origin)>=0) return true;
+  }catch(e){}
+  // Legacy single-origin const if present
+  try{
+    if(typeof ADMIN_SSO_ORIGIN==='string' && origin===ADMIN_SSO_ORIGIN) return true;
+  }catch(e){}
+  // Allow any subdomain of minecore.ec (custom domain Admin)
+  try{
+    var u=new URL(origin);
+    if(u.protocol==='https:' && (u.hostname==='minecore.ec' || u.hostname.endsWith('.minecore.ec'))) return true;
+  }catch(e){}
+  return false;
 }
 function cajaUserList(){
   return (allUsers&&allUsers.length)?allUsers:DEFAULT_USERS;
@@ -218,6 +232,7 @@ async function applyEmbedSso(payload){
   const rolMapped=String((mapped&&mapped.rol)||'').toLowerCase();
   const rol=(rolPayload==='admin')?'admin':((rolMapped==='admin')?'admin':(rolPayload||rolMapped||'chofer'));
   const pin=String(payload.pin||readAdminPin()||'').trim();
+  try{ if(usuario) localStorage.setItem('mc_user_name', usuario); }catch(e){}
   if(payload.pin){
     try{ sessionStorage.setItem('mc_bridge_pin', String(payload.pin)); }catch(e){}
     if(String(payload.pin).trim()){
