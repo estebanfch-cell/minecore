@@ -1,5 +1,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { Dossier } from "./Dossier.jsx";
+import { TaskFeed } from "./TaskFeed.jsx";
+import { AGENTS } from "./constants.js";
 import { getState, subscribe } from "./store.js";
 import { runDemo, startLive } from "./director.js";
 
@@ -8,15 +10,13 @@ function useStore() {
 }
 
 function clockLabel() {
-  return (
-    new Intl.DateTimeFormat("es-EC", {
-      timeZone: "America/Guayaquil",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-    }).format(new Date()) + " GT"
-  );
+  return new Intl.DateTimeFormat("es-EC", {
+    timeZone: "America/Guayaquil",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).format(new Date());
 }
 
 export function Hud() {
@@ -31,23 +31,20 @@ export function Hud() {
 
   return (
     <>
-      <div className="hud notranslate">
+      <header className="topbar notranslate" translate="no">
         <div className="brand">
           <span className="logo-mark">M</span>
           <div>
             <strong>MINECORE</strong>
-            <span className="sub">Piso operativo</span>
+            <span className="sub">Piso de agentes</span>
           </div>
         </div>
-        <div className="clock">{clock}</div>
-        <div className="modes">
-          <button
-            className={`mode ${state.mode === "live" ? "active" : ""}`}
-            type="button"
-            onClick={startLive}
-          >
-            En vivo
-          </button>
+        <p className="census">{AGENTS.length} agentes en piso</p>
+        <div className="clock">
+          <span>{clock}</span>
+          <em>Guayaquil</em>
+        </div>
+        <div className="modes" role="group" aria-label="Modo del piso">
           <button
             className={`mode ${state.mode === "demo" ? "active" : ""}`}
             type="button"
@@ -55,11 +52,20 @@ export function Hud() {
           >
             Demo
           </button>
+          <button
+            className={`mode ${state.mode === "live" ? "active" : ""}`}
+            type="button"
+            onClick={startLive}
+          >
+            En vivo
+          </button>
         </div>
-      </div>
+      </header>
+
+      <TaskFeed />
 
       {!selected && (
-        <div className="hint notranslate">Toca un agente para ver su ficha</div>
+        <div className="hint notranslate">Toca un agente para abrir su ficha</div>
       )}
 
       <Dossier agent={selected} />
