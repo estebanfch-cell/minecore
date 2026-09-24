@@ -7,6 +7,7 @@ function blankAgent(def) {
     name: def.name,
     role: def.role,
     popupKind: def.popupKind,
+    grokId: def.grokId,
     activity: "En espera de heartbeat…",
     status: "pending",
     popup: POPUPS[def.popupKind][0],
@@ -48,6 +49,9 @@ function createInitial() {
     popupFlash: null,
     liveConnected: false,
     feed,
+    instructions: [],
+    announcement: null,
+    toast: null,
   };
 }
 
@@ -167,7 +171,58 @@ export function pushNote(text, status = "pending") {
 }
 
 export function selectAgent(id) {
-  patchState({ selectedId: id || null });
+  patchState({ selectedId: id || null, focusInstruction: id === "chief" });
+}
+
+export function openChiefInstruction() {
+  patchState({ selectedId: "chief", focusInstruction: true });
+}
+
+let toastTimer = null;
+export function setToast(message, tone = "ok") {
+  const at = Date.now();
+  patchState({ toast: { message, tone, at } });
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    if (getState().toast?.at === at) patchState({ toast: null });
+  }, 5200);
+}
+
+export function enqueueInstruction(entry) {
+  const item = {
+    agentId: entry.agentId,
+    agentName: entry.agentName,
+    text: entry.text,
+    ts: entry.ts,
+    slug: entry.slug || null,
+  };
+  state = {
+    ...state,
+    instructions: [item, ...(state.instructions || [])].slice(0, 40),
+  };
+  emit();
+  return item;
+}
+
+/** Local historial + queue. Does not call the webhook. */
+export function recordInstruction(floorId, text) {
+  const agent = state.agents[floorId];
+  if (!agent) return null;
+  const trimmed = String(text || "").trim();
+  if (!trimmed) return null;
+  const entry = {
+    agentId: agent.grokId,
+    agentName: agent.name,
+    text: trimmed,
+    ts: new Date().toISOString(),
+    slug: agent.id,
+  };
+  setAgent(floorId, {
+    activity: `Instrucción: ${trimmed}`,
+    status: "pending",
+    order: trimmed,
+  });
+  return enqueueInstruction(entry);
 }
 
 export function setTicker(msg) {

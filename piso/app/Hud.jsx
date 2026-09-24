@@ -2,7 +2,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { Dossier } from "./Dossier.jsx";
 import { TaskFeed } from "./TaskFeed.jsx";
 import { AGENTS } from "./constants.js";
-import { getState, subscribe } from "./store.js";
+import { getState, openChiefInstruction, subscribe } from "./store.js";
 import { runDemo, startLive } from "./director.js";
 
 function useStore() {
@@ -44,6 +44,9 @@ export function Hud() {
           <span>{clock}</span>
           <em>Guayaquil</em>
         </div>
+        <button className="instruct-launch" type="button" onClick={openChiefInstruction}>
+          Dar instrucción
+        </button>
         <div className="modes" role="group" aria-label="Modo del piso">
           <button
             className={`mode ${state.mode === "demo" ? "active" : ""}`}
@@ -64,11 +67,24 @@ export function Hud() {
 
       <TaskFeed />
 
-      {!selected && (
-        <div className="hint notranslate">Toca un agente para abrir su ficha</div>
+      {!selected && !state.announcement && (
+        <div className="hint notranslate">Toca CHIEF para anunciar a la sala</div>
       )}
 
-      <Dossier agent={selected} />
+      {state.announcement && (
+        <div className="announce notranslate" role="status" translate="no">
+          <span>CHIEF · anuncio</span>
+          <p>{state.announcement}</p>
+        </div>
+      )}
+
+      {state.toast && (
+        <div className={`floor-toast notranslate ${state.toast.tone || "ok"}`} role="status" translate="no">
+          {state.toast.message}
+        </div>
+      )}
+
+      <Dossier agent={selected} focusInstruction={!!state.focusInstruction} />
     </>
   );
 }

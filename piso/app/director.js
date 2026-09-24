@@ -1,5 +1,6 @@
-import { AGENTS, MEETING_SPOTS, beside, hubGate } from "./constants.js";
+import { AGENTS, CHIEF_PODIUM, MEETING_SPOTS, beside, hubGate } from "./constants.js";
 import {
+  enqueueInstruction as queueInstruction,
   flashPopup,
   getState,
   goHome,
@@ -7,6 +8,7 @@ import {
   pushNote,
   resetAllHome,
   restoreSeeds,
+  selectAgent,
   setAgent,
   setHandoff,
   setTicker,
@@ -103,7 +105,12 @@ async function playRound(token) {
     ["secre", "SRI en línea · retenciones del día", "pending"],
     ["finance", "inFlow abierto · esperando OK_aplicar", "pending"],
     ["marketing", "liq.minecore.ec · espera deploy EFCH", "pending"],
-    ["stock-devops", "Admin App · sync de stock en curso", "pending"],
+    ["stock-pilot", "Stock · sync de existencias", "pending"],
+    ["devops", "CI del Admin App en curso", "pending"],
+    ["chief", "CHIEF abre la jornada en el núcleo", "ok"],
+    ["comunicados", "Borrador de comunicado en silencio", "pending"],
+    ["personal", "Turnos de la semana en revisión", "pending"],
+    ["pmv", "Ecuación PMV en seguimiento", "pending"],
   ];
   for (const [id, activity, status] of desk) {
     if (token.aborted) return;
@@ -150,39 +157,64 @@ async function playRound(token) {
 
   setAgent("law", { activity: "Impacto Rumi marcado en el expediente", status: "pending" });
   flashPopup("law", "Oficio 74310716");
-  await sleep(900, token);
+  await sleep(700, token);
   if (token.aborted) return;
-  setAgent("stock-devops", { activity: "CI del Admin App en verde", status: "ok" });
-  flashPopup("stock-devops", "GitHub · CI passed");
-  await sleep(900, token);
+  setAgent("devops", { activity: "CI del Admin App en verde", status: "ok" });
+  flashPopup("devops", "GitHub · CI passed");
+  await sleep(700, token);
+  if (token.aborted) return;
+  setAgent("stock-pilot", { activity: "Stock sync confirmado", status: "ok" });
+  await sleep(500, token);
   if (token.aborted) return;
   setAgent("marketing", { activity: "Flyer de liquidación publicado", status: "ok" });
   flashPopup("marketing", "Flyer publicado");
-  await sleep(1000, token);
+  await sleep(700, token);
   if (token.aborted) return;
 
-  setTicker("Demo · stand-up en el núcleo");
-  pushNote("Stand-up en el núcleo", "ok");
-  patchState({ meeting: true });
-  AGENTS.forEach((a, i) => {
-    const spot = MEETING_SPOTS[i];
+  await runGathering(token, "Demo · stand-up en el núcleo", null);
+  if (token.aborted) return;
+  setTicker("Demo · ciclo listo, se repite");
+}
+
+function clipLine(text, n = 140) {
+  const t = String(text || "").replace(/\s+/g, " ").trim();
+  return t.length > n ? `${t.slice(0, n - 1)}…` : t;
+}
+
+async function runGathering(token, ticker, announcement) {
+  setTicker(ticker);
+  if (announcement) pushNote(`Reunión · ${clipLine(announcement, 80)}`, "ok");
+  else pushNote("Stand-up en el núcleo", "ok");
+  selectAgent(null);
+  patchState({ meeting: true, announcement: announcement || null });
+  AGENTS.forEach((a) => {
     setAgent(a.id, { meeting: true, typing: false }, { silent: true });
-    walkTo(a.id, spot.x, spot.z);
+    const spot = a.id === "chief" ? CHIEF_PODIUM : MEETING_SPOTS[a.id];
+    if (spot) walkTo(a.id, spot.x, spot.z);
   });
-  await sleep(2200, token);
+  await sleep(4200, token);
   if (token.aborted) return;
   AGENTS.forEach((a) => setAgent(a.id, { walking: false, meeting: true }, { silent: true }));
-  await sleep(2200, token);
+  await sleep(announcement ? 14000 : 3600, token);
   if (token.aborted) return;
-
+  patchState({ announcement: null, meeting: false });
   AGENTS.forEach((a) => {
     setAgent(a.id, { meeting: false }, { silent: true });
     goHome(a.id);
   });
-  patchState({ meeting: false });
-  await sleep(1800, token);
+  await sleep(1600, token);
+}
+
+/** Workshop: CHIEF calls the room. Visual starts immediately. */
+export async function playAnnouncement(text) {
+  clearTimers();
+  const token = { aborted: false };
+  demoAbort = token;
+  const line = clipLine(text, 220);
+  await runGathering(token, `CHIEF · ${clipLine(line, 90)}`, line);
   if (token.aborted) return;
-  setTicker("Demo · ciclo listo, se repite");
+  setTicker("Reunión cerrada · de vuelta a los escritorios");
+  if (getState().mode === "demo") runDemo();
 }
 
 export async function runDemo() {
@@ -212,6 +244,12 @@ export function bindFeedApi() {
     },
     getState() {
       return JSON.parse(JSON.stringify(getState().agents));
+    },
+    enqueueInstruction(entry) {
+      return queueInstruction(entry || {});
+    },
+    getInstructions() {
+      return JSON.parse(JSON.stringify(getState().instructions || []));
     },
   };
 }

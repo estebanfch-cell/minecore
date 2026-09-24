@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
-import { HOMES, LOOKS, PLATFORM_TOP, POPUP_META, YAW } from "../constants.js";
+import { HOMES, HUB, LOOKS, PLATFORM_TOP, POPUP_META, YAW } from "../constants.js";
 import { selectAgent } from "../store.js";
 import { getMarkTexture } from "./markTexture.js";
 
@@ -27,7 +27,7 @@ function Arm({ side, color, skin, armRef }) {
   );
 }
 
-export function Miner({ agent, selected, popupFlash }) {
+export function Miner({ agent, selected, popupFlash, floorMeeting }) {
   const root = useRef();
   const chest = useRef();
   const legL = useRef();
@@ -45,7 +45,7 @@ export function Miner({ agent, selected, popupFlash }) {
     const node = root.current;
     if (!node) return;
     const d = display.current;
-    const k = 1 - Math.exp(-3.6 * dt);
+    const k = 1 - Math.exp(-1.45 * dt);
     d.x += (agent.x - d.x) * k;
     d.z += (agent.z - d.z) * k;
     const dx = agent.x - d.x;
@@ -63,17 +63,25 @@ export function Miner({ agent, selected, popupFlash }) {
     node.position.x = d.x;
     node.position.z = d.z;
     node.position.y = PLATFORM_TOP + (moving ? Math.abs(walk) * 0.05 : 0);
-    const face = moving && dist > 0.02 ? Math.atan2(dx, dz) : YAW;
+    let face = YAW;
+    if (moving && dist > 0.02) face = Math.atan2(dx, dz);
+    else if (agent.meeting) face = Math.atan2(HUB.x - d.x, HUB.z - d.z);
     node.rotation.y = lerpAngle(node.rotation.y, face, 1 - Math.exp(-8 * dt));
 
+    const listening = agent.meeting && !moving;
     if (legL.current) legL.current.rotation.x = -1.15 * s + walk * (1 - s) * 0.75;
     if (legR.current) legR.current.rotation.x = -1.15 * s - walk * (1 - s) * 0.75;
     if (armL.current) armL.current.rotation.x = -1.02 * s + walk * (1 - s) * 0.7 + type * 0.32 * s;
     if (armR.current) armR.current.rotation.x = -1.02 * s - walk * (1 - s) * 0.7 - type * 0.32 * s;
     if (chest.current) {
       chest.current.position.y = -0.26 * s;
-      chest.current.rotation.x = 0.1 * s;
+      const nod = listening && agent.id !== "chief" ? Math.sin(time * 1.7 + d.x * 2) * 0.14 : 0;
+      chest.current.rotation.x = 0.1 * s + nod;
       chest.current.rotation.z = Math.sin(time * 1.35 + d.x) * 0.028;
+    }
+    if (listening && agent.id === "chief") {
+      if (armL.current) armL.current.rotation.x = -0.35 + Math.sin(time * 2.1) * 0.28;
+      if (armR.current) armR.current.rotation.x = -0.2 + Math.sin(time * 2.1 + 0.8) * 0.22;
     }
   });
 
@@ -213,11 +221,13 @@ export function Miner({ agent, selected, popupFlash }) {
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
 
-      <Html position={[0, 1.02, 0]} center distanceFactor={14.5} zIndexRange={[20, 0]} style={{ pointerEvents: "auto" }}>
+      {!floorMeeting && !agent.meeting && (
+      <Html position={[0, 1.02, 0]} center distanceFactor={16} zIndexRange={[20, 0]} style={{ pointerEvents: "auto" }}>
         <button
           className={`id-tag notranslate ${agent.status} ${selected ? "is-on" : ""}`}
           type="button"
           translate="no"
+          data-agent-id={agent.grokId}
           onClick={open}
         >
           <span className="dot" aria-hidden="true" />
@@ -225,6 +235,7 @@ export function Miner({ agent, selected, popupFlash }) {
           <span className="role">{agent.role}</span>
         </button>
       </Html>
+      )}
 
       {showToast && (
         <Html position={[0.85, 1.15, 0.2]} center distanceFactor={12} zIndexRange={[30, 0]} style={{ pointerEvents: "none" }}>
