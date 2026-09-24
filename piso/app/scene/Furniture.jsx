@@ -109,8 +109,23 @@ function Props({ accent, flip }) {
 export function ZoneIsland({ zone, kind, hot, index }) {
   const top = mixHex("#2a3548", zone.accent, 0.58);
   const side = mixHex("#1c2636", zone.accent, 0.42);
+  const s = zone.scale || 1;
+  const furniture = (
+    <group position={[0, PLATFORM_TOP, 0]}>
+      <Chair />
+      <Desk kind={kind} accent={zone.accent} />
+      <Props accent={zone.accent} flip={index % 2 === 0} />
+    </group>
+  );
+  if (zone.ring === "hub") {
+    return (
+      <group position={[zone.position.x, 0, zone.position.z]} rotation={[0, YAW, 0]} scale={[s, 1, s]}>
+        {furniture}
+      </group>
+    );
+  }
   return (
-    <group position={[zone.position.x, 0, zone.position.z]} rotation={[0, YAW, 0]}>
+    <group position={[zone.position.x, 0, zone.position.z]} rotation={[0, YAW, 0]} scale={[s, 1, s]}>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]}>
         <circleGeometry args={[2.15, 24]} />
         <meshBasicMaterial color="#000000" transparent opacity={0.35} />
@@ -132,38 +147,35 @@ export function ZoneIsland({ zone, kind, hot, index }) {
         <planeGeometry args={[SLAB_W - 0.18, SLAB_D - 0.18]} />
         <meshStandardMaterial color={top} roughness={0.78} metalness={0.08} />
       </mesh>
-      <pointLight position={[0, 1.5, 0]} color={zone.accent} intensity={hot ? 0.7 : 0.28} distance={4.2} />
-      <group position={[0, PLATFORM_TOP, 0]}>
-        <Chair />
-        <Desk kind={kind} accent={zone.accent} />
-        <Props accent={zone.accent} flip={index % 2 === 0} />
-      </group>
+      <pointLight position={[0, 1.6, 0]} color={zone.accent} intensity={hot ? 0.55 : 0.22} distance={3.4} />
+      {furniture}
     </group>
   );
 }
 
 export function Hub({ meeting }) {
+  const slab = 4.5;
   return (
     <group position={[HUB.x, 0, HUB.z]}>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]}>
-        <circleGeometry args={[2.3, 28]} />
+        <circleGeometry args={[2.7, 32]} />
         <meshBasicMaterial color="#000" transparent opacity={0.35} />
       </mesh>
-      <RoundedBox args={[3.15, 0.08, 3.15]} radius={0.12} smoothness={3} position={[0, 0.06, 0]}>
+      <RoundedBox args={[slab + 0.18, 0.08, slab + 0.18]} radius={0.16} smoothness={3} position={[0, 0.06, 0]}>
         <meshStandardMaterial color={LIME} emissive={LIME} emissiveIntensity={meeting ? 0.9 : 0.28} />
       </RoundedBox>
-      <RoundedBox args={[2.95, SLAB_H, 2.95]} radius={0.14} smoothness={3} position={[0, PLATFORM_TOP - SLAB_H / 2, 0]} receiveShadow castShadow>
+      <RoundedBox args={[slab, SLAB_H, slab]} radius={0.16} smoothness={3} position={[0, PLATFORM_TOP - SLAB_H / 2, 0]} receiveShadow castShadow>
         <meshStandardMaterial color="#141a24" metalness={0.22} roughness={0.55} />
       </RoundedBox>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, PLATFORM_TOP + 0.012, 0]}>
-        <ringGeometry args={[0.72, 0.86, 40]} />
+        <ringGeometry args={[0.55, 0.7, 40]} />
         <meshBasicMaterial color={LIME} transparent opacity={meeting ? 0.95 : 0.45} toneMapped={false} />
       </mesh>
       <mesh position={[0, PLATFORM_TOP + 0.08, 0]}>
-        <cylinderGeometry args={[0.18, 0.22, 0.12, 16]} />
+        <cylinderGeometry args={[0.16, 0.2, 0.1, 16]} />
         <meshStandardMaterial color="#0e1410" emissive={LIME} emissiveIntensity={meeting ? 1.4 : 0.45} />
       </mesh>
-      <pointLight position={[0, 1.6, 0]} color={LIME} intensity={meeting ? 1.3 : 0.45} distance={6} />
+      <pointLight position={[0, 2.2, 0]} color={LIME} intensity={meeting ? 1.5 : 0.4} distance={8} />
     </group>
   );
 }
@@ -171,20 +183,24 @@ export function Hub({ meeting }) {
 export function Walkways({ hotIds }) {
   return (
     <group>
-      {ZONES.map((zone) => {
+      {ZONES.filter((zone) => zone.ring !== "hub").map((zone) => {
         const dx = zone.position.x - HUB.x;
         const dz = zone.position.z - HUB.z;
-        const len = Math.hypot(dx, dz);
+        const len = Math.hypot(dx, dz) || 1;
         const rot = Math.atan2(dx, dz);
         const hot = hotIds?.has(zone.id);
+        const startR = zone.ring === "outer" ? 5.05 : 2.4;
+        const endR = Math.max(startR + 0.35, len - 1.05);
+        const mid = (startR + endR) / 2;
+        const span = endR - startR;
         return (
-          <group key={zone.id} position={[HUB.x + dx / 2, 0.1, HUB.z + dz / 2]} rotation={[0, rot, 0]}>
+          <group key={zone.id} position={[(dx / len) * mid, 0.08, (dz / len) * mid]} rotation={[0, rot, 0]}>
             <mesh receiveShadow>
-              <boxGeometry args={[0.62, 0.08, len - 1.7]} />
+              <boxGeometry args={[0.42, 0.06, span]} />
               <meshStandardMaterial color="#121820" metalness={0.25} roughness={0.6} />
             </mesh>
-            <mesh position={[0, 0.045, 0]}>
-              <boxGeometry args={[0.06, 0.02, len - 2.1]} />
+            <mesh position={[0, 0.04, 0]}>
+              <boxGeometry args={[0.045, 0.015, Math.max(0.2, span - 0.18)]} />
               <meshStandardMaterial
                 color={hot ? zone.accent : "#9fb4c8"}
                 emissive={hot ? zone.accent : "#7f93a8"}

@@ -137,6 +137,20 @@ html { translate: no; }
   color: #12180c;
 }
 
+.instruct-launch {
+  border: 1px solid rgba(184, 255, 60, 0.35);
+  background: rgba(184, 255, 60, 0.08);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 7px 14px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.instruct-launch:hover { border-color: var(--lime); }
+
 .hint {
   position: fixed;
   left: 18px;
@@ -308,8 +322,8 @@ html { translate: no; }
 }
 
 .zone-card {
-  width: 158px;
-  padding: 10px 12px 8px;
+  width: 132px;
+  padding: 8px 10px 7px;
   border-radius: 14px;
   background: rgba(8, 12, 20, 0.62);
   border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
@@ -372,6 +386,143 @@ html { translate: no; }
 }
 .zone-card li.ok i { background: var(--ok); }
 .zone-card li.blocked i { background: var(--blocked); }
+
+.zone-card.compact { width: 118px; padding: 7px 9px 6px; }
+.zone-card.compact p {
+  margin-top: 4px;
+  font-size: 10px;
+  line-height: 1.3;
+  color: #c9d5e4;
+}
+.zone-card.compact p i {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: var(--pending);
+}
+.zone-card.compact p.ok i { background: var(--ok); }
+.zone-card.compact p.blocked i { background: var(--blocked); }
+
+.announce {
+  position: fixed;
+  left: calc((100vw - var(--panel-w) - 22px) / 2);
+  bottom: 28px;
+  transform: translateX(-50%);
+  z-index: 28;
+  width: min(520px, calc(100vw - var(--panel-w) - 80px));
+  padding: 14px 18px 16px;
+  border-radius: 16px;
+  background: rgba(8, 12, 18, 0.9);
+  border: 1px solid rgba(242, 212, 138, 0.4);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(14px);
+  pointer-events: none;
+}
+.announce span {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #f2d48a;
+  font-weight: 750;
+}
+.announce p {
+  margin-top: 6px;
+  font-size: 18px;
+  line-height: 1.35;
+  color: #f4f7fb;
+}
+
+.floor-toast {
+  position: fixed;
+  top: calc(var(--top) + 14px);
+  left: calc((100vw - var(--panel-w) - 22px) / 2);
+  transform: translateX(-50%);
+  z-index: 60;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: rgba(8, 12, 18, 0.92);
+  border: 1px solid rgba(184, 255, 60, 0.35);
+  color: var(--text);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+.floor-toast.wait { border-color: rgba(255, 211, 92, 0.55); color: var(--pending); }
+.floor-toast.ok { border-color: rgba(184, 255, 60, 0.45); }
+
+.instruct textarea {
+  width: 100%;
+  min-height: 120px;
+  resize: vertical;
+  margin-top: 4px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.45;
+}
+.instruct textarea:focus {
+  outline: none;
+  border-color: rgba(184, 255, 60, 0.55);
+}
+.instruct-hint {
+  margin-top: 8px;
+  font-size: 12px !important;
+  color: var(--muted) !important;
+}
+.instruct-row { margin-top: 10px; }
+.instruct .send {
+  border: 0;
+  background: var(--lime);
+  color: #12180c;
+  border-radius: 999px;
+  padding: 9px 18px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+}
+.grok-link {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.grok-link button {
+  align-self: flex-start;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+.grok-link code {
+  font-size: 11px;
+  color: var(--muted);
+  word-break: break-all;
+}
+.portrait-fallback {
+  width: 168px;
+  height: 168px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: var(--lime);
+  color: #12180c;
+  font-size: 64px;
+  font-weight: 800;
+}
 
 .id-tag {
   display: flex;
@@ -601,4 +752,11 @@ html { translate: no; }
   }
   .dossier-head h2 { font-size: 26px; }
   .hint { display: none; }
+  .announce {
+    left: 50%;
+    bottom: 200px;
+    width: min(520px, calc(100vw - 32px));
+  }
+  .floor-toast { left: 50%; }
+  .portrait-fallback { width: 112px; height: 112px; font-size: 42px; }
 }
