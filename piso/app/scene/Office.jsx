@@ -44,10 +44,10 @@ export function Office({ agents, meeting, selectedId, handoff, popupFlash }) {
 
       <Walkways hotIds={hotIds} />
       <Hub meeting={meeting} />
-      <Html position={[HUB.x, 2.05, HUB.z]} center distanceFactor={14} zIndexRange={[6, 0]} style={{ pointerEvents: "none" }}>
+      <Html position={[HUB.x, 2.45, HUB.z]} center distanceFactor={16} zIndexRange={[6, 0]} style={{ pointerEvents: "none" }}>
         <div className="hub-card notranslate" translate="no">
-          <span>NÚCLEO</span>
-          <strong>{meeting ? "Reunión" : "Entregas"}</strong>
+          <span>SALA</span>
+          <strong>{meeting ? "Reunión" : "Reuniones"}</strong>
         </div>
       </Html>
 

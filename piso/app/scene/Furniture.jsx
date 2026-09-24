@@ -5,6 +5,7 @@ import {
   LIME,
   PLATFORM_TOP,
   POPUP_META,
+  ROOM,
   SEAT_LOCAL_Z,
   YAW,
   ZONES,
@@ -153,29 +154,96 @@ export function ZoneIsland({ zone, kind, hot, index }) {
   );
 }
 
-export function Hub({ meeting }) {
-  const slab = 4.5;
+function Wall({ args, position, glass }) {
   return (
-    <group position={[HUB.x, 0, HUB.z]}>
+    <group position={position}>
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={args} />
+        <meshStandardMaterial color="#1c2636" roughness={0.62} metalness={0.16} />
+      </mesh>
+      <mesh position={[0, args[1] / 2 + 0.025, 0]}>
+        <boxGeometry args={[args[0], 0.045, args[2]]} />
+        <meshStandardMaterial color={LIME} emissive={LIME} emissiveIntensity={0.35} />
+      </mesh>
+      {glass && (
+        <mesh position={[0, args[1] / 2 + 0.28, 0]}>
+          <boxGeometry args={args[0] >= args[2] ? [args[0], 0.46, 0.035] : [0.035, 0.46, args[2]]} />
+          <meshStandardMaterial
+            color="#b7c6d6"
+            transparent
+            opacity={0.22}
+            roughness={0.08}
+            metalness={0.15}
+            depthWrite={false}
+          />
+        </mesh>
+      )}
+    </group>
+  );
+}
+
+export function Hub({ meeting }) {
+  const { halfX, halfZ, door } = ROOM;
+  const wallH = 0.86;
+  const wallT = 0.08;
+  const y = PLATFORM_TOP + wallH / 2;
+  const jamb = halfX - door;
+  const floorW = halfX * 2;
+  const floorD = halfZ * 2;
+
+  return (
+    <group position={[HUB.x, 0, HUB.z]} rotation={[0, YAW, 0]}>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]}>
-        <circleGeometry args={[2.7, 32]} />
-        <meshBasicMaterial color="#000" transparent opacity={0.35} />
+        <circleGeometry args={[1.7, 28]} />
+        <meshBasicMaterial color="#000" transparent opacity={0.32} />
       </mesh>
-      <RoundedBox args={[slab + 0.18, 0.08, slab + 0.18]} radius={0.16} smoothness={3} position={[0, 0.06, 0]}>
-        <meshStandardMaterial color={LIME} emissive={LIME} emissiveIntensity={meeting ? 0.9 : 0.28} />
+      <RoundedBox args={[floorW + 0.14, 0.055, floorD + 0.14]} radius={0.06} smoothness={2} position={[0, 0.05, 0]}>
+        <meshStandardMaterial color={LIME} emissive={LIME} emissiveIntensity={meeting ? 0.45 : 0.16} />
       </RoundedBox>
-      <RoundedBox args={[slab, SLAB_H, slab]} radius={0.16} smoothness={3} position={[0, PLATFORM_TOP - SLAB_H / 2, 0]} receiveShadow castShadow>
-        <meshStandardMaterial color="#141a24" metalness={0.22} roughness={0.55} />
+      <RoundedBox
+        args={[floorW, SLAB_H, floorD]}
+        radius={0.05}
+        smoothness={2}
+        position={[0, PLATFORM_TOP - SLAB_H / 2, 0]}
+        receiveShadow
+        castShadow
+      >
+        <meshStandardMaterial color="#121820" metalness={0.18} roughness={0.62} />
       </RoundedBox>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, PLATFORM_TOP + 0.012, 0]}>
-        <ringGeometry args={[0.55, 0.7, 40]} />
-        <meshBasicMaterial color={LIME} transparent opacity={meeting ? 0.95 : 0.45} toneMapped={false} />
+
+      <group position={[0, PLATFORM_TOP, -0.4]}>
+        <mesh position={[0, 0.34, 0]} castShadow>
+          <boxGeometry args={[0.9, 0.045, 0.36]} />
+          <meshStandardMaterial color="#0e141c" roughness={0.4} metalness={0.25} />
+        </mesh>
+        {[
+          [-0.42, -0.22],
+          [0.42, -0.22],
+          [-0.42, 0.22],
+          [0.42, 0.22],
+        ].map(([x, z], i) => (
+          <mesh key={i} position={[x, 0.16, z]}>
+            <boxGeometry args={[0.04, 0.3, 0.04]} />
+            <meshStandardMaterial color="#0a0e14" />
+          </mesh>
+        ))}
+      </group>
+
+      <Wall args={[floorW, wallH, wallT]} position={[0, y, -halfZ]} glass />
+      <Wall args={[wallT, wallH, floorD]} position={[-halfX, y, 0]} glass />
+      <Wall args={[wallT, wallH, floorD]} position={[halfX, y, 0]} glass />
+      <Wall args={[jamb, wallH, wallT]} position={[-(door + jamb / 2), y, halfZ]} />
+      <Wall args={[jamb, wallH, wallT]} position={[door + jamb / 2, y, halfZ]} />
+      <mesh position={[0, PLATFORM_TOP + wallH - 0.05, halfZ]} castShadow>
+        <boxGeometry args={[door * 2 + 0.16, 0.1, wallT + 0.02]} />
+        <meshStandardMaterial color="#243044" roughness={0.45} metalness={0.2} />
       </mesh>
-      <mesh position={[0, PLATFORM_TOP + 0.08, 0]}>
-        <cylinderGeometry args={[0.16, 0.2, 0.1, 16]} />
-        <meshStandardMaterial color="#0e1410" emissive={LIME} emissiveIntensity={meeting ? 1.4 : 0.45} />
+      <mesh position={[0, PLATFORM_TOP + 0.02, halfZ + 0.28]} receiveShadow>
+        <boxGeometry args={[door * 2 + 0.2, 0.04, 0.55]} />
+        <meshStandardMaterial color="#1a2433" roughness={0.7} />
       </mesh>
-      <pointLight position={[0, 2.2, 0]} color={LIME} intensity={meeting ? 1.5 : 0.4} distance={8} />
+
+      <pointLight position={[0, 1.7, 0]} color={LIME} intensity={meeting ? 0.85 : 0.22} distance={3.4} />
     </group>
   );
 }
@@ -189,7 +257,7 @@ export function Walkways({ hotIds }) {
         const len = Math.hypot(dx, dz) || 1;
         const rot = Math.atan2(dx, dz);
         const hot = hotIds?.has(zone.id);
-        const startR = zone.ring === "outer" ? 5.05 : 2.4;
+        const startR = zone.ring === "outer" ? 5.05 : 2.05;
         const endR = Math.max(startR + 0.35, len - 1.05);
         const mid = (startR + endR) / 2;
         const span = endR - startR;
