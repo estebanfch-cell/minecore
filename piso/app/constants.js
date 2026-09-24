@@ -105,23 +105,38 @@ export const ZONES = [
 export const ZONE_BY_ID = Object.fromEntries(ZONES.map((z) => [z.id, z]));
 export const HOMES = Object.fromEntries(ZONES.map((z) => [z.id, z.seat]));
 
-/** Camera sits on +X/+Z. CHIEF stands on the far side of the sala and faces the room. */
-const CAM_ANG = Math.PI / 4;
-const FAR_ANG = CAM_ANG + Math.PI;
-export const CHIEF_PODIUM = {
-  x: Math.cos(FAR_ANG) * 1.12,
-  z: Math.sin(FAR_ANG) * 1.12,
-};
+/** Sala local axes: +Z faces the camera (same yaw as the desks). */
+export const ROOM = { halfX: 1.22, halfZ: 1.02, door: 0.7 };
+
+function roomLocal(lx, lz) {
+  return localToWorld(HUB.x, HUB.z, lx, lz);
+}
+
+function spreadRow(ids, z, halfSpan) {
+  return ids.map((agent, i) => {
+    const t = ids.length === 1 ? 0.5 : i / (ids.length - 1);
+    const x = -halfSpan + t * halfSpan * 2;
+    return [agent.id, roomLocal(x, z)];
+  });
+}
+
+/** CHIEF stands at the far wall and faces the room. */
+export const CHIEF_PODIUM = roomLocal(0, -0.66);
 
 const LISTENERS = AGENTS.filter((a) => a.id !== "chief");
-export const MEETING_SPOTS = Object.fromEntries(
-  LISTENERS.map((a, i) => {
-    const span = Math.PI * 1.22;
-    const start = CAM_ANG - span / 2;
-    const t = i / (LISTENERS.length - 1);
-    const ang = start + span * t;
-    const r = 1.68;
-    return [a.id, { x: Math.cos(ang) * r, z: Math.sin(ang) * r }];
+const BACK_ROW = LISTENERS.slice(0, 5);
+const FRONT_ROW = LISTENERS.slice(5);
+export const MEETING_SPOTS = Object.fromEntries([
+  ...spreadRow(BACK_ROW, -0.14, 0.62),
+  ...spreadRow(FRONT_ROW, 0.4, 0.7),
+]);
+
+/** Queue just outside the door, then the director walks them in. */
+export const DOOR_QUEUE = Object.fromEntries(
+  AGENTS.map((agent, i) => {
+    const t = i / (AGENTS.length - 1);
+    const x = -1.15 + t * 2.3;
+    return [agent.id, roomLocal(x * 0.28, ROOM.halfZ + 0.7)];
   })
 );
 
@@ -262,7 +277,7 @@ export function hubGate(id) {
   const dx = HUB.x - home.x;
   const dz = HUB.z - home.z;
   const len = Math.hypot(dx, dz) || 1;
-  return { x: HUB.x - (dx / len) * 1.35, z: HUB.z - (dz / len) * 1.35 };
+  return { x: HUB.x - (dx / len) * 2.2, z: HUB.z - (dz / len) * 2.2 };
 }
 
 export function wantsMeeting(agentId, text) {

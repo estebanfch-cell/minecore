@@ -15,7 +15,7 @@ Animated isometric office for the Minecore agents. Replaces the old flat 2D HTML
 - Panel derecho **Estado de tareas** (icono, texto, hora Guayaquil)
 - Barra superior: marca Minecore, reloj America/Guayaquil, Demo / En vivo
 - Click / tap an agent to open a large **ficha**: quién es, para qué está entrenado, historial, siguiente, and an **Instrucción** box
-- **Dar instrucción** (or click CHIEF) → type the announcement → **Enviar**. The room walks to the núcleo, CHIEF delivers the line (ticker + one speech panel), then everyone returns to their desks. The scene plays even if the webhook is not set yet
+- **Dar instrucción** (or click CHIEF) → type the announcement → **Enviar**. Everyone walks in through the sala door, CHIEF delivers the line (ticker + one speech panel), then they leave and return to their desks. The scene plays even if the webhook is not set yet
 - **Demo** loops desk work, handoffs (SECRE→Finance, COTE→Manuelito) and a stand-up on the núcleo. App toasts (SRI, inFlow, Gmail, WA, GitHub) are one at a time
 - **En vivo** waits for `window.MinecoreFeed.setAgent` or `window.MINECORE_FEED_URL`. Until a heartbeat arrives, the floor keeps the last known state and the panel says so
 

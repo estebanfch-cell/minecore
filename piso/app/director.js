@@ -1,4 +1,4 @@
-import { AGENTS, CHIEF_PODIUM, MEETING_SPOTS, beside, hubGate } from "./constants.js";
+import { AGENTS, CHIEF_PODIUM, DOOR_QUEUE, MEETING_SPOTS, beside, hubGate } from "./constants.js";
 import {
   enqueueInstruction as queueInstruction,
   flashPopup,
@@ -189,10 +189,16 @@ async function runGathering(token, ticker, announcement) {
   patchState({ meeting: true, announcement: announcement || null });
   AGENTS.forEach((a) => {
     setAgent(a.id, { meeting: true, typing: false }, { silent: true });
+    const door = DOOR_QUEUE[a.id];
+    if (door) walkTo(a.id, door.x, door.z);
+  });
+  await sleep(2800, token);
+  if (token.aborted) return;
+  AGENTS.forEach((a) => {
     const spot = a.id === "chief" ? CHIEF_PODIUM : MEETING_SPOTS[a.id];
     if (spot) walkTo(a.id, spot.x, spot.z);
   });
-  await sleep(4200, token);
+  await sleep(2600, token);
   if (token.aborted) return;
   AGENTS.forEach((a) => setAgent(a.id, { walking: false, meeting: true }, { silent: true }));
   await sleep(announcement ? 14000 : 3600, token);
@@ -200,9 +206,13 @@ async function runGathering(token, ticker, announcement) {
   patchState({ announcement: null, meeting: false });
   AGENTS.forEach((a) => {
     setAgent(a.id, { meeting: false }, { silent: true });
-    goHome(a.id);
+    const door = DOOR_QUEUE[a.id];
+    if (door) walkTo(a.id, door.x, door.z);
   });
-  await sleep(1600, token);
+  await sleep(1800, token);
+  if (token.aborted) return;
+  AGENTS.forEach((a) => goHome(a.id));
+  await sleep(2000, token);
 }
 
 /** Workshop: CHIEF calls the room. Visual starts immediately. */
