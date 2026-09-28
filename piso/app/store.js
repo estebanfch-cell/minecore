@@ -8,6 +8,7 @@ function blankAgent(def) {
     role: def.role,
     popupKind: def.popupKind,
     grokId: def.grokId,
+    tag: def.tag,
     activity: "En espera de heartbeat…",
     status: "pending",
     popup: POPUPS[def.popupKind][0],

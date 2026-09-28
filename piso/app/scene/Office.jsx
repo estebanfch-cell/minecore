@@ -1,11 +1,11 @@
 import { Suspense, useMemo } from "react";
-import { ContactShadows, Html, OrbitControls } from "@react-three/drei";
-import { AGENTS, HUB, YAW, ZONE_BY_ID } from "../constants.js";
+import { ContactShadows, OrbitControls } from "@react-three/drei";
+import { AGENTS, YAW, ZONE_BY_ID } from "../constants.js";
+import { DeskTag } from "./DeskTag.jsx";
 import { Hub, Walkways, ZoneIsland } from "./Furniture.jsx";
 import { Miner } from "./Miner.jsx";
-import { ZoneCard } from "./ZoneCard.jsx";
 
-export function Office({ agents, meeting, selectedId, handoff, popupFlash }) {
+export function Office({ agents, meeting, selectedId, handoff }) {
   const hotIds = useMemo(() => {
     const ids = new Set();
     if (handoff?.from) ids.add(handoff.from);
@@ -44,12 +44,6 @@ export function Office({ agents, meeting, selectedId, handoff, popupFlash }) {
 
       <Walkways hotIds={hotIds} />
       <Hub meeting={meeting} />
-      <Html position={[HUB.x, 2.45, HUB.z]} center distanceFactor={16} zIndexRange={[6, 0]} style={{ pointerEvents: "none" }}>
-        <div className="hub-card notranslate" translate="no">
-          <span>SALA</span>
-          <strong>{meeting ? "Reunión" : "Reuniones"}</strong>
-        </div>
-      </Html>
 
       {AGENTS.map((def, index) => (
         <ZoneIsland
@@ -67,16 +61,13 @@ export function Office({ agents, meeting, selectedId, handoff, popupFlash }) {
             key={def.id}
             agent={agents[def.id]}
             selected={selectedId === def.id}
-            popupFlash={popupFlash}
-            floorMeeting={meeting}
           />
         ))}
       </Suspense>
 
-      {!meeting &&
-        AGENTS.map((def) => (
-          <ZoneCard key={`card-${def.id}`} zone={ZONE_BY_ID[def.id]} agent={agents[def.id]} />
-        ))}
+      {AGENTS.map((def) => (
+        <DeskTag key={`tag-${def.id}`} zone={ZONE_BY_ID[def.id]} agent={agents[def.id]} />
+      ))}
 
       <ContactShadows position={[0, 0, 0]} opacity={0.38} scale={30} blur={2.4} far={5} color="#000" />
 

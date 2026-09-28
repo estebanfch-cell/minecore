@@ -8,18 +8,18 @@ export const HUB = { x: 0, z: 0 };
 export const ISLAND_SCALE = 0.48;
 
 export const AGENTS = [
-  { id: "chief", name: "MINECORE CHIEF", role: "Orquestador", popupKind: "brief", grokId: "865dd2df-e29f-40a4-9631-41ca5624e03e" },
-  { id: "manuelito", name: "MANUELITO", role: "WhatsApp", popupKind: "wa", grokId: "a6cb20b6-70e6-429d-9737-cc2e1a5c4ae1" },
-  { id: "cote", name: "MINECORE COTE", role: "Costeo", popupKind: "gmail", grokId: "ca3b12a2-90aa-41c6-bdca-995384ed931d" },
-  { id: "law", name: "MINECORE LAW", role: "Legal", popupKind: "pdf", grokId: "155d5508-70d9-4d5a-95e4-619da13d5a44" },
-  { id: "secre", name: "MINECORE SECRE", role: "Retenciones", popupKind: "sri", grokId: "3823e65f-b1cf-4561-ab73-8f0c00a5f0da" },
-  { id: "finance", name: "MINECORE FINANCE", role: "inFlow", popupKind: "inflow", grokId: "4c8dbbed-7889-4328-9121-d8a5883f2139" },
-  { id: "marketing", name: "MINECORE MARKETING", role: "Liquidación", popupKind: "liq", grokId: "5ebf12eb-13d0-463b-85d0-2634b273de79" },
-  { id: "stock-pilot", name: "MINECORE STOCK PILOT", role: "Stock", popupKind: "stock", grokId: "b9f678f9-a153-4cc0-9046-16125fb928fb" },
-  { id: "devops", name: "MINECORE DEVOPS", role: "DevOps", popupKind: "gh", grokId: "3411110b-4ab8-4687-8df2-831b21505adf" },
-  { id: "comunicados", name: "Minecore Comunicados", role: "Comunicados", popupKind: "nota", grokId: "d2f25820-f66c-4e61-a859-fb6616cc4a9d" },
-  { id: "personal", name: "PERSONAL", role: "Personal", popupKind: "hr", grokId: "f175d0c3-18b8-4b48-886a-40009a84960a" },
-  { id: "pmv", name: "PMV THE EQUATION", role: "PMV", popupKind: "eq", grokId: "76723efb-81c6-4c47-8727-83ebe406fb9c" },
+  { id: "chief", name: "MINECORE CHIEF", tag: "CHIEF", role: "Orquestador", popupKind: "brief", grokId: "865dd2df-e29f-40a4-9631-41ca5624e03e" },
+  { id: "manuelito", name: "MANUELITO", tag: "MANUELITO", role: "WhatsApp", popupKind: "wa", grokId: "a6cb20b6-70e6-429d-9737-cc2e1a5c4ae1" },
+  { id: "cote", name: "MINECORE COTE", tag: "COTE", role: "Costeo", popupKind: "gmail", grokId: "ca3b12a2-90aa-41c6-bdca-995384ed931d" },
+  { id: "law", name: "MINECORE LAW", tag: "LAW", role: "Legal", popupKind: "pdf", grokId: "155d5508-70d9-4d5a-95e4-619da13d5a44" },
+  { id: "secre", name: "MINECORE SECRE", tag: "SECRE", role: "Retenciones", popupKind: "sri", grokId: "3823e65f-b1cf-4561-ab73-8f0c00a5f0da" },
+  { id: "finance", name: "MINECORE FINANCE", tag: "FINANCE", role: "inFlow", popupKind: "inflow", grokId: "4c8dbbed-7889-4328-9121-d8a5883f2139" },
+  { id: "marketing", name: "MINECORE MARKETING", tag: "MARKETING", role: "Liquidación", popupKind: "liq", grokId: "5ebf12eb-13d0-463b-85d0-2634b273de79" },
+  { id: "stock-pilot", name: "MINECORE STOCK PILOT", tag: "STOCK", role: "Stock", popupKind: "stock", grokId: "b9f678f9-a153-4cc0-9046-16125fb928fb" },
+  { id: "devops", name: "MINECORE DEVOPS", tag: "DEVOPS", role: "DevOps", popupKind: "gh", grokId: "3411110b-4ab8-4687-8df2-831b21505adf" },
+  { id: "comunicados", name: "Minecore Comunicados", tag: "COMUNICADOS", role: "Comunicados", popupKind: "nota", grokId: "d2f25820-f66c-4e61-a859-fb6616cc4a9d" },
+  { id: "personal", name: "PERSONAL", tag: "PERSONAL", role: "Personal", popupKind: "hr", grokId: "f175d0c3-18b8-4b48-886a-40009a84960a" },
+  { id: "pmv", name: "PMV THE EQUATION", tag: "PMV", role: "PMV", popupKind: "eq", grokId: "76723efb-81c6-4c47-8727-83ebe406fb9c" },
 ];
 
 export const AGENT_BY_ID = Object.fromEntries(AGENTS.map((a) => [a.id, a]));
@@ -244,6 +244,8 @@ export const SEEDS = {
 };
 
 export const STATUS_COLOR = { ok: "#5dffa8", pending: "#ffd35c", blocked: "#ff6b6b" };
+/** Floor dot: online green, away grey, offline red. Demo and En vivo drive `status`. */
+export const FLOOR_DOT = { ok: "#3dff9a", pending: "#9aa6b5", blocked: "#ff5c5c" };
 export const STATUS_LABEL = { ok: "ok", pending: "pendiente", blocked: "bloqueado" };
 
 export function actionVerb(agent) {
