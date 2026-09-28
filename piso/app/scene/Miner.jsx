@@ -1,7 +1,6 @@
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Html } from "@react-three/drei";
-import { HOMES, HUB, LOOKS, PLATFORM_TOP, POPUP_META, YAW } from "../constants.js";
+import { HOMES, HUB, LOOKS, PLATFORM_TOP, YAW } from "../constants.js";
 import { selectAgent } from "../store.js";
 import { getMarkTexture } from "./markTexture.js";
 
@@ -27,7 +26,7 @@ function Arm({ side, color, skin, armRef }) {
   );
 }
 
-export function Miner({ agent, selected, popupFlash, floorMeeting }) {
+export function Miner({ agent, selected }) {
   const root = useRef();
   const chest = useRef();
   const legL = useRef();
@@ -92,12 +91,6 @@ export function Miner({ agent, selected, popupFlash, floorMeeting }) {
   const hover = (on) => {
     document.body.style.cursor = on ? "pointer" : "auto";
   };
-
-  const showToast =
-    popupFlash &&
-    popupFlash.agentId === agent.id &&
-    Date.now() - popupFlash.at < 3900;
-  const toastMeta = POPUP_META[agent.popupKind] || { app: "App", accent: "#b8ff3c" };
 
   return (
     <group ref={root} position={[agent.x, PLATFORM_TOP, agent.z]} rotation={[0, YAW, 0]}>
@@ -221,33 +214,6 @@ export function Miner({ agent, selected, popupFlash, floorMeeting }) {
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
 
-      {!floorMeeting && !agent.meeting && (
-      <Html position={[0, 1.02, 0]} center distanceFactor={16} zIndexRange={[20, 0]} style={{ pointerEvents: "auto" }}>
-        <button
-          className={`id-tag notranslate ${agent.status} ${selected ? "is-on" : ""}`}
-          type="button"
-          translate="no"
-          data-agent-id={agent.grokId}
-          onClick={open}
-        >
-          <span className="dot" aria-hidden="true" />
-          <span className="nm">{agent.name}</span>
-          <span className="role">{agent.role}</span>
-        </button>
-      </Html>
-      )}
-
-      {showToast && (
-        <Html position={[0.85, 1.15, 0.2]} center distanceFactor={12} zIndexRange={[30, 0]} style={{ pointerEvents: "none" }}>
-          <div className="app-toast notranslate" style={{ "--accent": toastMeta.accent }} translate="no">
-            <span className="app-mark" />
-            <div>
-              <strong>{toastMeta.app}</strong>
-              <em>{popupFlash.text}</em>
-            </div>
-          </div>
-        </Html>
-      )}
     </group>
   );
 }

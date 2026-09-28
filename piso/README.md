@@ -10,13 +10,12 @@ Animated isometric office for the Minecore agents. Replaces the old flat 2D HTML
 
 - Dark isometric diorama: every agent on their own desk (CHIEF, LAW, SECRE, FINANCE, MANUELITO, COTE, MARKETING, STOCK PILOT, DEVOPS, Comunicados, PERSONAL, PMV) around a central **sala / núcleo**
 - Low-poly miners with white helmets and the Minecore M mark (approved v5 portraits stay on the ficha)
-- Calm identity labels only (name + role). No speech bubbles over avatars
-- Glass cards per zone: nombre, 1 agente, dos métricas y el estado corto
+- Each desk floor carries the short name and a status dot (green online, grey away, red offline). No plates above the miners. Activity stays in the ficha and the task panel
 - Panel derecho **Estado de tareas** (icono, texto, hora Guayaquil)
 - Barra superior: marca Minecore, reloj America/Guayaquil, Demo / En vivo
 - Click / tap an agent to open a large **ficha**: quién es, para qué está entrenado, historial, siguiente, and an **Instrucción** box
 - **Dar instrucción** (or click CHIEF) → type the announcement → **Enviar**. Everyone walks in through the sala door, CHIEF delivers the line (ticker + one speech panel), then they leave and return to their desks. The scene plays even if the webhook is not set yet
-- **Demo** loops desk work, handoffs (SECRE→Finance, COTE→Manuelito) and a stand-up on the núcleo. App toasts (SRI, inFlow, Gmail, WA, GitHub) are one at a time
+- **Demo** loops desk work, handoffs (SECRE→Finance, COTE→Manuelito) and a stand-up in the sala. Status dots follow each agent’s `status`
 - **En vivo** waits for `window.MinecoreFeed.setAgent` or `window.MINECORE_FEED_URL`. Until a heartbeat arrives, the floor keeps the last known state and the panel says so
 
 ## Develop
