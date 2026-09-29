@@ -121,7 +121,7 @@ function orquestaBody(entry) {
     agentName: chief.name,
     text: entry?.text || "",
     ts: new Date().toISOString(),
-    phase: "manuelito_done",
+    phase: entry?.phase || "pre_send",
   };
 }
 
@@ -137,7 +137,7 @@ function deliver(url, body) {
 }
 
 /**
- * One simple CORS POST when Manuelito finishes. No Authorization, no preflight.
+ * One simple CORS POST per run. No Authorization, no preflight.
  * Retries once after 1.5s if the network fails or the status is not 2xx.
  */
 export function postOrquesta(entry) {

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ErpStage } from "./ErpStage.jsx";
 import { PART_B, PO_LINES, STOCK_ROWS } from "./erpData.js";
-import { demoAsset } from "./demoRun.js";
+import { ENVIADO_FLIP_MS, demoAsset } from "./demoRun.js";
 import { renderPdfPages } from "./pdfPages.js";
 
 const RECOVERY_MONTHS = {
@@ -289,7 +289,7 @@ function SettleScreen({ spec, image, log, shown }) {
   useEffect(() => {
     setIndex(0);
     if (lines.length < 2) return undefined;
-    const timer = setTimeout(() => setIndex(1), 2400);
+    const timer = setTimeout(() => setIndex(1), ENVIADO_FLIP_MS);
     return () => clearTimeout(timer);
   }, [spec.title, lines.length]);
   const still = spec.still ? demoAsset("previews", spec.still) : image;
