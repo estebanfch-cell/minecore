@@ -1,5 +1,5 @@
 import { AGENTS, CHIEF_PODIUM, DOOR_QUEUE, MEETING_SPOTS, ZONE_BY_ID, wantsDemoRun } from "./constants.js";
-import { CHIEF_ACK, SCRIPTED_FILE, SCRIPTED_USER, announceRunStep, cancelChiefTalk, chiefSays, pushUserLine } from "./chatLog.js";
+import { CHIEF_ACK, CHIEF_ACK_MS, SCRIPTED_FILE, SCRIPTED_USER, announceRunStep, cancelChiefTalk, chiefSays, pushUserLine } from "./chatLog.js";
 import { postOrquesta } from "./instruct.js";
 import {
   getState,
@@ -14,6 +14,10 @@ import {
 } from "./store.js";
 
 const STEP_MS = 7500;
+/** Mail transit after the relay POST. The notice leaves this long before Manuelito says "Enviado". */
+const EMAIL_LEAD_MS = 75000;
+const DESK_OPEN_MS = 1100;
+export const ENVIADO_FLIP_MS = 2400;
 
 let script = null;
 let stepTimer = null;
@@ -65,6 +69,8 @@ function clearRunTimers() {
   frameTimer = null;
   if (finishTimer) clearTimeout(finishTimer);
   finishTimer = null;
+  if (emailTimer) clearTimeout(emailTimer);
+  emailTimer = null;
   stepRemain = 0;
   stepDeadline = 0;
   clearSubs();
@@ -306,7 +312,7 @@ function showStep(index) {
         }, slice);
       }
     }
-    later(() => openDeskWindow(step), 1100);
+    later(() => openDeskWindow(step), DESK_OPEN_MS);
   }
 
   setAgent(step.agent, { activity: step.caption, status: "ok", typing: phase === "desk" });
@@ -336,12 +342,7 @@ function showStep(index) {
   if (last) {
     const epoch = runEpoch;
     const worked = step.stepMs || script.stepMs || STEP_MS;
-    finishTimer = setTimeout(() => {
-      if (epoch !== runEpoch || orquestaFiredEpoch === epoch) return;
-      orquestaFiredEpoch = epoch;
-      postOrquesta({ text: orquestaText, phase: "manuelito_done" });
-      finishTimer = setTimeout(() => settleAndHome(epoch), RESET_PAUSE_MS);
-    }, worked);
+    finishTimer = setTimeout(() => settleAndHome(epoch), worked + RESET_PAUSE_MS);
     return;
   }
   scheduleAdvance(index, step.stepMs || script.stepMs || STEP_MS);
@@ -368,6 +369,7 @@ export async function startDemoRun() {
     workWindow: null,
     assignments: [],
   });
+  armOrquesta(runSerial);
   showStep(0);
 }
 
@@ -406,6 +408,7 @@ export function restartDemoRun() {
     previewDoc: null,
     carry: null,
   });
+  armOrquesta(runSerial);
   showStep(0);
 }
 
@@ -415,17 +418,86 @@ export function shouldStartDemo(agentId, text) {
 
 let runSerial = 0;
 let orquestaText = "";
-let orquestaFiredEpoch = -1;
+let orquestaSentSerial = -1;
+let emailTimer = null;
 
-/** User line is already on screen. CHIEF types, then the floor run starts. The notice waits for Manuelito. */
+function stepDur(loaded, step) {
+  return step.stepMs || loaded.stepMs || STEP_MS;
+}
+
+/** Designed clock from Enviar. "Enviado" is the settle line; done is the end of that step. */
+export function orquestaSchedule(loaded) {
+  const steps = loaded?.steps || [];
+  let cursor = 0;
+  let enviadoFromShow = null;
+  let doneFromShow = null;
+  for (const step of steps) {
+    const dur = stepDur(loaded, step);
+    const saysEnviado = (step.window?.status || []).some((line) => String(line).trim().toLowerCase() === "enviado");
+    if (saysEnviado && enviadoFromShow == null) {
+      const phase = step.phase || "desk";
+      const openAt = phase === "analysis" || phase === "meeting" ? 0 : DESK_OPEN_MS;
+      enviadoFromShow = cursor + openAt + ENVIADO_FLIP_MS;
+    }
+    cursor += dur;
+    if (saysEnviado && doneFromShow == null) doneFromShow = cursor;
+  }
+  if (doneFromShow == null) doneFromShow = cursor;
+  if (enviadoFromShow == null) enviadoFromShow = doneFromShow;
+  const fromAttachToEnviado = CHIEF_ACK_MS + enviadoFromShow;
+  const fromAttachToDone = CHIEF_ACK_MS + doneFromShow;
+  const postDelayFromShow = enviadoFromShow - EMAIL_LEAD_MS;
+  return {
+    enviadoFromShow,
+    doneFromShow,
+    fromAttachToEnviado,
+    fromAttachToDone,
+    postDelayFromShow,
+    fireOnEnviar: fromAttachToDone < EMAIL_LEAD_MS || postDelayFromShow <= 0,
+  };
+}
+
+function fireOrquesta(serial) {
+  if (orquestaSentSerial === serial) return;
+  orquestaSentSerial = serial;
+  if (emailTimer) clearTimeout(emailTimer);
+  emailTimer = null;
+  postOrquesta({ text: orquestaText, phase: "pre_send" });
+}
+
+function armOrquesta(serial) {
+  if (orquestaSentSerial === serial || !script) return;
+  if (emailTimer) clearTimeout(emailTimer);
+  emailTimer = null;
+  const plan = orquestaSchedule(script);
+  if (plan.fireOnEnviar || plan.postDelayFromShow <= 0) {
+    fireOrquesta(serial);
+    return;
+  }
+  emailTimer = setTimeout(() => {
+    emailTimer = null;
+    if (serial !== runSerial) return;
+    fireOrquesta(serial);
+  }, plan.postDelayFromShow);
+}
+
+/** User line is already on screen. CHIEF types, then the floor run starts. The notice leads "Enviado" by EMAIL_LEAD_MS. */
 export function ackAndStartOrquesta(entry) {
   const serial = ++runSerial;
   orquestaText = entry?.text || "";
+  const considerEarly = (loaded) => {
+    if (serial !== runSerial || !loaded) return;
+    if (orquestaSchedule(loaded).fireOnEnviar) fireOrquesta(serial);
+  };
+  if (script) considerEarly(script);
+  else loadDemoScript().then(considerEarly);
   chiefSays(CHIEF_ACK, () => {
     if (serial !== runSerial) return;
     startDemoRun();
   });
 }
+
+loadDemoScript().catch(() => {});
 
 /** Hidden URL and the D key. The greeting stays, then the floor runs. */
 export function beginScriptedExchange() {

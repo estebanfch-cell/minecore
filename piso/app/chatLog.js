@@ -1,6 +1,7 @@
 import { getState, pushChat, setChatTyping } from "./store.js";
 
 export const CHIEF_ACK = "Recibida OC-2026-0417 de Taluvira. Arranco la orquesta.";
+export const CHIEF_ACK_MS = 700;
 export const SCRIPTED_USER = "Te paso la OC de Taluvira";
 export const SCRIPTED_FILE = "OC-2026-0417 TALUVIRA.pdf";
 
@@ -35,7 +36,7 @@ export function chiefSays(text, then) {
     setChatTyping(false);
     pushChat({ role: "chief", text });
     if (then) then();
-  }, 700);
+  }, CHIEF_ACK_MS);
 }
 
 export function pushUserLine(text, fileName) {

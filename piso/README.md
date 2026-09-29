@@ -86,7 +86,7 @@ Agent ids on the floor: `chief`, `manuelito`, `cote`, `law`, `secre`, `finance`,
 
 The winning moment is visual: type on CHIEF, press **Enviar**, watch the room gather.
 
-The relay URL lives in `instruct.json` and is fetched on each page load with `cache: "no-store"`. No key is stored or sent. Precedence when Manuelito finishes:
+The relay URL lives in `instruct.json` and is fetched on each page load with `cache: "no-store"`. No key is stored or sent. The POST leaves 75 seconds before Manuelito says "Enviado". Precedence:
 
 1. `window.MINECORE_INSTRUCT_URL` or `?instructUrl=` (saved to localStorage, then removed from the address bar)
 2. `instruct.json`
