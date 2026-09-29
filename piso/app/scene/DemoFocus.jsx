@@ -4,8 +4,8 @@ import { QuadraticBezierLine } from "@react-three/drei";
 import * as THREE from "three";
 import { LIME } from "../constants.js";
 
-const HOME_TARGET = new THREE.Vector3(0.15, 0.42, 0.05);
-const HOME_OFFSET = new THREE.Vector3(15.6, 12.8, 15.6);
+const HOME_TARGET = new THREE.Vector3(-0.85, 0.42, -0.2);
+const HOME_OFFSET = new THREE.Vector3(11.4, 6.7, 11.4);
 const FOCUS_OFFSET = new THREE.Vector3(3.55, 4.15, 3.55);
 const WIDE_OFFSET = new THREE.Vector3(6.6, 8.1, 6.6);
 const ROOM_OFFSET = new THREE.Vector3(7.4, 3.7, 7.4);

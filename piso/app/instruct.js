@@ -34,12 +34,28 @@ function writeStore(url, key) {
   }
 }
 
+/** Accept a plain URL or one that is still percent-encoded (once or twice). */
+function unwrap(value) {
+  let out = String(value || "").trim();
+  for (let i = 0; i < 3; i += 1) {
+    if (!/%[0-9A-Fa-f]{2}/.test(out)) break;
+    try {
+      const next = decodeURIComponent(out).trim();
+      if (!next || next === out) break;
+      out = next;
+    } catch {
+      break;
+    }
+  }
+  return out;
+}
+
 /** Read ?instructUrl=&instructKey= once, keep them in localStorage, and drop them from the address bar. */
 export function captureInstructSettings() {
   if (typeof window === "undefined") return;
   const params = new URLSearchParams(window.location.search);
-  const url = (params.get("instructUrl") || "").trim();
-  const key = (params.get("instructKey") || "").trim();
+  const url = unwrap(params.get("instructUrl"));
+  const key = unwrap(params.get("instructKey"));
   if (!url && !key) return;
   writeStore(url, key);
   params.delete("instructUrl");
@@ -55,27 +71,28 @@ export function instructSettings() {
   const saved = readStore();
   const url = (typeof window !== "undefined" && window.MINECORE_INSTRUCT_URL) || saved.url || file.url || "";
   const key = (typeof window !== "undefined" && window.MINECORE_INSTRUCT_KEY) || saved.key || file.key || "";
-  return { url: String(url).trim(), key: String(key).trim() };
+  return { url: unwrap(url), key: unwrap(key) };
+}
+
+function urlWithKey(url, key) {
+  if (!key) return url;
+  const hashAt = url.indexOf("#");
+  const base = hashAt >= 0 ? url.slice(0, hashAt) : url;
+  const hash = hashAt >= 0 ? url.slice(hashAt) : "";
+  const join = base.includes("?") ? "&" : "?";
+  return `${base}${join}key=${encodeURIComponent(key)}${hash}`;
 }
 
 /**
- * POST to the CHIEF webhook routine.
- * Header is the one Cursor documents: Authorization: Bearer <sender key>.
- * Does not throw.
- */
-/**
- * Fire-and-forget notice that the OC run started. One POST per call.
- * Cross-origin from agentes.minecore.ec: JSON plus Authorization is not a
- * simple request, so the browser sends OPTIONS first. The endpoint must
- * allow POST and the headers content-type and authorization.
- * Never throws and never surfaces an error.
+ * Fire-and-forget notice that the OC run started. Called once per run.
+ * Tries a CORS POST with Authorization. If that throws (preflight or network),
+ * one simple no-cors POST follows: text/plain body, key on the query and in
+ * the JSON. Never throws and never surfaces an error.
  */
 export function postOrquesta(entry) {
   const { url, key } = instructSettings();
   if (!url) return;
   const chief = AGENT_BY_ID.chief;
-  const headers = { "Content-Type": "application/json" };
-  if (key) headers.Authorization = `Bearer ${key}`;
   const body = {
     event: "orquesta_oc",
     oc: "OC-2026-0417",
@@ -86,12 +103,22 @@ export function postOrquesta(entry) {
     text: entry?.text || "",
     ts: new Date().toISOString(),
   };
+  const headers = { "Content-Type": "application/json" };
+  if (key) headers.Authorization = `Bearer ${key}`;
+  const simpleBody = key ? { ...body, key } : body;
   fetch(url, {
     method: "POST",
     mode: "cors",
     headers,
     body: JSON.stringify(body),
-  }).catch(() => {});
+  }).catch(() => {
+    fetch(urlWithKey(url, key), {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=UTF-8" },
+      body: JSON.stringify(simpleBody),
+    }).catch(() => {});
+  });
 }
 
 export async function postInstruction(entry) {

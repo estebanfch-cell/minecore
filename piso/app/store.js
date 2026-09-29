@@ -9,7 +9,7 @@ function blankAgent(def) {
     popupKind: def.popupKind,
     grokId: def.grokId,
     tag: def.tag,
-    activity: "En espera de heartbeat…",
+    activity: "En el escritorio",
     status: "pending",
     popup: POPUPS[def.popupKind][0],
     history: [],
@@ -43,7 +43,7 @@ function createInitial() {
   return {
     agents,
     mode: "live",
-    ticker: "En vivo · esperando heartbeats",
+    ticker: "Último estado del piso",
     meeting: false,
     handoff: null,
     selectedId: null,

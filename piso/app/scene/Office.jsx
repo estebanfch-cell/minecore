@@ -90,7 +90,7 @@ export function Office({ agents, meeting, selectedId, handoff, demoRun, deskScre
         maxAzimuthAngle={YAW + 0.28}
         minDistance={11}
         maxDistance={42}
-        target={[0.15, 0.42, 0.05]}
+        target={[-0.85, 0.42, -0.2]}
       />
     </>
   );

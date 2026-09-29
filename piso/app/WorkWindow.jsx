@@ -43,6 +43,8 @@ export function WorkWindow({ spec, sourcePdf }) {
   const frame = frames[frameIndex];
   const scroller = useRef(null);
   const [pages, setPages] = useState([]);
+  const [scanOn, setScanOn] = useState(false);
+  const [scanKey, setScanKey] = useState(0);
   const pdfName = spec?.pdf || "";
   const bundled = pdfName ? demoAsset("pdf", pdfName) : "";
   const live = sourcePdf?.url && /oc|taluvira/i.test(sourcePdf.name || "") ? sourcePdf.url : "";
@@ -67,18 +69,42 @@ export function WorkWindow({ spec, sourcePdf }) {
 
   useEffect(() => {
     const node = scroller.current;
-    if (!node || spec?.mode !== "scan") return undefined;
+    if (!node || spec?.mode !== "scan") {
+      setScanOn(false);
+      return undefined;
+    }
     let frameId = 0;
+    let live = true;
     const start = performance.now();
     const duration = 14000;
+    const settle = 900;
+    node.scrollTop = 0;
+    setScanOn(true);
+    setScanKey((key) => key + 1);
     const tick = (now) => {
+      if (!live) return;
       const max = Math.max(0, node.scrollHeight - node.clientHeight);
-      const t = Math.min(1, (now - start) / duration);
-      node.scrollTop = max * t;
-      if (t < 1) frameId = requestAnimationFrame(tick);
+      const elapsed = now - start;
+      if (elapsed <= duration) {
+        node.scrollTop = max * (elapsed / duration);
+        frameId = requestAnimationFrame(tick);
+        return;
+      }
+      const u = Math.min(1, (elapsed - duration) / settle);
+      const ease = u * u * (3 - 2 * u);
+      node.scrollTop = max * (1 - ease);
+      if (u < 1) {
+        frameId = requestAnimationFrame(tick);
+        return;
+      }
+      node.scrollTop = 0;
+      setScanOn(false);
     };
     frameId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frameId);
+    return () => {
+      live = false;
+      cancelAnimationFrame(frameId);
+    };
   }, [pages.length, spec?.mode, spec?.title]);
 
   if (!spec) return null;
@@ -112,7 +138,7 @@ export function WorkWindow({ spec, sourcePdf }) {
               image && <img src={image} alt="" />
             )}
           </div>
-          {spec.mode === "scan" && <div className="scan-line" />}
+          {spec.mode === "scan" && scanOn && <div key={scanKey} className="scan-line" />}
         </div>
         <ol className="work-log">
           {log.slice(0, shown).map((line) => (
