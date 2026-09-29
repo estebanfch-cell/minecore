@@ -1,66 +1,168 @@
 {
   "id": "taluvira",
   "title": "OC Taluvira",
-  "stepMs": 7500,
+  "stepMs": 15000,
   "closing": "Manuelito envió el resumen completo. Todo ha sido enviado a tu correo: SO-001209-1, SO-001209-2, el pick list, PO-000379 y el RESUMEN.",
   "steps": [
     {
+      "id": "analisis",
+      "phase": "analysis",
       "agent": "chief",
-      "caption": "Iniciando orquesta",
-      "chat": "DEVOPS aplicando en el sistema…",
-      "preview": "OC-2026-0417 TALUVIRA.png",
-      "file": "OC-2026-0417 TALUVIRA.pdf"
+      "caption": "Leyendo la orden",
+      "stepMs": 18000,
+      "chat": "Leyendo OC-2026-0417…",
+      "window": {
+        "title": "CHIEF — OC-2026-0417 TALUVIRA.pdf",
+        "pdf": "OC-2026-0417 TALUVIRA.pdf",
+        "preview": "OC-2026-0417 TALUVIRA.png",
+        "log": [
+          "Leyendo OC-2026-0417 — Taluvira Perforaciones S.A.",
+          "59 líneas · Subtotal $20,830.77 · IVA 15% · Total $23,955.39",
+          "Cruzando con cotización MCOR-SQ-001011… 59/59 coinciden ✓",
+          "Pago CONTADO · Entrega Campamento Bella Rica · fecha 09-oct",
+          "Plan:",
+          "→ DEVOPS: convertir SQ en SO-001209 en el sistema y dividir",
+          "→ STOCK PILOT: verificar stock y generar pick list",
+          "→ FINANCE: alta rotación + costo de importación + recuperación",
+          "→ MANUELITO: enviar resumen completo",
+          "Convocando reunión…"
+        ]
+      }
     },
     {
-      "agent": "devops",
-      "caption": "Entrando al sistema",
-      "chat": "SO-001209 creada",
-      "handoffFrom": "chief",
-      "preview": "ORDEN DE COMPRA - MCOR-PO-000379.png",
-      "file": "ORDEN DE COMPRA - MCOR-PO-000379.pdf",
-      "frames": [
-        { "preview": "INFLOW - SQ-001011 a SO-001209.png", "file": "ORDEN DE VENTA - MCOR-SO-001209.pdf" },
-        { "preview": "ORDEN DE VENTA - MCOR-SO-001209.png", "file": "ORDEN DE VENTA - MCOR-SO-001209.pdf" },
-        { "preview": "ORDEN DE VENTA - MCOR-SO-001209-1.png", "file": "ORDEN DE VENTA - MCOR-SO-001209-1.pdf" },
-        { "preview": "ORDEN DE VENTA - MCOR-SO-001209-2.png", "file": "ORDEN DE VENTA - MCOR-SO-001209-2.pdf" },
-        { "preview": "ORDEN DE COMPRA - MCOR-PO-000379.png", "file": "ORDEN DE COMPRA - MCOR-PO-000379.pdf" }
+      "id": "reunion",
+      "phase": "meeting",
+      "agent": "chief",
+      "caption": "Reunión en la sala",
+      "stepMs": 26000,
+      "chat": "Convocando reunión…",
+      "assignments": [
+        { "agent": "devops", "card": "DEVOPS — SO-001209 + split", "at": 9000 },
+        { "agent": "stock-pilot", "card": "STOCK PILOT — stock y pick list", "at": 13200 },
+        { "agent": "finance", "card": "FINANCE — rotación, importación y recuperación", "at": 17400 },
+        { "agent": "manuelito", "card": "MANUELITO — resumen completo", "at": 21600 }
       ]
     },
     {
+      "id": "devops",
+      "phase": "desk",
+      "agent": "devops",
+      "caption": "Convirtiendo la orden",
+      "stepMs": 15000,
+      "chat": "DEVOPS aplicando en el sistema…",
+      "preview": "INFLOW - SQ-001011 a SO-001209.png",
+      "file": "ORDEN DE VENTA - MCOR-SO-001209.pdf",
+      "window": {
+        "title": "DEVOPS — inFlow",
+        "logMs": 1600,
+        "frames": [
+          { "preview": "INFLOW - SQ-001011 a SO-001209.png", "file": "ORDEN DE VENTA - MCOR-SO-001209.pdf" },
+          { "preview": "ORDEN DE VENTA - MCOR-SO-001209.png", "file": "ORDEN DE VENTA - MCOR-SO-001209.pdf" },
+          { "preview": "ORDEN DE VENTA - MCOR-SO-001209-1.png", "file": "ORDEN DE VENTA - MCOR-SO-001209-1.pdf" },
+          { "preview": "ORDEN DE VENTA - MCOR-SO-001209-2.png", "file": "ORDEN DE VENTA - MCOR-SO-001209-2.pdf" },
+          { "preview": "ORDEN DE COMPRA - MCOR-PO-000379.png", "file": "ORDEN DE COMPRA - MCOR-PO-000379.pdf" }
+        ],
+        "log": [
+          "Abriendo inFlow · cotización MCOR-SQ-001011",
+          "Convirtiendo a orden de venta MCOR-SO-001209 · 59 líneas",
+          "Split -1: sale de bodega · 54 líneas · $23,338.59",
+          "Split -2: pendiente Boyles · 5 líneas · $616.79",
+          "PO-000379 creada · Boyles · FOB $8,790.74"
+        ]
+      }
+    },
+    {
+      "id": "stock",
+      "phase": "desk",
       "agent": "stock-pilot",
-      "caption": "Chequeo de stock y pick list",
-      "chat": "split -1/-2",
-      "handoffFrom": "chief",
+      "caption": "Stock y pick list",
+      "stepMs": 15000,
+      "chat": "SO-001209 creada",
       "preview": "PICK LIST - MCOR-SO-001209-1.png",
       "file": "PICK LIST - MCOR-SO-001209-1.pdf",
-      "frames": [
-        { "preview": "STOCK - SO-001209.png", "file": "ORDEN DE VENTA - MCOR-SO-001209-1.pdf" },
-        { "preview": "PICK LIST - MCOR-SO-001209-1.png", "file": "PICK LIST - MCOR-SO-001209-1.pdf" }
-      ]
+      "window": {
+        "title": "STOCK PILOT — existencias",
+        "logMs": 2200,
+        "frames": [
+          { "preview": "STOCK - SO-001209.png", "file": "ORDEN DE VENTA - MCOR-SO-001209-1.pdf" },
+          { "preview": "PICK LIST - MCOR-SO-001209-1.png", "file": "PICK LIST - MCOR-SO-001209-1.pdf" }
+        ],
+        "log": [
+          "Verificando stock de SO-001209",
+          "54 líneas con stock · 5 líneas Boyles sin stock",
+          "Pick list SO-001209-1 · 54 líneas · 1,220 unidades"
+        ]
+      }
     },
     {
+      "id": "finance",
+      "phase": "desk",
       "agent": "finance",
-      "caption": "Rotación, prorrateo y meses a recuperar",
-      "chat": "pick list listo",
-      "handoffFrom": "chief",
+      "caption": "Rotación y recuperación",
+      "stepMs": 15000,
+      "chat": "split -1/-2",
       "preview": "FINANZAS - MCOR-PO-000379.png",
-      "file": "ORDEN DE COMPRA - MCOR-PO-000379.pdf"
+      "file": "ORDEN DE COMPRA - MCOR-PO-000379.pdf",
+      "window": {
+        "title": "FINANCE — rotación",
+        "logMs": 2000,
+        "frames": [
+          { "preview": "FINANZAS - MCOR-PO-000379.png", "file": "ORDEN DE COMPRA - MCOR-PO-000379.pdf" },
+          { "preview": "ORDEN DE COMPRA - MCOR-PO-000379.png", "file": "ORDEN DE COMPRA - MCOR-PO-000379.pdf" }
+        ],
+        "log": [
+          "6 SKUs de alta rotación · cobertura bajo 3 meses · objetivo 4 meses",
+          "Parte A urgente $321.06 · parte B $8,469.68",
+          "Importación 18% · puesto en bodega $9,994 · recupera en 4.5 meses",
+          "PO-000379 · total FOB $8,790.74"
+        ]
+      }
     },
     {
+      "id": "resumen",
+      "phase": "desk",
       "agent": "chief",
       "caption": "Resumen consolidado",
+      "stepMs": 15000,
       "chat": "PO-000379 Boyles $8,790.74. A urgente $321.06. B $8,469.68, $9,994 en 4.5 meses.",
       "preview": "RESUMEN - OC-2026-0417.png",
-      "file": "RESUMEN - OC-2026-0417.pdf"
+      "file": "RESUMEN - OC-2026-0417.pdf",
+      "window": {
+        "title": "CHIEF — RESUMEN OC-2026-0417",
+        "logMs": 2200,
+        "frames": [
+          { "preview": "RESUMEN - OC-2026-0417.png", "file": "RESUMEN - OC-2026-0417.pdf" }
+        ],
+        "log": [
+          "Consolidando OC-2026-0417",
+          "SO-001209 · split -1/-2 · pick list · PO-000379",
+          "Resumen listo para enviar"
+        ]
+      }
     },
     {
+      "id": "envio",
+      "phase": "desk",
       "agent": "manuelito",
       "caption": "Resumen completo enviado",
-      "chat": "resumen listo",
       "banner": "Todo ha sido enviado",
-      "handoffFrom": "chief",
+      "stepMs": 15000,
+      "chat": "resumen listo",
       "preview": "WHATSAPP - Resumen completo enviado.png",
-      "file": "RESUMEN - OC-2026-0417.pdf"
+      "file": "RESUMEN - OC-2026-0417.pdf",
+      "window": {
+        "title": "MANUELITO — correo",
+        "logMs": 2000,
+        "frames": [
+          { "preview": "WHATSAPP - Resumen completo enviado.png", "file": "RESUMEN - OC-2026-0417.pdf" }
+        ],
+        "log": [
+          "Enviando a estebanferlito@minecore.ec",
+          "Adjuntos: SO-001209-1 · SO-001209-2 · pick list · PO-000379",
+          "Más el RESUMEN",
+          "Todo ha sido enviado a tu correo: SO-001209-1, SO-001209-2, el pick list, PO-000379 y el RESUMEN."
+        ]
+      }
     }
   ]
 }

@@ -59,6 +59,9 @@ function createInitial() {
     carry: null,
     chatOpen: false,
     chat: [],
+    workWindow: null,
+    assignments: [],
+    sourcePdf: null,
   };
 }
 
@@ -259,6 +262,8 @@ export function goHome(id) {
       z: home.z,
       walking: false,
       meeting: false,
+      seated: false,
+      cue: null,
       typing: true,
     },
     { silent: true }
@@ -273,7 +278,7 @@ export function walkTo(id, x, z) {
       z,
       walking: true,
       typing: false,
-      meeting: false,
+      seated: false,
     },
     { silent: true }
   );
@@ -289,10 +294,12 @@ export function resetAllHome() {
       z: home.z,
       walking: false,
       meeting: false,
+      seated: false,
+      cue: null,
       typing: true,
     };
   }
-  state = { ...state, agents, meeting: false, handoff: null };
+  state = { ...state, agents, meeting: false, handoff: null, assignments: [] };
   emit();
 }
 

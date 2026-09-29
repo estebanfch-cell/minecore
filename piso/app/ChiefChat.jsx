@@ -35,6 +35,11 @@ export function ChiefChat({ embedded = false, focus = false }) {
     const fileName = file?.name || "";
     if (!text && !fileName) return;
     pushUserLine(text, fileName);
+    if (file) {
+      const prev = getState().sourcePdf;
+      if (prev?.url) URL.revokeObjectURL(prev.url);
+      patchState({ sourcePdf: { url: URL.createObjectURL(file), name: file.name } });
+    }
     setDraft("");
     setFile(null);
     if (fileBox.current) fileBox.current.value = "";

@@ -200,12 +200,18 @@ async function runGathering(token, ticker, announcement) {
   });
   await sleep(2600, token);
   if (token.aborted) return;
-  AGENTS.forEach((a) => setAgent(a.id, { walking: false, meeting: true }, { silent: true }));
+  AGENTS.forEach((a) =>
+    setAgent(
+      a.id,
+      { walking: false, meeting: true, seated: a.id !== "chief", cue: "listen", cueAt: Date.now() },
+      { silent: true }
+    )
+  );
   await sleep(announcement ? 14000 : 3600, token);
   if (token.aborted) return;
   patchState({ announcement: null, meeting: false });
   AGENTS.forEach((a) => {
-    setAgent(a.id, { meeting: false }, { silent: true });
+    setAgent(a.id, { meeting: false, seated: false, cue: null }, { silent: true });
     const door = DOOR_QUEUE[a.id];
     if (door) walkTo(a.id, door.x, door.z);
   });

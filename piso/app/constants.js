@@ -112,24 +112,25 @@ function roomLocal(lx, lz) {
   return localToWorld(HUB.x, HUB.z, lx, lz);
 }
 
-function spreadRow(ids, z, halfSpan) {
-  return ids.map((agent, i) => {
-    const t = ids.length === 1 ? 0.5 : i / (ids.length - 1);
-    const x = -halfSpan + t * halfSpan * 2;
-    return [agent.id, roomLocal(x, z)];
-  });
-}
+/** CHIEF stands at the head of the table and faces the room. */
+export const CHIEF_PODIUM = roomLocal(0, -0.86);
 
-/** CHIEF stands at the far wall and faces the room. */
-export const CHIEF_PODIUM = roomLocal(0, -0.66);
+/** Seats around the table, in room-local coordinates. CHIEF does not sit. */
+export const CHAIRS = [
+  { id: "devops", x: -0.86, z: -0.46 },
+  { id: "stock-pilot", x: -0.86, z: -0.08 },
+  { id: "finance", x: -0.86, z: 0.3 },
+  { id: "manuelito", x: 0.86, z: -0.46 },
+  { id: "law", x: 0.86, z: -0.08 },
+  { id: "secre", x: 0.86, z: 0.3 },
+  { id: "cote", x: -0.46, z: 0.7 },
+  { id: "marketing", x: 0, z: 0.7 },
+  { id: "comunicados", x: 0.46, z: 0.7 },
+  { id: "personal", x: -0.58, z: -0.72 },
+  { id: "pmv", x: 0.58, z: -0.72 },
+];
 
-const LISTENERS = AGENTS.filter((a) => a.id !== "chief");
-const BACK_ROW = LISTENERS.slice(0, 5);
-const FRONT_ROW = LISTENERS.slice(5);
-export const MEETING_SPOTS = Object.fromEntries([
-  ...spreadRow(BACK_ROW, -0.14, 0.62),
-  ...spreadRow(FRONT_ROW, 0.4, 0.7),
-]);
+export const MEETING_SPOTS = Object.fromEntries(CHAIRS.map((c) => [c.id, roomLocal(c.x, c.z)]));
 
 /** Queue just outside the door, then the director walks them in. */
 export const DOOR_QUEUE = Object.fromEntries(

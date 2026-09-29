@@ -5,6 +5,7 @@ import {
   LIME,
   PLATFORM_TOP,
   POPUP_META,
+  CHAIRS,
   ROOM,
   SEAT_LOCAL_Z,
   YAW,
@@ -193,6 +194,32 @@ function Wall({ args, position, glass }) {
   );
 }
 
+function Seat({ x, z, rot }) {
+  return (
+    <group position={[x, PLATFORM_TOP, z]} rotation={[0, rot, 0]}>
+      <mesh position={[0, 0.2, 0]} castShadow>
+        <boxGeometry args={[0.32, 0.045, 0.3]} />
+        <meshStandardMaterial color="#1a2330" roughness={0.55} metalness={0.15} />
+      </mesh>
+      <mesh position={[0, 0.4, -0.13]} castShadow>
+        <boxGeometry args={[0.32, 0.34, 0.04]} />
+        <meshStandardMaterial color="#243044" roughness={0.5} metalness={0.12} />
+      </mesh>
+      {[
+        [-0.12, -0.1],
+        [0.12, -0.1],
+        [-0.12, 0.1],
+        [0.12, 0.1],
+      ].map(([lx, lz], i) => (
+        <mesh key={i} position={[lx, 0.1, lz]}>
+          <boxGeometry args={[0.035, 0.18, 0.035]} />
+          <meshStandardMaterial color="#0c1118" />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
 export function Hub({ meeting }) {
   const { halfX, halfZ, door } = ROOM;
   const wallH = 0.86;
@@ -222,23 +249,35 @@ export function Hub({ meeting }) {
         <meshStandardMaterial color="#121820" metalness={0.18} roughness={0.62} />
       </RoundedBox>
 
-      <group position={[0, PLATFORM_TOP, -0.4]}>
-        <mesh position={[0, 0.34, 0]} castShadow>
-          <boxGeometry args={[0.9, 0.045, 0.36]} />
-          <meshStandardMaterial color="#0e141c" roughness={0.4} metalness={0.25} />
+      <group position={[0, PLATFORM_TOP, -0.08]}>
+        <mesh position={[0, 0.36, 0]} castShadow>
+          <boxGeometry args={[1.15, 0.05, 0.62]} />
+          <meshStandardMaterial color="#101820" roughness={0.42} metalness={0.28} />
+        </mesh>
+        <mesh position={[0, 0.39, 0]}>
+          <boxGeometry args={[1.08, 0.012, 0.54]} />
+          <meshStandardMaterial color="#1a2433" roughness={0.35} metalness={0.2} />
         </mesh>
         {[
-          [-0.42, -0.22],
-          [0.42, -0.22],
-          [-0.42, 0.22],
-          [0.42, 0.22],
+          [-0.5, -0.24],
+          [0.5, -0.24],
+          [-0.5, 0.24],
+          [0.5, 0.24],
         ].map(([x, z], i) => (
-          <mesh key={i} position={[x, 0.16, z]}>
-            <boxGeometry args={[0.04, 0.3, 0.04]} />
+          <mesh key={i} position={[x, 0.17, z]}>
+            <boxGeometry args={[0.045, 0.32, 0.045]} />
             <meshStandardMaterial color="#0a0e14" />
           </mesh>
         ))}
       </group>
+      {CHAIRS.map((chair) => (
+        <Seat
+          key={chair.id}
+          x={chair.x}
+          z={chair.z}
+          rot={Math.atan2(-chair.x, -0.08 - chair.z)}
+        />
+      ))}
 
       <Wall args={[floorW, wallH, wallT]} position={[0, y, -halfZ]} glass />
       <Wall args={[wallT, wallH, floorD]} position={[-halfX, y, 0]} glass />
