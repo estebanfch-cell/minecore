@@ -286,3 +286,9 @@ export function wantsMeeting(agentId, text) {
   if (agentId === "chief") return true;
   return /reuni[oó]n|anunci|convo[ck]/i.test(text || "");
 }
+
+/** Client-side recorded run. CHIEF text that mentions the OC demo. */
+export function wantsDemoRun(agentId, text) {
+  if (agentId !== "chief") return false;
+  return /taluvira|demo|\boc\b/i.test(text || "");
+}

@@ -17,11 +17,20 @@ const SLAB_W = 3.45;
 export const SLAB_D = 2.55;
 export const SLAB_H = 0.28;
 
-function Desk({ kind, accent }) {
+function Desk({ kind, accent, screen, onMonitor }) {
   const meta = POPUP_META[kind] || { accent };
   return (
     <group position={[0, 0, DESK_LOCAL_Z]}>
-      <mesh position={[0, 0.46, 0]} castShadow receiveShadow>
+      <mesh
+        position={[0, 0.46, 0]}
+        castShadow
+        receiveShadow
+        onClick={(e) => {
+          if (!screen || !onMonitor) return;
+          e.stopPropagation();
+          onMonitor();
+        }}
+      >
         <boxGeometry args={[1.28, 0.045, 0.64]} />
         <meshStandardMaterial color="#121822" roughness={0.45} metalness={0.2} />
       </mesh>
@@ -41,16 +50,18 @@ function Desk({ kind, accent }) {
         </mesh>
       ))}
 
-      <mesh position={[0.02, 0.74, 0.18]} castShadow>
-        <boxGeometry args={[0.78, 0.48, 0.04]} />
-        <meshStandardMaterial color="#07090d" metalness={0.45} roughness={0.35} />
-      </mesh>
-      <mesh position={[0.02, 0.5, 0.16]}>
-        <boxGeometry args={[0.07, 0.08, 0.05]} />
+      {!screen && (
+        <mesh position={[0.02, 0.74, 0.18]} castShadow>
+          <boxGeometry args={[0.78, 0.48, 0.04]} />
+          <meshStandardMaterial color="#07090d" metalness={0.45} roughness={0.35} />
+        </mesh>
+      )}
+      <mesh position={[0.02, screen ? 0.62 : 0.5, 0.16]}>
+        <boxGeometry args={[0.07, screen ? 0.28 : 0.08, 0.05]} />
         <meshStandardMaterial color="#07090d" />
       </mesh>
-      <group position={[0.02, 0.74, 0.205]} rotation={[-0.22, 0, 0]}>
-        <MonitorScreen kind={kind} />
+      <group position={[0.02, screen ? 1.32 : 0.74, screen ? 0.32 : 0.205]} rotation={[screen ? -0.05 : -0.22, 0, 0]}>
+        <MonitorScreen kind={kind} imageUrl={screen?.image} onOpen={screen ? onMonitor : null} />
       </group>
       <pointLight position={[0.02, 0.7, 0.42]} color={meta.accent} intensity={0.7} distance={2.2} />
 
@@ -107,14 +118,14 @@ function Props({ accent, flip }) {
   );
 }
 
-export function ZoneIsland({ zone, kind, hot, index }) {
+export function ZoneIsland({ zone, kind, hot, index, screen, onMonitor }) {
   const top = mixHex("#2a3548", zone.accent, 0.58);
   const side = mixHex("#1c2636", zone.accent, 0.42);
   const s = zone.scale || 1;
   const furniture = (
     <group position={[0, PLATFORM_TOP, 0]}>
       <Chair />
-      <Desk kind={kind} accent={zone.accent} />
+        <Desk kind={kind} accent={zone.accent} screen={screen} onMonitor={onMonitor} />
       <Props accent={zone.accent} flip={index % 2 === 0} />
     </group>
   );

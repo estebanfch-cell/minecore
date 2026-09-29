@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { DOSSIERS, POPUPS, STATUS_LABEL, actionVerb, wantsMeeting } from "./constants.js";
+import { shouldStartDemo, startDemoRun } from "./demoRun.js";
 import { playAnnouncement } from "./director.js";
 import { grokLink, instructSettings, postInstruction } from "./instruct.js";
 import { recordInstruction, selectAgent, setToast } from "./store.js";
@@ -63,12 +64,15 @@ export function Dossier({ agent, focusInstruction }) {
     const text = draft.trim();
     if (!text) return;
     const entry = recordInstruction(agent.id, text);
-    const scene = wantsMeeting(agent.id, text);
-    if (scene) playAnnouncement(text);
+    const demo = shouldStartDemo(agent.id, text);
+    const scene = !demo && wantsMeeting(agent.id, text);
+    if (demo) startDemoRun();
+    else if (scene) playAnnouncement(text);
     const result = entry ? await postInstruction(entry) : { ok: false, reason: "missing" };
-    if (scene && result.ok) setToast("Escena + enviado", "ok");
-    else if (scene && result.reason === "missing") setToast("Escena ok · webhook pendiente", "wait");
-    else if (scene) setToast("Escena ok · no se pudo enviar", "wait");
+    const visual = demo || scene;
+    if (visual && result.ok) setToast("Escena + enviado", "ok");
+    else if (visual && result.reason === "missing") setToast("Escena ok · webhook pendiente", "wait");
+    else if (visual) setToast("Escena ok · no se pudo enviar", "wait");
     else if (result.ok) setToast("Enviado a CHIEF", "ok");
     else setToast("Falta configurar webhook del demo", "wait");
     setDraft("");

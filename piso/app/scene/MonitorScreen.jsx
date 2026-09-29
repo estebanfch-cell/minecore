@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { POPUP_META } from "../constants.js";
@@ -30,8 +30,9 @@ function paint(canvas, kind) {
   });
 }
 
-export function MonitorScreen({ kind, position = [0, 0, 0] }) {
+export function MonitorScreen({ kind, position = [0, 0, 0], imageUrl, onOpen }) {
   const glow = useRef();
+  const [photo, setPhoto] = useState(null);
   const { canvas, texture } = useMemo(() => {
     const el = document.createElement("canvas");
     el.width = 512;
@@ -46,23 +47,65 @@ export function MonitorScreen({ kind, position = [0, 0, 0] }) {
     texture.needsUpdate = true;
   }, [canvas, texture, kind]);
 
+  useEffect(() => {
+    if (!imageUrl) {
+      setPhoto(null);
+      return;
+    }
+    let alive = true;
+    const loader = new THREE.TextureLoader();
+    loader.load(imageUrl, (tex) => {
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.anisotropy = 8;
+      if (alive) setPhoto(tex);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [imageUrl]);
+
   useFrame(() => {
     if (!glow.current) return;
     glow.current.material.opacity = 0.08 + Math.sin(performance.now() / 480) * 0.05;
   });
 
   const meta = POPUP_META[kind] || { accent: "#b8ff3c" };
+  const featured = !!photo;
+  const w = featured ? 2.42 : 0.72;
+  const h = featured ? 1.55 : 0.46;
 
   return (
     <group position={position}>
-      <mesh>
-        <planeGeometry args={[0.72, 0.46]} />
-        <meshBasicMaterial map={texture} toneMapped={false} />
+      {featured && (
+        <mesh position={[0, 0, -0.03]}>
+          <planeGeometry args={[w + 0.12, h + 0.12]} />
+          <meshBasicMaterial color="#07090d" toneMapped={false} />
+        </mesh>
+      )}
+      <mesh
+        onClick={(e) => {
+          if (!onOpen) return;
+          e.stopPropagation();
+          onOpen();
+        }}
+        onPointerOver={(e) => {
+          if (!onOpen) return;
+          e.stopPropagation();
+          document.body.style.cursor = "pointer";
+        }}
+        onPointerOut={() => {
+          document.body.style.cursor = "auto";
+        }}
+      >
+        <planeGeometry args={[w, h]} />
+        <meshBasicMaterial map={photo || texture} toneMapped={false} />
       </mesh>
-      <mesh ref={glow} position={[0, 0, 0.012]}>
-        <planeGeometry args={[0.72, 0.46]} />
-        <meshBasicMaterial color={meta.accent} transparent opacity={0.1} toneMapped={false} depthWrite={false} />
-      </mesh>
+      {!featured && (
+        <mesh ref={glow} position={[0, 0, 0.012]}>
+          <planeGeometry args={[w, h]} />
+          <meshBasicMaterial color={meta.accent} transparent opacity={0.1} toneMapped={false} depthWrite={false} />
+        </mesh>
+      )}
     </group>
   );
 }

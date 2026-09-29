@@ -2,16 +2,19 @@ import { Suspense, useMemo } from "react";
 import { ContactShadows, OrbitControls } from "@react-three/drei";
 import { AGENTS, YAW, ZONE_BY_ID } from "../constants.js";
 import { DeskTag } from "./DeskTag.jsx";
+import { DemoCamera, DocCarry } from "./DemoFocus.jsx";
 import { Hub, Walkways, ZoneIsland } from "./Furniture.jsx";
 import { Miner } from "./Miner.jsx";
+import { openDeskPreview } from "../DemoChrome.jsx";
 
-export function Office({ agents, meeting, selectedId, handoff }) {
+export function Office({ agents, meeting, selectedId, handoff, demoRun, deskScreens, carry }) {
   const hotIds = useMemo(() => {
     const ids = new Set();
     if (handoff?.from) ids.add(handoff.from);
     if (handoff?.to) ids.add(handoff.to);
+    if (demoRun?.agentId) ids.add(demoRun.agentId);
     return ids;
-  }, [handoff]);
+  }, [handoff, demoRun]);
 
   return (
     <>
@@ -52,6 +55,8 @@ export function Office({ agents, meeting, selectedId, handoff }) {
           kind={def.popupKind}
           hot={hotIds.has(def.id)}
           index={index}
+          screen={deskScreens?.[def.id]}
+          onMonitor={() => openDeskPreview(def.id)}
         />
       ))}
 
@@ -68,6 +73,9 @@ export function Office({ agents, meeting, selectedId, handoff }) {
       {AGENTS.map((def) => (
         <DeskTag key={`tag-${def.id}`} zone={ZONE_BY_ID[def.id]} agent={agents[def.id]} />
       ))}
+
+      <DocCarry carry={carry} agents={agents} />
+      <DemoCamera run={demoRun} />
 
       <ContactShadows position={[0, 0, 0]} opacity={0.38} scale={30} blur={2.4} far={5} color="#000" />
 

@@ -1,0 +1,45 @@
+{
+  "id": "taluvira",
+  "title": "OC Taluvira",
+  "stepMs": 7000,
+  "steps": [
+    {
+      "agent": "manuelito",
+      "caption": "Encontré OC nueva de Taluvira",
+      "preview": "OC_cliente_inventado.png",
+      "file": "OC-2026-0417.pdf",
+      "handoffTo": "chief"
+    },
+    {
+      "agent": "chief",
+      "caption": "MCOR-SQ-001011 → MCOR-SO-001209",
+      "preview": "ORDEN DE VENTA - MCOR-SO-001209.png",
+      "file": "MCOR-SO-001209.pdf"
+    },
+    {
+      "agent": "stock-pilot",
+      "caption": "SO-001209-1 sale de bodega · SO-001209-2 pendiente",
+      "preview": "PICK LIST - MCOR-SO-001209-1.png",
+      "file": "PICK LIST - MCOR-SO-001209-1.pdf",
+      "frames": [
+        "ORDEN DE VENTA - MCOR-SO-001209-1.png",
+        "ORDEN DE VENTA - MCOR-SO-001209-2.png",
+        "PICK LIST - MCOR-SO-001209-1.png"
+      ],
+      "handoffTo": "finance"
+    },
+    {
+      "agent": "finance",
+      "caption": "PO MCOR-PO-000379 · alta rotación",
+      "preview": "ORDEN DE COMPRA - MCOR-PO-000379.png",
+      "file": "MCOR-PO-000379.pdf"
+    },
+    {
+      "agent": "secre",
+      "caption": "Enviado a estebanferlito@minecore.ec",
+      "banner": "Todo ha sido enviado a tu mail",
+      "preview": "RESUMEN DEMO - OC-2026-0417.png",
+      "file": "RESUMEN DEMO - OC-2026-0417.pdf"
+    }
+  ]
+}

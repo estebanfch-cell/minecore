@@ -53,6 +53,10 @@ function createInitial() {
     instructions: [],
     announcement: null,
     toast: null,
+    demoRun: null,
+    deskScreens: {},
+    previewDoc: null,
+    carry: null,
   };
 }
 

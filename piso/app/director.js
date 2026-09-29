@@ -244,6 +244,12 @@ export function stopDirector() {
   clearTimers();
 }
 
+/** Stop the looped Demo / a meeting so a recorded run can take the floor. */
+export function interruptFloor() {
+  clearTimers();
+  patchState({ meeting: false, announcement: null });
+}
+
 export function bindFeedApi() {
   window.MinecoreFeed = {
     setAgent(id, patch) {

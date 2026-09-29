@@ -2,6 +2,8 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { Dossier } from "./Dossier.jsx";
 import { TaskFeed } from "./TaskFeed.jsx";
 import { AGENTS } from "./constants.js";
+import { DemoBar, PreviewPanel } from "./DemoChrome.jsx";
+import { startDemoRun, stopDemoRun } from "./demoRun.js";
 import { getState, openChiefInstruction, subscribe } from "./store.js";
 import { runDemo, startLive } from "./director.js";
 
@@ -29,6 +31,19 @@ export function Hud() {
     return () => clearInterval(t);
   }, []);
 
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== "d" && e.key !== "D") return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const tag = e.target?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      e.preventDefault();
+      startDemoRun();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   return (
     <>
       <header className="topbar notranslate" translate="no">
@@ -51,14 +66,20 @@ export function Hud() {
           <button
             className={`mode ${state.mode === "demo" ? "active" : ""}`}
             type="button"
-            onClick={runDemo}
+            onClick={() => {
+              stopDemoRun();
+              runDemo();
+            }}
           >
             Demo
           </button>
           <button
             className={`mode ${state.mode === "live" ? "active" : ""}`}
             type="button"
-            onClick={startLive}
+            onClick={() => {
+              stopDemoRun();
+              startLive();
+            }}
           >
             En vivo
           </button>
@@ -77,6 +98,9 @@ export function Hud() {
           <p>{state.announcement}</p>
         </div>
       )}
+
+      <DemoBar run={state.demoRun} />
+      <PreviewPanel doc={state.previewDoc} />
 
       {state.toast && (
         <div className={`floor-toast notranslate ${state.toast.tone || "ok"}`} role="status" translate="no">

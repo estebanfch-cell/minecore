@@ -3,7 +3,8 @@ import { Canvas } from "@react-three/fiber";
 import { Hud } from "./Hud.jsx";
 import { Office } from "./scene/Office.jsx";
 import { getState, selectAgent, subscribe } from "./store.js";
-import { bindFeedApi, startLive, stopDirector } from "./director.js";
+import { bindFeedApi, interruptFloor, startLive, stopDirector } from "./director.js";
+import { bindDemoRun, startDemoRun } from "./demoRun.js";
 
 function useStore() {
   return useSyncExternalStore(subscribe, getState, getState);
@@ -14,7 +15,10 @@ export default function App() {
 
   useEffect(() => {
     bindFeedApi();
+    bindDemoRun({ interrupt: interruptFloor });
     startLive();
+    const demo = new URLSearchParams(window.location.search).get("demo");
+    if (demo === "taluvira") startDemoRun();
     return () => stopDirector();
   }, []);
 
@@ -36,7 +40,9 @@ export default function App() {
             meeting={state.meeting}
             selectedId={state.selectedId}
             handoff={state.handoff}
-            popupFlash={state.popupFlash}
+            demoRun={state.demoRun}
+            deskScreens={state.deskScreens}
+            carry={state.carry}
           />
         </Canvas>
       </div>
