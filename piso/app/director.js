@@ -94,7 +94,7 @@ async function playRound(token) {
   resetAllHome();
   setHandoff(null, null);
   patchState({ meeting: false });
-  pushNote("Demo · jornada en los escritorios", "ok");
+  pushNote("Ejecutar · jornada en los escritorios", "ok");
   await sleep(500, token);
   if (token.aborted) return;
 
@@ -119,7 +119,7 @@ async function playRound(token) {
   }
   if (token.aborted) return;
 
-  setTicker("Demo · SECRE lleva OK_aplicar a Finance");
+  setTicker("Ejecutar · SECRE lleva OK_aplicar a Finance");
   setHandoff("secre", "finance");
   setAgent("secre", { activity: "Sale con OK_aplicar hacia Finance", status: "ok" });
   flashPopup("secre", "Retenciones OK");
@@ -137,7 +137,7 @@ async function playRound(token) {
   await sleep(900, token);
   if (token.aborted) return;
 
-  setTicker("Demo · COTE pasa la OC a Manuelito");
+  setTicker("Ejecutar · COTE pasa la OC a Manuelito");
   setHandoff("cote", "manuelito");
   setAgent("cote", { activity: "Pide aviso a Majo por la OC", status: "pending" });
   flashPopup("cote", "Gmail: OC pendiente");
@@ -171,9 +171,9 @@ async function playRound(token) {
   await sleep(700, token);
   if (token.aborted) return;
 
-  await runGathering(token, "Demo · stand-up en el núcleo", null);
+  await runGathering(token, "Ejecutar · stand-up en el núcleo", null);
   if (token.aborted) return;
-  setTicker("Demo · ciclo listo, se repite");
+  setTicker("Ejecutar · ciclo listo, se repite");
 }
 
 function clipLine(text, n = 140) {
@@ -233,7 +233,7 @@ export async function runDemo() {
   const token = { aborted: false };
   demoAbort = token;
   resetAllHome();
-  setTicker("Demo · intensificando actividad");
+  setTicker("Ejecutar · intensificando actividad");
   while (!token.aborted) {
     await playRound(token);
     await sleep(1400, token);

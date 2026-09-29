@@ -17,8 +17,8 @@ export default function App() {
     bindFeedApi();
     bindDemoRun({ interrupt: interruptFloor });
     startLive();
-    const demo = new URLSearchParams(window.location.search).get("demo");
-    if (demo === "taluvira") startDemoRun();
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("run") === "taluvira" || params.get("demo") === "taluvira") startDemoRun();
     return () => stopDirector();
   }, []);
 

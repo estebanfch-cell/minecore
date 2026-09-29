@@ -2,9 +2,9 @@
 
 **Taller:** escribe la instrucción en CHIEF → mira la sala.
 
-**Demo OC:** en CHIEF escribe algo con `OC`, `Taluvira` o `demo` (o abre `?demo=taluvira`, o pulsa `D`). La orquesta sale de su escritorio (1/6 … 6/6): él recibe la OC, DevOps aplica en el sistema, Stock y Finance, el resumen vuelve a CHIEF y Manuelito envía. Pausa / Siguiente / Reiniciar. Los archivos viven en `piso/demo/`.
+**Orquesta OC:** en CHIEF escribe algo con `OC`, `Taluvira` u `orquesta` (o abre `?run=taluvira`, o pulsa `D`). Sale de su escritorio (1/6 … 6/6): él recibe la OC, DevOps aplica en el sistema, Stock y Finance, el resumen vuelve a CHIEF y Manuelito envía. Pausa / Siguiente / Reiniciar. Los archivos viven en `piso/run/`.
 
-Animated isometric office for the Minecore agents. Replaces the old flat 2D HTML demo. GitHub Pages serves this folder at:
+Animated isometric office for the Minecore agents. Replaces the old flat 2D HTML floor. GitHub Pages serves this folder at:
 
 **https://estebanfch-cell.github.io/minecore/piso/**
 
@@ -14,10 +14,10 @@ Animated isometric office for the Minecore agents. Replaces the old flat 2D HTML
 - Low-poly miners with white helmets and the Minecore M mark (approved v5 portraits stay on the ficha)
 - Each platform’s front face (toward the camera) carries the short name and a status dot (green online, grey away, red offline). No plates above the miners. Activity stays in the ficha and the task panel
 - Panel derecho **Estado de tareas** (icono, texto, hora Guayaquil)
-- Barra superior: marca Minecore, reloj America/Guayaquil, Demo / En vivo
+- Barra superior: marca Minecore, reloj America/Guayaquil, Ejecutar / En vivo
 - Click / tap an agent to open a large **ficha**: quién es, para qué está entrenado, historial, siguiente, and an **Instrucción** box
 - **Dar instrucción** (or click CHIEF) → type the announcement → **Enviar**. Everyone walks in through the sala door, CHIEF delivers the line (ticker + one speech panel), then they leave and return to their desks. The scene plays even if the webhook is not set yet
-- **Demo** loops desk work, handoffs (SECRE→Finance, COTE→Manuelito) and a stand-up in the sala. Status dots follow each agent’s `status`
+- **Ejecutar** loops desk work, handoffs (SECRE→Finance, COTE→Manuelito) and a stand-up in the sala. Status dots follow each agent’s `status`
 - **En vivo** waits for `window.MinecoreFeed.setAgent` or `window.MINECORE_FEED_URL`. Until a heartbeat arrives, the floor keeps the last known state and the panel says so
 
 ## Develop

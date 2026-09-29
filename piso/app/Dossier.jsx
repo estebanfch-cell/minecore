@@ -74,7 +74,7 @@ export function Dossier({ agent, focusInstruction }) {
     else if (visual && result.reason === "missing") setToast("Escena ok · webhook pendiente", "wait");
     else if (visual) setToast("Escena ok · no se pudo enviar", "wait");
     else if (result.ok) setToast("Enviado a CHIEF", "ok");
-    else setToast("Falta configurar webhook del demo", "wait");
+    else setToast("Falta configurar el webhook", "wait");
     setDraft("");
   }
 

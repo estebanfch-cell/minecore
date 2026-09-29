@@ -287,8 +287,8 @@ export function wantsMeeting(agentId, text) {
   return /reuni[oó]n|anunci|convo[ck]/i.test(text || "");
 }
 
-/** Client-side recorded run. CHIEF text that mentions the OC demo. */
+/** Client-side recorded run. CHIEF text about the OC, Taluvira, or the orquesta. "demo" stays as a silent alias. */
 export function wantsDemoRun(agentId, text) {
   if (agentId !== "chief") return false;
-  return /taluvira|demo|\boc\b/i.test(text || "");
+  return /taluvira|orquesta|\boc\b|\bdemo\b/i.test(text || "");
 }

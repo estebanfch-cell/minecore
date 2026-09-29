@@ -71,7 +71,7 @@ export function Hud() {
               runDemo();
             }}
           >
-            Demo
+            Ejecutar
           </button>
           <button
             className={`mode ${state.mode === "live" ? "active" : ""}`}

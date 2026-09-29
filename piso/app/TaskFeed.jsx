@@ -29,7 +29,7 @@ export function TaskFeed() {
         </div>
         <span className={`live-pill ${waiting ? "wait" : live ? "live" : "demo"}`}>
           <i />
-          {waiting ? "Esperando" : live ? "En vivo" : "Demo"}
+          {waiting ? "Esperando" : live ? "En vivo" : "Ejecutar"}
         </span>
       </header>
       <p className="ticker">{state.ticker}</p>

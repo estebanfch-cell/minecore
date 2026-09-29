@@ -25,13 +25,13 @@ function demoBase() {
 }
 
 export function demoAsset(folder, name) {
-  return `${demoBase()}demo/${folder}/${encodeURIComponent(name)}`;
+  return `${demoBase()}run/${folder}/${encodeURIComponent(name)}`;
 }
 
 export async function loadDemoScript() {
   if (script) return script;
-  const res = await fetch(`${demoBase()}demo/demo_steps.json`);
-  if (!res.ok) throw new Error("demo script");
+  const res = await fetch(`${demoBase()}run/steps.json`);
+  if (!res.ok) throw new Error("run script");
   script = await res.json();
   return script;
 }
@@ -151,7 +151,7 @@ export async function startDemoRun() {
   try {
     await loadDemoScript();
   } catch {
-    setTicker("No se pudo cargar la demo");
+    setTicker("No se pudo cargar la orquesta");
     return;
   }
   patchState({

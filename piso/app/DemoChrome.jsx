@@ -5,7 +5,7 @@ export function DemoBar({ run }) {
   if (!run?.caption) return null;
   return (
     <div className="demo-bar notranslate" translate="no" data-step={run.index + 1}>
-      <div className="demo-bar-kicker">Paso {run.index + 1}/{run.count}</div>
+      <div className="demo-bar-kicker">Orquesta OC · {run.index + 1}/{run.count}</div>
       <p>{run.banner || run.caption}</p>
       <div className="demo-bar-actions">
         <button type="button" onClick={pauseDemoRun}>

@@ -6,8 +6,8 @@
     {
       "agent": "chief",
       "caption": "Iniciando orquesta",
-      "preview": "OC_cliente_inventado.png",
-      "file": "OC_cliente_inventado.pdf"
+      "preview": "OC-2026-0417 TALUVIRA.png",
+      "file": "OC-2026-0417 TALUVIRA.pdf"
     },
     {
       "agent": "devops",
@@ -44,8 +44,8 @@
     {
       "agent": "chief",
       "caption": "Resumen consolidado",
-      "preview": "RESUMEN DEMO - OC-2026-0417.png",
-      "file": "RESUMEN DEMO - OC-2026-0417.pdf"
+      "preview": "RESUMEN - OC-2026-0417.png",
+      "file": "RESUMEN - OC-2026-0417.pdf"
     },
     {
       "agent": "manuelito",
@@ -53,7 +53,7 @@
       "banner": "Todo ha sido enviado",
       "handoffFrom": "chief",
       "preview": "WHATSAPP - Resumen completo enviado.png",
-      "file": "RESUMEN DEMO - OC-2026-0417.pdf"
+      "file": "RESUMEN - OC-2026-0417.pdf"
     }
   ]
 }
