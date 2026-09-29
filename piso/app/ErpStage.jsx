@@ -113,6 +113,28 @@ function buildStockBeats() {
 
 const STOCK_BEATS = buildStockBeats();
 const STOCK_SAVED_AT = STOCK_BEATS.find((beat) => beat.saved)?.t || 20000;
+
+const DEVOPS_LOG = [
+  { at: 0, text: "Abro Ventas › Cotizaciones." },
+  { at: 750, text: "Escribo SQ-001011 y filtro la lista." },
+  { at: 3150, text: "Cotización abierta · 59 líneas · TALUVIRA · $23,955.39." },
+  { at: 8100, text: "Clic en Convertir a orden de venta." },
+  { at: 11100, text: "Quedó MCOR-SO-001209. OC cliente OC-2026-0417." },
+  { at: 12400, text: "Marco stock: 54 disponibles, 5 en falta." },
+  { at: 19200, text: "SO-001209-1 $23,338.59 · SO-001209-2 $616.79." },
+  { at: 24400, text: "Imprimo el pick list y las dos órdenes." },
+];
+
+const STOCK_LOG = [
+  { at: 0, text: "Abro Inventario › Existencias." },
+  { at: 750, text: "Busco BOYLES." },
+  { at: 1800, text: "Seis SKUs con cobertura bajo 3 meses." },
+  { at: 6500, text: "Abro Compras › Nueva orden." },
+  { at: 9100, text: "Proveedor BOYLES BROS DIAMANTINA S.A." },
+  { at: 14000, text: "Cargo la parte A urgente y la parte B." },
+  { at: STOCK_SAVED_AT, text: "Guardé MCOR-PO-000379 · FOB $8,790.74." },
+];
+
 const STOCK_NOTES = [
   { at: 1800, text: "Inventario Boyles: 6 SKUs con cobertura bajo 3 meses." },
   { at: 9100, text: "Compra a BOYLES BROS DIAMANTINA S.A. Parte A urgente y parte B de reposición." },
@@ -194,8 +216,12 @@ export function ErpStage({ phase }) {
   const clicking = !!(beat.click && elapsed - beat.t < 260);
   const rootRef = useRef(null);
   const linesRef = useRef(null);
+  const logRef = useRef(null);
   const [cursor, setCursor] = useState({ x: 48, y: 64 });
   const sent = useRef(new Set());
+  const operator = phase === "stock" ? "STOCK PILOT" : "DEVOPS";
+  const agentLog = phase === "stock" ? STOCK_LOG : DEVOPS_LOG;
+  const shownLog = agentLog.filter((line) => elapsed >= line.at);
 
   useEffect(() => {
     notes.forEach((note) => {
@@ -224,6 +250,11 @@ export function ErpStage({ phase }) {
     node.scrollTop = Math.max(0, max * beat.scroll);
   }, [beat.scroll, beat.screen, beat.chips, beat.doc]);
 
+  useEffect(() => {
+    const node = logRef.current;
+    if (node) node.scrollTop = node.scrollHeight;
+  }, [shownLog.length]);
+
   const page = pageBeat(beats, elapsed);
   const active = navKey(page.screen === "preview" ? beat.screen : page.screen, page.doc);
 
@@ -240,7 +271,10 @@ export function ErpStage({ phase }) {
       <aside className="erp-side">
         <div className="erp-brand">
           <span>M</span>
-          <strong>MINECORE</strong>
+          <div>
+            <strong>MINECORE</strong>
+            <em>Sistema</em>
+          </div>
         </div>
         <p>Ventas</p>
         <button type="button" data-aim="nav-cot" className={active === "nav-cot" ? "is-on" : ""}>
@@ -270,7 +304,7 @@ export function ErpStage({ phase }) {
           <label className={`erp-search ${beat.aim === "search" ? "is-focus" : ""}`}>
             <input data-aim="search" readOnly value={search} placeholder="Buscar cotización, SKU o cliente" aria-label="Buscar" />
           </label>
-          <em>Guayaquil</em>
+          <span className="erp-op">Operado por {operator} · agente</span>
         </header>
         {page.screen === "quotes" && <QuoteList search={search} pressed={pressed(beat, elapsed, "row-sq")} />}
         {page.screen === "doc" && <SaleDoc beat={page.chips != null || page.doc ? page : beat} elapsed={elapsed} linesRef={linesRef} />}
@@ -287,6 +321,18 @@ export function ErpStage({ phase }) {
         {beat.screen === "preview" && beat.preview && <PdfSheet kind={beat.preview} />}
         {beat.toast && beat.screen === "preview" && <div className="erp-toast">{beat.toast}</div>}
       </div>
+      <aside className="erp-agent">
+        <header>
+          <i />
+          {operator} · agente
+        </header>
+        <ol ref={logRef}>
+          {shownLog.map((line) => (
+            <li key={line.text}>{line.text}</li>
+          ))}
+          {shownLog.length < agentLog.length && <li className="caret">▍</li>}
+        </ol>
+      </aside>
       <i className={`erp-cursor ${clicking ? "is-click" : ""}`} style={{ left: cursor.x, top: cursor.y }} />
     </div>
   );

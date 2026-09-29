@@ -70,14 +70,14 @@ export function WorkWindow({ spec, sourcePdf }) {
   const image = frame?.preview ? demoAsset("previews", frame.preview) : fallback;
 
   return (
-    <section className={`work-window notranslate ${spec.minimizing ? "is-min" : ""}`} translate="no" aria-label={spec.title}>
+    <section className={`work-window notranslate ${spec.minimizing ? "is-min" : ""} ${spec.erp ? "is-sistema" : ""}`} translate="no" aria-label={spec.erp ? "MINECORE · Sistema" : spec.title}>
       <header className="work-title">
         <span className="work-dots" aria-hidden="true">
           <i />
           <i />
           <i />
         </span>
-        <strong>{spec.title}</strong>
+        <strong>{spec.erp ? "MINECORE · Sistema" : spec.title}</strong>
       </header>
       <div className={`work-body ${spec.erp ? "work-body-erp" : ""}`}>
         {spec.erp ? (

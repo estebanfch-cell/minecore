@@ -103,7 +103,7 @@ async function playRound(token) {
     ["cote", "Costeo semanal · cruce de packing list", "pending"],
     ["law", "Oficio 74310716 · PDF sin digitalizar", "pending"],
     ["secre", "SRI en línea · retenciones del día", "pending"],
-    ["finance", "inFlow abierto · esperando OK_aplicar", "pending"],
+    ["finance", "Sistema abierto · esperando OK_aplicar", "pending"],
     ["marketing", "liq.minecore.ec · espera deploy EFCH", "pending"],
     ["stock-pilot", "Stock · sync de existencias", "pending"],
     ["devops", "CI del Admin App en curso", "pending"],
@@ -128,8 +128,8 @@ async function playRound(token) {
   const fin = beside("finance", -1);
   await arrive("secre", fin.x, fin.z, token, 1600);
   if (token.aborted) return;
-  setAgent("finance", { activity: "Recibe OK_aplicar · abre inFlow", status: "ok" });
-  flashPopup("finance", "inFlow: listo aplicar");
+  setAgent("finance", { activity: "Recibe OK_aplicar · abre el Sistema", status: "ok" });
+  flashPopup("finance", "Sistema: listo aplicar");
   await sleep(1100, token);
   if (token.aborted) return;
   goHome("secre");

@@ -50,14 +50,13 @@
       "caption": "Cotización a orden de venta",
       "stepMs": 32800,
       "chat": "DEVOPS abre Ventas › Cotizaciones.",
-      "preview": "INFLOW - SQ-001011 a SO-001209.png",
+      "preview": "ORDEN DE VENTA - MCOR-SO-001209.png",
       "file": "ORDEN DE VENTA - MCOR-SO-001209.pdf",
       "window": {
-        "title": "DEVOPS — MINECORE",
+        "title": "MINECORE · Sistema",
         "erp": "devops",
         "logMs": 1600,
         "frames": [
-          { "preview": "INFLOW - SQ-001011 a SO-001209.png", "file": "ORDEN DE VENTA - MCOR-SO-001209.pdf" },
           { "preview": "ORDEN DE VENTA - MCOR-SO-001209.png", "file": "ORDEN DE VENTA - MCOR-SO-001209.pdf" },
           { "preview": "ORDEN DE VENTA - MCOR-SO-001209-1.png", "file": "ORDEN DE VENTA - MCOR-SO-001209-1.pdf" },
           { "preview": "ORDEN DE VENTA - MCOR-SO-001209-2.png", "file": "ORDEN DE VENTA - MCOR-SO-001209-2.pdf" },
@@ -82,7 +81,7 @@
       "preview": "PICK LIST - MCOR-SO-001209-1.png",
       "file": "PICK LIST - MCOR-SO-001209-1.pdf",
       "window": {
-        "title": "STOCK PILOT — MINECORE",
+        "title": "MINECORE · Sistema",
         "erp": "stock",
         "logMs": 2200,
         "frames": [
