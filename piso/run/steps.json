@@ -69,6 +69,16 @@
           "Split -2: pendiente Boyles · 5 líneas · $616.79",
           "PO-000379 creada · Boyles · FOB $8,790.74"
         ]
+      },
+      "brief": {
+        "role": "Ventas",
+        "purpose": "Pasa la cotización a órdenes de venta y deja listo el listado de bodega.",
+        "steps": [
+          { "text": "Buscando cotización SQ-001011", "at": 0 },
+          { "text": "Convirtiendo a orden de venta", "at": 7000 },
+          { "text": "Dividiendo -1 / -2", "at": 15000 },
+          { "text": "Generando pick list", "at": 23000 }
+        ]
       }
     },
     {
@@ -96,6 +106,16 @@
           "Cruzando rotación y stock mínimo",
           "Recomendación: aprovechar el pedido a Boyles para reponer alta rotación."
         ]
+      },
+      "brief": {
+        "role": "Finanzas",
+        "purpose": "Revisa qué piezas se acaban pronto y recomienda reponerlas en el pedido a Boyles.",
+        "steps": [
+          { "text": "Revisando el inventario", "at": 0 },
+          { "text": "Leyendo compras y cotizaciones", "at": 2800 },
+          { "text": "Cruzando ventas y pedidos", "at": 6200 },
+          { "text": "Recomendando reposición de alta rotación", "at": 9800 }
+        ]
       }
     },
     {
@@ -118,6 +138,16 @@
         "log": [
           "Orden de compra a Boyles con reposición de alta rotación",
           "MCOR-PO-000379 · FOB $8,790.74"
+        ]
+      },
+      "brief": {
+        "role": "Compras",
+        "purpose": "Arma la orden de compra a Boyles con la reposición de alta rotación.",
+        "steps": [
+          { "text": "Tomando la recomendación de Finanzas", "at": 0 },
+          { "text": "Armando la orden a Boyles", "at": 8000 },
+          { "text": "Cargando la reposición de alta rotación", "at": 17000 },
+          { "text": "Cerrando el pedido", "at": 25000 }
         ]
       }
     },
@@ -143,6 +173,15 @@
           "Consolidando OC-2026-0417",
           "SO-001209 · split -1/-2 · pick list · PO-000379",
           "Resumen listo para enviar"
+        ]
+      },
+      "brief": {
+        "role": "Orquestador",
+        "purpose": "Junta las órdenes y el resumen para enviárselos a Esteban.",
+        "steps": [
+          { "text": "Reuniendo las órdenes", "at": 0 },
+          { "text": "Preparando el resumen", "at": 4500 },
+          { "text": "Dejando el paquete listo", "at": 9500 }
         ]
       }
     },
@@ -170,6 +209,15 @@
           "Adjuntos: SO-001209-1 · SO-001209-2 · pick list · PO-000379",
           "Más el RESUMEN",
           "Todo ha sido enviado a tu correo: SO-001209-1, SO-001209-2, el pick list, PO-000379 y el RESUMEN."
+        ]
+      },
+      "brief": {
+        "role": "Correo",
+        "purpose": "Envía el resumen completo al correo de Esteban.",
+        "steps": [
+          { "text": "Preparando el correo", "at": 0 },
+          { "text": "Enviando el resumen completo", "at": 3500 },
+          { "text": "Confirmando el envío", "at": 8000 }
         ]
       }
     }

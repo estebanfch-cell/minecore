@@ -15,6 +15,10 @@ export default function App() {
   const state = useStore();
 
   useEffect(() => {
+    document.getElementById("root")?.classList.toggle("is-split", !!state.demoRun?.split);
+  }, [state.demoRun?.split]);
+
+  useEffect(() => {
     bindFeedApi();
     bindDemoRun({ interrupt: interruptFloor });
     captureInstructSettings();
