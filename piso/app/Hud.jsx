@@ -101,6 +101,7 @@ export function Hud() {
         </div>
       )}
 
+      {state.demoRun && <ChiefChat runDock />}
       {state.chatOpen && !state.demoRun && state.selectedId !== "chief" && (
         <ChiefChat focus={!!state.focusInstruction} />
       )}

@@ -10,7 +10,7 @@ function PdfChip({ name }) {
   return <span className="pdf-chip">{name}</span>;
 }
 
-export function ChiefChat({ embedded = false, focus = false }) {
+export function ChiefChat({ embedded = false, focus = false, runDock = false }) {
   const [draft, setDraft] = useState("");
   const [file, setFile] = useState(null);
   const input = useRef(null);
@@ -51,7 +51,7 @@ export function ChiefChat({ embedded = false, focus = false }) {
   }
 
   return (
-    <section className={`chief-chat notranslate ${embedded ? "is-embedded" : ""}`} translate="no" aria-label="Chat con CHIEF">
+    <section className={`chief-chat notranslate ${embedded ? "is-embedded" : ""} ${runDock ? "is-run" : ""}`} translate="no" aria-label="Chat con CHIEF">
       <header>
         <strong>CHIEF</strong>
         {!embedded && (

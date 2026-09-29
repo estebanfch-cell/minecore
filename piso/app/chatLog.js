@@ -46,11 +46,16 @@ export function pushUserLine(text, fileName) {
   });
 }
 
+export function pushChief(text) {
+  if (!text) return;
+  cancelChiefTalk();
+  pushChat({ role: "chief", text });
+}
+
 export function announceRunStep(step, { last = false, closing = "" } = {}) {
   if (!step?.chat) return;
-  chiefSays(step.chat, () => {
-    if (last && closing) chiefSays(closing);
-  });
+  pushChief(step.chat);
+  if (last && closing) pushChief(closing);
 }
 
 export function chatIsOpen() {

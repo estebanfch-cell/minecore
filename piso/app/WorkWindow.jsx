@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { ErpStage } from "./ErpStage.jsx";
 import { demoAsset } from "./demoRun.js";
 import { renderPdfPages } from "./pdfPages.js";
 
@@ -78,7 +79,11 @@ export function WorkWindow({ spec, sourcePdf }) {
         </span>
         <strong>{spec.title}</strong>
       </header>
-      <div className="work-body">
+      <div className={`work-body ${spec.erp ? "work-body-erp" : ""}`}>
+        {spec.erp ? (
+          <ErpStage phase={spec.erp} />
+        ) : (
+          <>
         <div className="work-stage">
           <div className="work-doc" ref={scroller}>
             {pages.length > 0 ? (
@@ -99,6 +104,8 @@ export function WorkWindow({ spec, sourcePdf }) {
             </li>
           )}
         </ol>
+          </>
+        )}
       </div>
     </section>
   );

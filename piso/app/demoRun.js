@@ -17,6 +17,8 @@ const STEP_MS = 7500;
 let script = null;
 let stepTimer = null;
 let frameTimer = null;
+let stepRemain = 0;
+let stepDeadline = 0;
 let subs = [];
 let interruptFloor = () => {};
 
@@ -57,7 +59,19 @@ function clearRunTimers() {
   if (frameTimer) clearInterval(frameTimer);
   stepTimer = null;
   frameTimer = null;
+  stepRemain = 0;
+  stepDeadline = 0;
   clearSubs();
+}
+
+function scheduleAdvance(index, ms) {
+  if (stepTimer) clearTimeout(stepTimer);
+  stepTimer = null;
+  stepRemain = ms;
+  if (index >= (script?.steps.length || 1) - 1) return;
+  if (getState().demoRun?.paused) return;
+  stepDeadline = Date.now() + ms;
+  stepTimer = setTimeout(() => showStep(index + 1), ms);
 }
 
 function standDown() {
@@ -163,6 +177,7 @@ function openDeskWindow(step) {
     workWindow: {
       title: win.title,
       pdf: null,
+      erp: win.erp || null,
       frames: win.frames || [],
       log: win.log || [],
       logMs: win.logMs || 1500,
@@ -260,11 +275,7 @@ function showStep(index) {
   patchState({ demoRun: run, chatOpen: true });
   announceRunStep(step, { last: index === steps.length - 1, closing: script.closing || "" });
 
-  if (stepTimer) clearTimeout(stepTimer);
-  const wait = step.stepMs || script.stepMs || STEP_MS;
-  if (!run.paused && index < steps.length - 1) {
-    stepTimer = setTimeout(() => showStep(index + 1), wait);
-  }
+  scheduleAdvance(index, step.stepMs || script.stepMs || STEP_MS);
 }
 
 export async function startDemoRun() {
@@ -295,14 +306,14 @@ export function pauseDemoRun() {
   if (!run) return;
   if (run.paused) {
     patchState({ demoRun: { ...run, paused: false } });
-    if (run.index < run.count - 1) {
-      if (stepTimer) clearTimeout(stepTimer);
-      stepTimer = setTimeout(() => showStep(run.index + 1), script?.stepMs || STEP_MS);
-    }
+    if (run.index < run.count - 1) scheduleAdvance(run.index, stepRemain || script?.steps?.[run.index]?.stepMs || script?.stepMs || STEP_MS);
     return;
   }
-  if (stepTimer) clearTimeout(stepTimer);
-  stepTimer = null;
+  if (stepTimer) {
+    clearTimeout(stepTimer);
+    stepTimer = null;
+    stepRemain = Math.max(400, stepDeadline - Date.now());
+  }
   patchState({ demoRun: { ...run, paused: true } });
 }
 

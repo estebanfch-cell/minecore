@@ -47,13 +47,14 @@
       "id": "devops",
       "phase": "desk",
       "agent": "devops",
-      "caption": "Convirtiendo la orden",
-      "stepMs": 15000,
-      "chat": "DEVOPS aplicando en el sistema…",
+      "caption": "Cotización a orden de venta",
+      "stepMs": 32800,
+      "chat": "DEVOPS abre Ventas › Cotizaciones.",
       "preview": "INFLOW - SQ-001011 a SO-001209.png",
       "file": "ORDEN DE VENTA - MCOR-SO-001209.pdf",
       "window": {
-        "title": "DEVOPS — inFlow",
+        "title": "DEVOPS — MINECORE",
+        "erp": "devops",
         "logMs": 1600,
         "frames": [
           { "preview": "INFLOW - SQ-001011 a SO-001209.png", "file": "ORDEN DE VENTA - MCOR-SO-001209.pdf" },
@@ -63,7 +64,7 @@
           { "preview": "ORDEN DE COMPRA - MCOR-PO-000379.png", "file": "ORDEN DE COMPRA - MCOR-PO-000379.pdf" }
         ],
         "log": [
-          "Abriendo inFlow · cotización MCOR-SQ-001011",
+          "Abriendo cotización MCOR-SQ-001011",
           "Convirtiendo a orden de venta MCOR-SO-001209 · 59 líneas",
           "Split -1: sale de bodega · 54 líneas · $23,338.59",
           "Split -2: pendiente Boyles · 5 líneas · $616.79",
@@ -75,13 +76,14 @@
       "id": "stock",
       "phase": "desk",
       "agent": "stock-pilot",
-      "caption": "Stock y pick list",
-      "stepMs": 15000,
-      "chat": "SO-001209 creada",
+      "caption": "Inventario y compra",
+      "stepMs": 31000,
+      "chat": "STOCK PILOT abre Inventario.",
       "preview": "PICK LIST - MCOR-SO-001209-1.png",
       "file": "PICK LIST - MCOR-SO-001209-1.pdf",
       "window": {
-        "title": "STOCK PILOT — existencias",
+        "title": "STOCK PILOT — MINECORE",
+        "erp": "stock",
         "logMs": 2200,
         "frames": [
           { "preview": "STOCK - SO-001209.png", "file": "ORDEN DE VENTA - MCOR-SO-001209-1.pdf" },
