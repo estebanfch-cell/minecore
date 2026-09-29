@@ -2,7 +2,7 @@
   "id": "taluvira",
   "title": "OC Taluvira",
   "stepMs": 7500,
-  "closing": "Manuelito envió el resumen completo. Todo ha sido enviado a tu correo.",
+  "closing": "Manuelito envió el resumen completo. Todo ha sido enviado a tu correo: SO-001209-1, SO-001209-2, el pick list, PO-000379 y el RESUMEN.",
   "steps": [
     {
       "agent": "chief",
@@ -49,7 +49,7 @@
     {
       "agent": "chief",
       "caption": "Resumen consolidado",
-      "chat": "PO-000379 Boyles",
+      "chat": "PO-000379 Boyles $8,790.74. A urgente $321.06. B $8,469.68, $9,994 en 4.5 meses.",
       "preview": "RESUMEN - OC-2026-0417.png",
       "file": "RESUMEN - OC-2026-0417.pdf"
     },
