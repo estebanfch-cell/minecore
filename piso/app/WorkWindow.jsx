@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ErpStage } from "./ErpStage.jsx";
 import { PART_B, PO_LINES, STOCK_ROWS } from "./erpData.js";
-import { ENVIADO_FLIP_MS, demoAsset } from "./demoRun.js";
+import { SETTLE_REVEAL_MS, demoAsset } from "./demoRun.js";
 import { renderPdfPages } from "./pdfPages.js";
 
 const RECOVERY_MONTHS = {
@@ -107,12 +107,20 @@ export function WorkWindow({ spec, sourcePdf }) {
     };
   }, [pages.length, spec?.mode, spec?.title]);
 
+  const [swap, setSwap] = useState(false);
+  useEffect(() => {
+    if (!spec?.title) return undefined;
+    setSwap(true);
+    const timer = setTimeout(() => setSwap(false), 720);
+    return () => clearTimeout(timer);
+  }, [spec?.title]);
+
   if (!spec) return null;
   const fallback = spec.fallback ? demoAsset("previews", spec.fallback) : "";
   const image = frame?.preview ? demoAsset("previews", frame.preview) : fallback;
 
   return (
-    <section className={`work-window notranslate ${spec.minimizing ? "is-min" : ""} ${spec.erp ? "is-sistema" : ""}`} translate="no" aria-label={spec.erp ? "MINECORE · Sistema" : spec.title}>
+    <section className={`work-window notranslate ${spec.minimizing ? "is-min" : ""} ${spec.erp ? "is-sistema" : ""} ${swap ? "is-swap" : ""}`} translate="no" aria-label={spec.erp ? "MINECORE · Sistema" : spec.title}>
       <header className="work-title">
         <span className="work-dots" aria-hidden="true">
           <i />
@@ -289,7 +297,7 @@ function SettleScreen({ spec, image, log, shown }) {
   useEffect(() => {
     setIndex(0);
     if (lines.length < 2) return undefined;
-    const timer = setTimeout(() => setIndex(1), ENVIADO_FLIP_MS);
+    const timer = setTimeout(() => setIndex(1), SETTLE_REVEAL_MS);
     return () => clearTimeout(timer);
   }, [spec.title, lines.length]);
   const still = spec.still ? demoAsset("previews", spec.still) : image;

@@ -26,6 +26,111 @@ function Arm({ side, color, skin, armRef }) {
   );
 }
 
+export function MinerAvatar({ look, mark, legL, legR, armL, armR, chest }) {
+  const pants = look.coverall ? look.shirt : "#1b2130";
+  return (
+    <group scale={1.12}>
+      <group ref={legL} position={[-0.09, 0.4, 0]}>
+        <mesh position={[0, -0.16, 0]} castShadow>
+          <capsuleGeometry args={[0.055, 0.16, 4, 8]} />
+          <meshStandardMaterial color={pants} roughness={0.6} />
+        </mesh>
+        <mesh position={[0, -0.32, 0.03]}>
+          <boxGeometry args={[0.09, 0.06, 0.14]} />
+          <meshStandardMaterial color="#0e1116" />
+        </mesh>
+      </group>
+      <group ref={legR} position={[0.09, 0.4, 0]}>
+        <mesh position={[0, -0.16, 0]} castShadow>
+          <capsuleGeometry args={[0.055, 0.16, 4, 8]} />
+          <meshStandardMaterial color={pants} roughness={0.6} />
+        </mesh>
+        <mesh position={[0, -0.32, 0.03]}>
+          <boxGeometry args={[0.09, 0.06, 0.14]} />
+          <meshStandardMaterial color="#0e1116" />
+        </mesh>
+      </group>
+
+      <group ref={chest}>
+        <mesh position={[0, 0.56, 0]} castShadow>
+          <boxGeometry args={[0.34, 0.32, 0.18]} />
+          <meshStandardMaterial color={look.shirt} roughness={0.52} />
+        </mesh>
+        {look.vest && !look.coverall && (
+          <mesh position={[0, 0.56, 0.07]}>
+            <boxGeometry args={[0.26, 0.24, 0.05]} />
+            <meshStandardMaterial color="#1a2333" roughness={0.55} />
+          </mesh>
+        )}
+        {look.vest && (
+          <mesh position={[0, 0.7, 0.08]}>
+            <boxGeometry args={[0.1, 0.05, 0.04]} />
+            <meshStandardMaterial color="#ece8df" />
+          </mesh>
+        )}
+
+        <Arm side={-1} color={look.shirt} skin={look.skin} armRef={armL} />
+        <Arm side={1} color={look.shirt} skin={look.skin} armRef={armR} />
+
+        <group position={[0, 0.8, 0.02]}>
+          <mesh position={[0, 0, 0.04]} castShadow>
+            <sphereGeometry args={[0.105, 16, 14]} />
+            <meshStandardMaterial color={look.skin} roughness={0.62} />
+          </mesh>
+          <mesh position={[0, 0.08, -0.02]} scale={[1.16, 0.78, 1.1]} castShadow>
+            <sphereGeometry args={[0.145, 18, 14]} />
+            <meshStandardMaterial color="#f7fbff" roughness={0.28} metalness={0.04} emissive="#d5deea" emissiveIntensity={0.28} />
+          </mesh>
+          <mesh position={[0, 0.01, 0.01]} rotation={[0.28, 0, 0]}>
+            <cylinderGeometry args={[0.172, 0.172, 0.022, 18]} />
+            <meshStandardMaterial color="#f7fafc" roughness={0.35} />
+          </mesh>
+          <mesh position={[0, 0.02, 0.12]}>
+            <boxGeometry args={[0.15, 0.04, 0.02]} />
+            <meshStandardMaterial color="#1a2330" metalness={0.55} roughness={0.25} />
+          </mesh>
+          <mesh position={[0, 0.18, 0.06]}>
+            <sphereGeometry args={[0.04, 10, 8]} />
+            <meshStandardMaterial color="#ffe7a3" emissive="#ffbf4a" emissiveIntensity={1.8} />
+          </mesh>
+          <mesh position={[0, 0.09, 0.15]}>
+            <circleGeometry args={[0.058, 18]} />
+            <meshBasicMaterial map={mark} toneMapped={false} />
+          </mesh>
+          {look.beard && (
+            <mesh position={[0, -0.06, 0.08]} scale={[1, 0.75, 0.7]}>
+              <sphereGeometry args={[0.055, 10, 8]} />
+              <meshStandardMaterial color={look.hair} roughness={0.8} />
+            </mesh>
+          )}
+          {look.mustache && (
+            <mesh position={[0, -0.035, 0.12]}>
+              <boxGeometry args={[0.07, 0.018, 0.02]} />
+              <meshStandardMaterial color={look.hair} />
+            </mesh>
+          )}
+          {look.glasses && (
+            <group position={[0, 0.01, 0.11]}>
+              <mesh position={[-0.04, 0, 0]}>
+                <torusGeometry args={[0.028, 0.006, 6, 12]} />
+                <meshStandardMaterial color="#22262c" metalness={0.6} roughness={0.3} />
+              </mesh>
+              <mesh position={[0.04, 0, 0]}>
+                <torusGeometry args={[0.028, 0.006, 6, 12]} />
+                <meshStandardMaterial color="#22262c" metalness={0.6} roughness={0.3} />
+              </mesh>
+              <mesh position={[0, 0, 0]}>
+                <boxGeometry args={[0.028, 0.008, 0.008]} />
+                <meshStandardMaterial color="#22262c" />
+              </mesh>
+            </group>
+          )}
+        </group>
+      </group>
+    </group>
+  );
+}
+
 export function Miner({ agent, selected }) {
   const root = useRef();
   const chest = useRef();
@@ -37,7 +142,6 @@ export function Miner({ agent, selected }) {
   const sit = useRef(1);
   const look = LOOKS[agent.id];
   const mark = getMarkTexture();
-  const pants = look.coverall ? look.shirt : "#1b2130";
   const home = HOMES[agent.id];
 
   useFrame((_, dt) => {
@@ -119,105 +223,7 @@ export function Miner({ agent, selected }) {
         />
       </mesh>
 
-      <group scale={1.12}>
-        <group ref={legL} position={[-0.09, 0.4, 0]}>
-          <mesh position={[0, -0.16, 0]} castShadow>
-            <capsuleGeometry args={[0.055, 0.16, 4, 8]} />
-            <meshStandardMaterial color={pants} roughness={0.6} />
-          </mesh>
-          <mesh position={[0, -0.32, 0.03]}>
-            <boxGeometry args={[0.09, 0.06, 0.14]} />
-            <meshStandardMaterial color="#0e1116" />
-          </mesh>
-        </group>
-        <group ref={legR} position={[0.09, 0.4, 0]}>
-          <mesh position={[0, -0.16, 0]} castShadow>
-            <capsuleGeometry args={[0.055, 0.16, 4, 8]} />
-            <meshStandardMaterial color={pants} roughness={0.6} />
-          </mesh>
-          <mesh position={[0, -0.32, 0.03]}>
-            <boxGeometry args={[0.09, 0.06, 0.14]} />
-            <meshStandardMaterial color="#0e1116" />
-          </mesh>
-        </group>
-
-        <group ref={chest}>
-          <mesh position={[0, 0.56, 0]} castShadow>
-            <boxGeometry args={[0.34, 0.32, 0.18]} />
-            <meshStandardMaterial color={look.shirt} roughness={0.52} />
-          </mesh>
-          {look.vest && !look.coverall && (
-            <mesh position={[0, 0.56, 0.07]}>
-              <boxGeometry args={[0.26, 0.24, 0.05]} />
-              <meshStandardMaterial color="#1a2333" roughness={0.55} />
-            </mesh>
-          )}
-          {look.vest && (
-            <mesh position={[0, 0.7, 0.08]}>
-              <boxGeometry args={[0.1, 0.05, 0.04]} />
-              <meshStandardMaterial color="#ece8df" />
-            </mesh>
-          )}
-
-          <Arm side={-1} color={look.shirt} skin={look.skin} armRef={armL} />
-          <Arm side={1} color={look.shirt} skin={look.skin} armRef={armR} />
-
-          <group position={[0, 0.8, 0.02]}>
-            <mesh position={[0, 0, 0.04]} castShadow>
-              <sphereGeometry args={[0.105, 16, 14]} />
-              <meshStandardMaterial color={look.skin} roughness={0.62} />
-            </mesh>
-            <mesh position={[0, 0.08, -0.02]} scale={[1.16, 0.78, 1.1]} castShadow>
-              <sphereGeometry args={[0.145, 18, 14]} />
-              <meshStandardMaterial color="#f7fbff" roughness={0.28} metalness={0.04} emissive="#d5deea" emissiveIntensity={0.28} />
-            </mesh>
-            <mesh position={[0, 0.01, 0.01]} rotation={[0.28, 0, 0]}>
-              <cylinderGeometry args={[0.172, 0.172, 0.022, 18]} />
-              <meshStandardMaterial color="#f7fafc" roughness={0.35} />
-            </mesh>
-            <mesh position={[0, 0.02, 0.12]}>
-              <boxGeometry args={[0.15, 0.04, 0.02]} />
-              <meshStandardMaterial color="#1a2330" metalness={0.55} roughness={0.25} />
-            </mesh>
-            <mesh position={[0, 0.18, 0.06]}>
-              <sphereGeometry args={[0.04, 10, 8]} />
-              <meshStandardMaterial color="#ffe7a3" emissive="#ffbf4a" emissiveIntensity={1.8} />
-            </mesh>
-            <mesh position={[0, 0.09, 0.15]}>
-              <circleGeometry args={[0.058, 18]} />
-              <meshBasicMaterial map={mark} toneMapped={false} />
-            </mesh>
-            {look.beard && (
-              <mesh position={[0, -0.06, 0.08]} scale={[1, 0.75, 0.7]}>
-                <sphereGeometry args={[0.055, 10, 8]} />
-                <meshStandardMaterial color={look.hair} roughness={0.8} />
-              </mesh>
-            )}
-            {look.mustache && (
-              <mesh position={[0, -0.035, 0.12]}>
-                <boxGeometry args={[0.07, 0.018, 0.02]} />
-                <meshStandardMaterial color={look.hair} />
-              </mesh>
-            )}
-            {look.glasses && (
-              <group position={[0, 0.01, 0.11]}>
-                <mesh position={[-0.04, 0, 0]}>
-                  <torusGeometry args={[0.028, 0.006, 6, 12]} />
-                  <meshStandardMaterial color="#22262c" metalness={0.6} roughness={0.3} />
-                </mesh>
-                <mesh position={[0.04, 0, 0]}>
-                  <torusGeometry args={[0.028, 0.006, 6, 12]} />
-                  <meshStandardMaterial color="#22262c" metalness={0.6} roughness={0.3} />
-                </mesh>
-                <mesh position={[0, 0, 0]}>
-                  <boxGeometry args={[0.028, 0.008, 0.008]} />
-                  <meshStandardMaterial color="#22262c" />
-                </mesh>
-              </group>
-            )}
-          </group>
-        </group>
-      </group>
+      <MinerAvatar look={look} mark={mark} legL={legL} legR={legR} armL={armL} armR={armR} chest={chest} />
 
       <mesh
         position={[0, 0.55, 0]}

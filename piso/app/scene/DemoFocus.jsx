@@ -2,7 +2,7 @@ import { useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { QuadraticBezierLine } from "@react-three/drei";
 import * as THREE from "three";
-import { LIME } from "../constants.js";
+import { LIME, YAW } from "../constants.js";
 
 const HOME_TARGET = new THREE.Vector3(-0.85, 0.42, -0.2);
 const HOME_OFFSET = new THREE.Vector3(11.4, 6.7, 11.4);
@@ -32,6 +32,15 @@ export function DemoCamera({ run, carry, agents }) {
     const flying = !!(from && to && performance.now() - carry.t0 < 2700);
 
     controls.minDistance = active || homing.current ? 5.2 : 14;
+    controls.maxDistance = 42;
+    controls.minPolarAngle = 0.62;
+    controls.maxPolarAngle = 1.22;
+    controls.minAzimuthAngle = YAW - 0.28;
+    controls.maxAzimuthAngle = YAW + 0.28;
+    if (Math.abs(camera.fov - 44) > 0.4) {
+      camera.fov = 44;
+      camera.updateProjectionMatrix();
+    }
     const alpha = 1 - Math.exp(-1.6 * dt);
     const target = !active
       ? HOME_TARGET

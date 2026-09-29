@@ -18,6 +18,8 @@ const STEP_MS = 7500;
 const EMAIL_LEAD_MS = 75000;
 const DESK_OPEN_MS = 1100;
 export const ENVIADO_FLIP_MS = 2400;
+/** Settle line still appears at the same moment: window opens with the step, the flip waits the old open delay too. */
+export const SETTLE_REVEAL_MS = DESK_OPEN_MS + ENVIADO_FLIP_MS;
 
 let script = null;
 let stepTimer = null;
@@ -290,7 +292,8 @@ function showStep(index) {
     minimizeWindow();
     seatMeeting(step);
   } else {
-    minimizeWindow();
+    const fromDesk = prev && (prev.phase || "desk") === "desk";
+    if (!fromDesk) minimizeWindow();
     if (frames.length) {
       const applyFrame = (n) => {
         const view = screenFor(step, frames[n] || step.preview);
@@ -312,12 +315,13 @@ function showStep(index) {
         }, slice);
       }
     }
-    later(() => openDeskWindow(step), DESK_OPEN_MS);
+    openDeskWindow(step);
   }
 
   setAgent(step.agent, { activity: step.caption, status: "ok", typing: phase === "desk" });
   setTicker(step.banner || step.caption);
 
+  const split = phase === "desk";
   const run = {
     id: script.id,
     title: script.title,
@@ -329,11 +333,16 @@ function showStep(index) {
     agentId: step.agent,
     wide,
     room: phase === "meeting",
-    focus: wide
-      ? { x: 0.1, y: 1.15, z: 0.15 }
-      : zone
-        ? { x: zone.position.x - 0.22, y: 1.35, z: zone.position.z + 0.24 }
-        : { x: 0, y: 0.45, z: 0 },
+    split,
+    briefing: step.brief || null,
+    briefAt: Date.now(),
+    focus: split
+      ? null
+      : wide
+        ? { x: 0.1, y: 1.15, z: 0.15 }
+        : zone
+          ? { x: zone.position.x - 0.22, y: 1.35, z: zone.position.z + 0.24 }
+          : { x: 0, y: 0.45, z: 0 },
   };
   patchState({ demoRun: run, chatOpen: true });
   const last = index === steps.length - 1;
@@ -436,8 +445,8 @@ export function orquestaSchedule(loaded) {
     const saysEnviado = (step.window?.status || []).some((line) => String(line).trim().toLowerCase() === "enviado");
     if (saysEnviado && enviadoFromShow == null) {
       const phase = step.phase || "desk";
-      const openAt = phase === "analysis" || phase === "meeting" ? 0 : DESK_OPEN_MS;
-      enviadoFromShow = cursor + openAt + ENVIADO_FLIP_MS;
+      const revealAt = phase === "analysis" || phase === "meeting" ? ENVIADO_FLIP_MS : SETTLE_REVEAL_MS;
+      enviadoFromShow = cursor + revealAt;
     }
     cursor += dur;
     if (saysEnviado && doneFromShow == null) doneFromShow = cursor;

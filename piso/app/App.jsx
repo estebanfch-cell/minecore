@@ -15,6 +15,10 @@ export default function App() {
   const state = useStore();
 
   useEffect(() => {
+    document.getElementById("root")?.classList.toggle("is-split", !!state.demoRun?.split);
+  }, [state.demoRun?.split]);
+
+  useEffect(() => {
     bindFeedApi();
     bindDemoRun({ interrupt: interruptFloor });
     captureInstructSettings();
@@ -28,27 +32,29 @@ export default function App() {
   return (
     <>
       <div className="canvas-wrap">
-        <Canvas
-          shadows
-          dpr={[1, 1.6]}
-          camera={{ position: [10.55, 7.12, 11.2], fov: 44, near: 0.1, far: 160 }}
-          gl={{ antialias: true, alpha: false }}
-          onCreated={({ gl }) => {
-            gl.toneMappingExposure = 1.22;
-          }}
-          onPointerMissed={() => selectAgent(null)}
-        >
-          <Office
-            agents={state.agents}
-            meeting={state.meeting}
-            selectedId={state.selectedId}
-            handoff={state.handoff}
-            demoRun={state.demoRun}
-            deskScreens={state.deskScreens}
-            carry={state.carry}
-            brief={state.brief}
-          />
-        </Canvas>
+        {!state.demoRun?.split && (
+          <Canvas
+            shadows
+            dpr={[1, 1.6]}
+            camera={{ position: [10.55, 7.12, 11.2], fov: 44, near: 0.1, far: 160 }}
+            gl={{ antialias: true, alpha: false }}
+            onCreated={({ gl }) => {
+              gl.toneMappingExposure = 1.22;
+            }}
+            onPointerMissed={() => selectAgent(null)}
+          >
+            <Office
+              agents={state.agents}
+              meeting={state.meeting}
+              selectedId={state.selectedId}
+              handoff={state.handoff}
+              demoRun={state.demoRun}
+              deskScreens={state.deskScreens}
+              carry={state.carry}
+              brief={state.brief}
+            />
+          </Canvas>
+        )}
       </div>
       <Hud />
     </>

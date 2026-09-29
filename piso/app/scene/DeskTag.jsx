@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
-import { FLOOR_DOT, ISLAND_SCALE, PLATFORM_TOP, YAW } from "../constants.js";
+import { agentCallName, FLOOR_DOT, ISLAND_SCALE, PLATFORM_TOP, YAW } from "../constants.js";
 import { selectAgent } from "../store.js";
 import { SLAB_D } from "./Furniture.jsx";
 
@@ -37,7 +37,7 @@ function paintName(name) {
 }
 
 export function DeskTag({ zone, agent }) {
-  const label = agent?.tag || "AGENTE";
+  const label = agentCallName(agent);
   const map = useMemo(() => paintName(label), [label]);
   useEffect(() => () => map.dispose(), [map]);
   const color = FLOOR_DOT[agent?.status] || FLOOR_DOT.pending;
