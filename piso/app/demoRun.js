@@ -1,4 +1,4 @@
-import { AGENTS, CHIEF_PODIUM, DOOR_QUEUE, HOMES, MEETING_SPOTS, ZONE_BY_ID, wantsDemoRun } from "./constants.js";
+import { AGENTS, CHIEF_PODIUM, DOOR_QUEUE, MEETING_SPOTS, ZONE_BY_ID, wantsDemoRun } from "./constants.js";
 import { CHIEF_ACK, CHIEF_ACK_MS, SCRIPTED_FILE, SCRIPTED_USER, announceRunStep, cancelChiefTalk, chiefSays, pushUserLine } from "./chatLog.js";
 import { postOrquesta } from "./instruct.js";
 import {
@@ -322,7 +322,6 @@ function showStep(index) {
   setTicker(step.banner || step.caption);
 
   const split = phase === "desk";
-  const seat = HOMES[step.agent];
   const run = {
     id: script.id,
     title: script.title,
@@ -337,10 +336,10 @@ function showStep(index) {
     split,
     briefing: step.brief || null,
     briefAt: Date.now(),
-    focus: wide
-      ? { x: 0.1, y: 1.15, z: 0.15 }
-      : split && seat
-        ? { x: seat.x, y: 0.78, z: seat.z }
+    focus: split
+      ? null
+      : wide
+        ? { x: 0.1, y: 1.15, z: 0.15 }
         : zone
           ? { x: zone.position.x - 0.22, y: 1.35, z: zone.position.z + 0.24 }
           : { x: 0, y: 0.45, z: 0 },

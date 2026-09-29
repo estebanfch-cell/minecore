@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { AGENT_BY_ID } from "./constants.js";
+import { AGENT_BY_ID, agentCallName } from "./constants.js";
+import { PortraitBot } from "./scene/PortraitBot.jsx";
 
 export function SplitBrief({ run }) {
   const [now, setNow] = useState(() => Date.now());
@@ -13,6 +14,7 @@ export function SplitBrief({ run }) {
 
   if (!run?.split || !run.briefing) return null;
   const agent = AGENT_BY_ID[run.agentId];
+  const name = agentCallName(agent);
   const steps = run.briefing.steps || [];
   const elapsed = Math.max(0, now - (run.briefAt || now));
   let current = 0;
@@ -23,7 +25,7 @@ export function SplitBrief({ run }) {
   return (
     <aside className="split-brief notranslate is-swap" translate="no" key={run.agentId} aria-label="Qué está haciendo">
       <p className="split-kicker">En su puesto</p>
-      <h2>{agent?.tag || "AGENTE"}</h2>
+      <h2>{name}</h2>
       <p className="split-role">{run.briefing.role}</p>
       <p className="split-purpose">{run.briefing.purpose}</p>
       <ol>
@@ -43,7 +45,15 @@ export function SplitBrief({ run }) {
   );
 }
 
-export function SplitVeil({ run }) {
+export function SplitPortrait({ run }) {
   if (!run?.split) return null;
-  return <div className="split-veil" key={run.agentId} />;
+  const agent = AGENT_BY_ID[run.agentId];
+  return (
+    <aside className="split-portrait notranslate is-swap" translate="no" key={run.agentId} aria-label={agentCallName(agent)}>
+      <div className="split-portrait-stage">
+        <PortraitBot agentId={run.agentId} />
+      </div>
+      <p className="split-portrait-name">{agentCallName(agent)}</p>
+    </aside>
+  );
 }

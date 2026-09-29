@@ -15,7 +15,7 @@ export const AGENTS = [
   { id: "secre", name: "MINECORE SECRE", tag: "SECRE", role: "Retenciones", popupKind: "sri", grokId: "3823e65f-b1cf-4561-ab73-8f0c00a5f0da" },
   { id: "finance", name: "MINECORE FINANCE", tag: "FINANCE", role: "Sistema", popupKind: "inflow", grokId: "4c8dbbed-7889-4328-9121-d8a5883f2139" },
   { id: "marketing", name: "MINECORE MARKETING", tag: "MARKETING", role: "Liquidación", popupKind: "liq", grokId: "5ebf12eb-13d0-463b-85d0-2634b273de79" },
-  { id: "stock-pilot", name: "MINECORE STOCK PILOT", tag: "STOCK", role: "Stock", popupKind: "stock", grokId: "b9f678f9-a153-4cc0-9046-16125fb928fb" },
+  { id: "stock-pilot", name: "MINECORE STOCK PILOT", tag: "STOCK PILOT", role: "Stock", popupKind: "stock", grokId: "b9f678f9-a153-4cc0-9046-16125fb928fb" },
   { id: "devops", name: "MINECORE DEVOPS", tag: "DEVOPS", role: "DevOps", popupKind: "gh", grokId: "3411110b-4ab8-4687-8df2-831b21505adf" },
   { id: "comunicados", name: "Minecore Comunicados", tag: "COMUNICADOS", role: "Comunicados", popupKind: "nota", grokId: "d2f25820-f66c-4e61-a859-fb6616cc4a9d" },
   { id: "personal", name: "PERSONAL", tag: "PERSONAL", role: "Personal", popupKind: "hr", grokId: "f175d0c3-18b8-4b48-886a-40009a84960a" },
@@ -23,6 +23,13 @@ export const AGENTS = [
 ];
 
 export const AGENT_BY_ID = Object.fromEntries(AGENTS.map((a) => [a.id, a]));
+
+/** Floor plate and split labels: drop the MINECORE prefix, keep the working name. */
+export function agentCallName(agent) {
+  if (!agent) return "AGENTE";
+  const raw = String(agent.name || agent.tag || "AGENTE").replace(/^minecore\s+/i, "").trim();
+  return raw.toUpperCase();
+}
 
 export const POPUPS = {
   wa: ["WA → Majo: montos OK", "PDF inbound +593…", "Alerta retención enviada", "Reply Majo recibido"],

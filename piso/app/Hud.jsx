@@ -3,7 +3,7 @@ import { Dossier } from "./Dossier.jsx";
 import { TaskFeed } from "./TaskFeed.jsx";
 import { AGENTS } from "./constants.js";
 import { ChiefChat } from "./ChiefChat.jsx";
-import { SplitBrief, SplitVeil } from "./SplitBrief.jsx";
+import { SplitBrief, SplitPortrait } from "./SplitBrief.jsx";
 import { WorkWindow } from "./WorkWindow.jsx";
 import { PreviewPanel } from "./DemoChrome.jsx";
 import { beginScriptedExchange, stopDemoRun } from "./demoRun.js";
@@ -90,7 +90,7 @@ export function Hud() {
       </header>
 
       <TaskFeed />
-      <SplitVeil run={state.demoRun} />
+      <SplitPortrait run={state.demoRun} />
       <SplitBrief run={state.demoRun} />
 
       {!selected && !state.announcement && !state.chatOpen && !state.demoRun && (

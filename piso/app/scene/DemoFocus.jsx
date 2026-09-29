@@ -10,12 +10,6 @@ const FOCUS_OFFSET = new THREE.Vector3(3.55, 4.15, 3.55);
 const WIDE_OFFSET = new THREE.Vector3(6.6, 8.1, 6.6);
 const ROOM_OFFSET = new THREE.Vector3(7.4, 3.7, 7.4);
 const HANDOFF_OFFSET = new THREE.Vector3(6.5, 7.7, 6.5);
-/** Front-three-quarter of every desk. Same yaw, so the offset is one vector. Includes the name plate. */
-const PORTRAIT_OFFSET = new THREE.Vector3(
-  Math.cos(YAW) * 0.4 + Math.sin(YAW) * 3.45,
-  0.7,
-  -Math.sin(YAW) * 0.4 + Math.cos(YAW) * 3.45
-);
 
 export function DemoCamera({ run, carry, agents }) {
   const { camera, controls } = useThree();
@@ -35,36 +29,25 @@ export function DemoCamera({ run, carry, agents }) {
 
     const from = carry && agents ? agents[carry.from] : null;
     const to = carry && agents ? agents[carry.to] : null;
-    const portrait = !!run?.split && active;
-    const flying = !portrait && !!(from && to && performance.now() - carry.t0 < 2700);
+    const flying = !!(from && to && performance.now() - carry.t0 < 2700);
 
-    if (portrait) {
-      controls.minDistance = 0.3;
-      controls.maxDistance = 24;
-      controls.minPolarAngle = 0.2;
-      controls.maxPolarAngle = 1.48;
-      controls.minAzimuthAngle = -Infinity;
-      controls.maxAzimuthAngle = Infinity;
-    } else {
-      controls.minDistance = active || homing.current ? 5.2 : 14;
-      controls.maxDistance = 42;
-      controls.minPolarAngle = 0.62;
-      controls.maxPolarAngle = 1.22;
-      controls.minAzimuthAngle = YAW - 0.28;
-      controls.maxAzimuthAngle = YAW + 0.28;
-    }
-    const wantFov = portrait ? 40 : 44;
-    if (Math.abs(camera.fov - wantFov) > 0.4) {
-      camera.fov = wantFov;
+    controls.minDistance = active || homing.current ? 5.2 : 14;
+    controls.maxDistance = 42;
+    controls.minPolarAngle = 0.62;
+    controls.maxPolarAngle = 1.22;
+    controls.minAzimuthAngle = YAW - 0.28;
+    controls.maxAzimuthAngle = YAW + 0.28;
+    if (Math.abs(camera.fov - 44) > 0.4) {
+      camera.fov = 44;
       camera.updateProjectionMatrix();
     }
-    const alpha = 1 - Math.exp((portrait ? -1.15 : -1.6) * dt);
+    const alpha = 1 - Math.exp(-1.6 * dt);
     const target = !active
       ? HOME_TARGET
       : flying
         ? desired.current.set((from.x + to.x) / 2, 1.45, (from.z + to.z) / 2)
         : desired.current.set(focus.x, focus.y ?? 1.2, focus.z);
-    const goal = !active ? HOME_OFFSET : flying ? HANDOFF_OFFSET : portrait ? PORTRAIT_OFFSET : run?.room ? ROOM_OFFSET : run?.wide ? WIDE_OFFSET : FOCUS_OFFSET;
+    const goal = !active ? HOME_OFFSET : flying ? HANDOFF_OFFSET : run?.room ? ROOM_OFFSET : run?.wide ? WIDE_OFFSET : FOCUS_OFFSET;
     offset.current.copy(camera.position).sub(controls.target);
     offset.current.lerp(goal, alpha);
     controls.target.lerp(target, alpha);
