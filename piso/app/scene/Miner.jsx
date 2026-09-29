@@ -58,6 +58,7 @@ export function Miner({ agent, selected }) {
     const s = sit.current;
     const time = performance.now() / 1000;
     const walk = moving ? Math.sin(time * 7.2) : 0;
+    const bend = inChair ? 0.5 : 1.15;
     const type = atDesk && agent.typing ? Math.sin(time * 10) : 0;
     const cueAge = agent.cueAt ? (time - agent.cueAt / 1000) : 9;
     const nodding = agent.cue === "nod" && cueAge >= 0 && cueAge < 1.3;
@@ -65,22 +66,26 @@ export function Miner({ agent, selected }) {
 
     node.position.x = d.x;
     node.position.z = d.z;
-    node.position.y = PLATFORM_TOP - (inChair ? 0.2 * s : 0);
+    // Desk sit drops into the desk chair. Meeting sit only settles onto the seat so the helmet stays above the back.
+    node.position.y = PLATFORM_TOP + (inChair ? 0.22 * s : 0);
     let face = YAW;
     if (moving && dist > 0.02) face = Math.atan2(dx, dz);
-    else if (agent.meeting && agent.id !== "chief") face = Math.atan2(HUB.x - d.x, HUB.z - d.z);
+    else if (agent.meeting && agent.id !== "chief") {
+      const toHub = Math.atan2(HUB.x - d.x, HUB.z - d.z);
+      face = lerpAngle(toHub, YAW, 0.42);
+    }
     node.rotation.y = lerpAngle(node.rotation.y, face, 1 - Math.exp(-6 * dt));
 
-    if (legL.current) legL.current.rotation.x = -1.15 * s + walk * (1 - s) * 0.45;
-    if (legR.current) legR.current.rotation.x = -1.15 * s - walk * (1 - s) * 0.45;
+    if (legL.current) legL.current.rotation.x = -bend * s + walk * (1 - s) * 0.45;
+    if (legR.current) legR.current.rotation.x = -bend * s - walk * (1 - s) * 0.45;
     const hand = speaking ? Math.sin(Math.min(cueAge, 1) * Math.PI) * 0.55 : 0;
-    if (armL.current) armL.current.rotation.x = -1.02 * s + walk * (1 - s) * 0.4 + type * 0.22 * s;
-    if (armR.current) armR.current.rotation.x = -1.02 * s - walk * (1 - s) * 0.4 - type * 0.22 * s - hand;
+    if (armL.current) armL.current.rotation.x = -(inChair ? 0.45 : 1.02) * s + walk * (1 - s) * 0.4 + type * 0.22 * s;
+    if (armR.current) armR.current.rotation.x = -(inChair ? 0.45 : 1.02) * s - walk * (1 - s) * 0.4 - type * 0.22 * s - hand;
     if (chest.current) {
-      chest.current.position.y = -0.26 * s - (inChair ? 0.06 : 0);
+      chest.current.position.y = (inChair ? -0.08 : -0.26) * s;
       const nod = nodding ? Math.sin(cueAge * 9) * 0.16 * (1 - cueAge / 1.3) : 0;
       const look = inChair ? Math.sin(time * 0.45 + home.x) * 0.07 : 0;
-      chest.current.rotation.x = (inChair ? 0.32 : 0.08) * s + nod;
+      chest.current.rotation.x = 0.08 * s + nod;
       chest.current.rotation.y = look;
       chest.current.rotation.z = 0;
     }

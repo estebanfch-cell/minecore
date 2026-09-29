@@ -4,7 +4,7 @@ import { TaskFeed } from "./TaskFeed.jsx";
 import { AGENTS } from "./constants.js";
 import { ChiefChat } from "./ChiefChat.jsx";
 import { AssignmentFeed, WorkWindow } from "./WorkWindow.jsx";
-import { DemoBar, PreviewPanel } from "./DemoChrome.jsx";
+import { PreviewPanel } from "./DemoChrome.jsx";
 import { beginScriptedExchange, stopDemoRun } from "./demoRun.js";
 import { getState, openChiefInstruction, subscribe } from "./store.js";
 import { runDemo, startLive } from "./director.js";
@@ -109,7 +109,6 @@ export function Hud() {
       <WorkWindow spec={state.workWindow} sourcePdf={state.sourcePdf} />
       <AssignmentFeed items={state.assignments} />
 
-      <DemoBar run={state.demoRun} />
       <PreviewPanel doc={state.previewDoc} />
 
       {state.toast && (

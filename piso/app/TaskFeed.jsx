@@ -33,12 +33,6 @@ export function TaskFeed() {
         </span>
       </header>
       <p className="ticker">{state.ticker}</p>
-      {waiting && (
-        <p className="stub">
-          Sin heartbeats todavía. El piso muestra el último estado conocido. Conecta{" "}
-          <code>MinecoreFeed.setAgent</code> o define <code>MINECORE_FEED_URL</code>.
-        </p>
-      )}
       <ol>
         {state.feed.map((ev, i) => (
           <li key={`${ev.at}-${ev.agentId || "piso"}-${i}`}>

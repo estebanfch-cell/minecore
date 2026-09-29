@@ -1,7 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import { ErpStage } from "./ErpStage.jsx";
+import { PART_B, PO_LINES, STOCK_ROWS } from "./erpData.js";
 import { demoAsset } from "./demoRun.js";
 import { renderPdfPages } from "./pdfPages.js";
+
+const RECOVERY_MONTHS = {
+  MCOR000126: "8.4",
+  MCOR000509: "7.5",
+  MCOR000442: "5.0",
+  MCOR000355: "4.6",
+  MCOR000512: "3.8",
+  MCOR000803: "2.4",
+};
+
+function money(cents) {
+  return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 function useReveal(lines, ms) {
   const [count, setCount] = useState(0);
@@ -29,6 +43,8 @@ export function WorkWindow({ spec, sourcePdf }) {
   const frame = frames[frameIndex];
   const scroller = useRef(null);
   const [pages, setPages] = useState([]);
+  const [scanOn, setScanOn] = useState(false);
+  const [scanKey, setScanKey] = useState(0);
   const pdfName = spec?.pdf || "";
   const bundled = pdfName ? demoAsset("pdf", pdfName) : "";
   const live = sourcePdf?.url && /oc|taluvira/i.test(sourcePdf.name || "") ? sourcePdf.url : "";
@@ -53,17 +69,43 @@ export function WorkWindow({ spec, sourcePdf }) {
 
   useEffect(() => {
     const node = scroller.current;
-    if (!node) return undefined;
-    let y = 0;
-    const timer = setInterval(() => {
-      const max = node.scrollHeight - node.clientHeight;
-      if (max <= 0) return;
-      y += 36;
-      if (y > max + 40) y = 0;
-      node.scrollTop = y;
-    }, 60);
-    return () => clearInterval(timer);
-  }, [pages, frame?.preview, spec?.title]);
+    if (!node || spec?.mode !== "scan") {
+      setScanOn(false);
+      return undefined;
+    }
+    let frameId = 0;
+    let live = true;
+    const start = performance.now();
+    const duration = 14000;
+    const settle = 900;
+    node.scrollTop = 0;
+    setScanOn(true);
+    setScanKey((key) => key + 1);
+    const tick = (now) => {
+      if (!live) return;
+      const max = Math.max(0, node.scrollHeight - node.clientHeight);
+      const elapsed = now - start;
+      if (elapsed <= duration) {
+        node.scrollTop = max * (elapsed / duration);
+        frameId = requestAnimationFrame(tick);
+        return;
+      }
+      const u = Math.min(1, (elapsed - duration) / settle);
+      const ease = u * u * (3 - 2 * u);
+      node.scrollTop = max * (1 - ease);
+      if (u < 1) {
+        frameId = requestAnimationFrame(tick);
+        return;
+      }
+      node.scrollTop = 0;
+      setScanOn(false);
+    };
+    frameId = requestAnimationFrame(tick);
+    return () => {
+      live = false;
+      cancelAnimationFrame(frameId);
+    };
+  }, [pages.length, spec?.mode, spec?.title]);
 
   if (!spec) return null;
   const fallback = spec.fallback ? demoAsset("previews", spec.fallback) : "";
@@ -82,6 +124,10 @@ export function WorkWindow({ spec, sourcePdf }) {
       <div className={`work-body ${spec.erp ? "work-body-erp" : ""}`}>
         {spec.erp ? (
           <ErpStage phase={spec.erp} />
+        ) : spec.mode === "finance" ? (
+          <FinanceReport log={log} shown={shown} />
+        ) : spec.mode === "settle" ? (
+          <SettleScreen spec={spec} image={image} log={log} shown={shown} />
         ) : (
           <>
         <div className="work-stage">
@@ -92,7 +138,7 @@ export function WorkWindow({ spec, sourcePdf }) {
               image && <img src={image} alt="" />
             )}
           </div>
-          <div className="scan-line" />
+          {spec.mode === "scan" && scanOn && <div key={scanKey} className="scan-line" />}
         </div>
         <ol className="work-log">
           {log.slice(0, shown).map((line) => (
@@ -108,6 +154,103 @@ export function WorkWindow({ spec, sourcePdf }) {
         )}
       </div>
     </section>
+  );
+}
+
+function FinanceReport({ log, shown }) {
+  const total = 240;
+  const [count, setCount] = useState(0);
+  const hot = STOCK_ROWS.filter((row) => row.hot);
+  useEffect(() => {
+    let n = 0;
+    const timer = setInterval(() => {
+      n = Math.min(total, n + 6);
+      setCount(n);
+      if (n >= total) clearInterval(timer);
+    }, 90);
+    return () => clearInterval(timer);
+  }, []);
+  const done = count >= total;
+  const partB = PO_LINES.filter((line) => line.part === "B");
+  return (
+    <>
+      <div className="finance-report">
+        <p className="finance-count">{done ? `${total} SKUs revisados` : `Revisando inventario · ${count} / ${total} SKUs`}</p>
+        {done && (
+          <>
+            <h3>Alta rotación · cobertura bajo 3 meses</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>SKU</th>
+                  <th>Pieza</th>
+                  <th>Cobertura</th>
+                  <th>Recupera</th>
+                  <th>Reponer</th>
+                </tr>
+              </thead>
+              <tbody>
+                {hot.map((row) => {
+                  const po = partB.find((line) => line.sku === row.sku);
+                  return (
+                    <tr key={row.sku}>
+                      <td>{row.sku}</td>
+                      <td>{row.name}</td>
+                      <td>{row.cobertura.toFixed(1)} m</td>
+                      <td>{RECOVERY_MONTHS[row.sku]} m</td>
+                      <td>{po ? `${po.qty} · ${money(po.ext)}` : ""}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            <p className="finance-note">
+              Reponer a 4 meses. Parte B FOB {money(PART_B)}. Puesto en bodega $9,994. Se recupera en 4.5 meses.
+            </p>
+          </>
+        )}
+      </div>
+      <ol className="work-log">
+        {log.slice(0, shown).map((line) => (
+          <li key={line}>{line}</li>
+        ))}
+        {shown < log.length && (
+          <li className="caret" aria-hidden="true">
+            ▍
+          </li>
+        )}
+      </ol>
+    </>
+  );
+}
+
+function SettleScreen({ spec, image, log, shown }) {
+  const lines = spec.status || [];
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    setIndex(0);
+    if (lines.length < 2) return undefined;
+    const timer = setTimeout(() => setIndex(1), 2400);
+    return () => clearTimeout(timer);
+  }, [spec.title, lines.length]);
+  const still = spec.still ? demoAsset("previews", spec.still) : image;
+  return (
+    <>
+      <div className="settle-stage">
+        <strong>{lines[index] || lines[0]}</strong>
+        {index > 0 && still && <img src={still} alt="" />}
+      </div>
+      <ol className="work-log">
+        {log.slice(0, shown).map((line) => (
+          <li key={line}>{line}</li>
+        ))}
+        {shown < log.length && (
+          <li className="caret" aria-hidden="true">
+            ▍
+          </li>
+        )}
+      </ol>
+    </>
   );
 }
 

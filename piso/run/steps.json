@@ -9,7 +9,7 @@
       "phase": "analysis",
       "agent": "chief",
       "caption": "Leyendo la orden",
-      "stepMs": 18000,
+      "stepMs": 30000,
       "chat": "Leyendo OC-2026-0417…",
       "window": {
         "title": "CHIEF — OC-2026-0417 TALUVIRA.pdf",
@@ -106,6 +106,7 @@
       "file": "ORDEN DE COMPRA - MCOR-PO-000379.pdf",
       "window": {
         "title": "FINANCE — rotación",
+        "mode": "finance",
         "logMs": 2000,
         "frames": [
           { "preview": "FINANZAS - MCOR-PO-000379.png", "file": "ORDEN DE COMPRA - MCOR-PO-000379.pdf" },
@@ -130,6 +131,9 @@
       "file": "RESUMEN - OC-2026-0417.pdf",
       "window": {
         "title": "CHIEF — RESUMEN OC-2026-0417",
+        "mode": "settle",
+        "status": ["Preparando resumen…", "Resumen listo"],
+        "still": "RESUMEN - OC-2026-0417.png",
         "logMs": 2200,
         "frames": [
           { "preview": "RESUMEN - OC-2026-0417.png", "file": "RESUMEN - OC-2026-0417.pdf" }
@@ -153,6 +157,9 @@
       "file": "RESUMEN - OC-2026-0417.pdf",
       "window": {
         "title": "MANUELITO — correo",
+        "mode": "settle",
+        "status": ["Enviando entregables a Esteban…", "Enviado"],
+        "still": "WHATSAPP - Resumen completo enviado.png",
         "logMs": 2000,
         "frames": [
           { "preview": "WHATSAPP - Resumen completo enviado.png", "file": "RESUMEN - OC-2026-0417.pdf" }

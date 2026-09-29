@@ -227,20 +227,6 @@ html { translate: no; }
   color: var(--text);
   line-height: 1.35;
 }
-.stub {
-  font-size: 11px;
-  line-height: 1.4;
-  color: var(--muted);
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--line);
-}
-.stub code {
-  font-family: "JetBrains Mono", ui-monospace, monospace;
-  font-size: 10px;
-  color: #d5e2c2;
-}
 .task-panel ol {
   list-style: none;
   overflow: auto;
@@ -579,13 +565,70 @@ html { translate: no; }
   left: 8px;
   right: 8px;
   height: 22px;
+  top: 6%;
   pointer-events: none;
-  background: linear-gradient(transparent, rgba(184, 255, 60, 0.5), transparent);
-  animation: scan-move 2.6s linear infinite;
+  background: linear-gradient(transparent, rgba(184, 255, 60, 0.45), transparent);
+  animation: scan-move 14s linear 1 forwards;
 }
 @keyframes scan-move {
-  from { top: 8%; }
-  to { top: 88%; }
+  from { top: 6%; }
+  to { top: 90%; }
+}
+.finance-report,
+.settle-stage {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 22px 24px 28px;
+  background: #f5f5f0;
+  color: #1a1a18;
+}
+.finance-count {
+  margin: 0 0 16px;
+  font-size: 22px;
+  font-weight: 750;
+  color: #085041;
+}
+.finance-report h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+.finance-report table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.finance-report th,
+.finance-report td {
+  text-align: left;
+  padding: 8px 6px;
+  border-bottom: 1px solid #d3d1c7;
+}
+.finance-report th { color: #085041; font-size: 12px; letter-spacing: 0.04em; }
+.finance-note {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #e1f5ee;
+  color: #085041;
+  font-weight: 700;
+  font-size: 15px;
+}
+.settle-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.settle-stage strong {
+  font-size: 28px;
+  line-height: 1.25;
+  color: #085041;
+}
+.settle-stage img {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  background: #fff;
 }
 .work-log {
   list-style: none;

@@ -51,7 +51,7 @@ function applyPayload(data) {
     applied = true;
   }
   if (applied) {
-    setTicker("En vivo · heartbeat recibido");
+    setTicker("En vivo");
   }
 }
 
@@ -64,7 +64,7 @@ async function pullExternalFeed() {
     const data = await res.json();
     applyPayload(data);
   } catch {
-    /* keep the last known floor; the panel already says there is no heartbeat */
+    /* keep the last known floor */
   }
 }
 
@@ -73,11 +73,10 @@ export function startLive() {
   patchState({ mode: "live", meeting: false, popupFlash: null });
   if (!getState().liveConnected) {
     restoreSeeds();
-    setTicker("En vivo · esperando heartbeats");
-    pushNote("En vivo · sin heartbeat todavía", "pending");
+    setTicker("Último estado del piso");
   } else {
     resetAllHome();
-    setTicker("En vivo · heartbeat activo");
+    setTicker("En vivo");
   }
   liveTimer = setInterval(pullExternalFeed, 10000);
   pullExternalFeed();
@@ -260,8 +259,8 @@ export function bindFeedApi() {
   window.MinecoreFeed = {
     setAgent(id, patch) {
       setAgent(id, patch || {}, { external: true });
-      if (getState().mode === "live") {
-        setTicker("En vivo · heartbeat recibido");
+      if (getState().mode === "live" && !patch?.activity) {
+        setTicker("En vivo");
       }
     },
     getState() {
