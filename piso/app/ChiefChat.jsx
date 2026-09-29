@@ -44,7 +44,7 @@ export function ChiefChat({ embedded = false, focus = false, runDock = false }) 
     setFile(null);
     if (fileBox.current) fileBox.current.value = "";
     if (fileStartsOrquesta(fileName) || textStartsOrquesta(text)) {
-      ackAndStartOrquesta();
+      ackAndStartOrquesta({ text: [text, fileName].filter(Boolean).join(" · ") });
       return;
     }
     if (text && wantsMeeting("chief", text)) playAnnouncement(text);
@@ -110,7 +110,7 @@ export function ChiefChat({ embedded = false, focus = false, runDock = false }) 
             ref={input}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="Te paso la OC de Taluvira"
+            placeholder="Escribe un mensaje"
             aria-label="Mensaje para CHIEF"
           />
           <button className="send" type="submit">

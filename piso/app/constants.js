@@ -112,22 +112,25 @@ function roomLocal(lx, lz) {
   return localToWorld(HUB.x, HUB.z, lx, lz);
 }
 
-/** CHIEF stands at the head of the table and faces the room. */
-export const CHIEF_PODIUM = roomLocal(0, -0.86);
+/** CHIEF stands at the head, behind the far seats, facing the room and the camera. */
+export const CHIEF_PODIUM = roomLocal(0, -0.94);
 
-/** Seats around the table, in room-local coordinates. CHIEF does not sit. */
+/**
+ * Seats on the far side and the two flanks. Nobody sits on the near edge,
+ * so the camera sees faces instead of the backs of helmets. CHIEF does not sit.
+ */
 export const CHAIRS = [
-  { id: "devops", x: -0.86, z: -0.46 },
-  { id: "stock-pilot", x: -0.86, z: -0.08 },
-  { id: "finance", x: -0.86, z: 0.3 },
-  { id: "manuelito", x: 0.86, z: -0.46 },
-  { id: "law", x: 0.86, z: -0.08 },
-  { id: "secre", x: 0.86, z: 0.3 },
-  { id: "cote", x: -0.46, z: 0.7 },
-  { id: "marketing", x: 0, z: 0.7 },
-  { id: "comunicados", x: 0.46, z: 0.7 },
-  { id: "personal", x: -0.58, z: -0.72 },
-  { id: "pmv", x: 0.58, z: -0.72 },
+  { id: "personal", x: -0.62, z: -0.58 },
+  { id: "marketing", x: -0.22, z: -0.62 },
+  { id: "comunicados", x: 0.22, z: -0.62 },
+  { id: "pmv", x: 0.62, z: -0.58 },
+  { id: "devops", x: -1.02, z: -0.42 },
+  { id: "stock-pilot", x: -1.02, z: -0.08 },
+  { id: "finance", x: -1.02, z: 0.26 },
+  { id: "manuelito", x: 1.02, z: -0.42 },
+  { id: "law", x: 1.02, z: -0.08 },
+  { id: "secre", x: 1.02, z: 0.26 },
+  { id: "cote", x: 0.78, z: -0.22 },
 ];
 
 export const MEETING_SPOTS = Object.fromEntries(CHAIRS.map((c) => [c.id, roomLocal(c.x, c.z)]));

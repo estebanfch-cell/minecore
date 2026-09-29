@@ -178,6 +178,9 @@ function openDeskWindow(step) {
       title: win.title,
       pdf: null,
       erp: win.erp || null,
+      mode: win.mode || null,
+      status: win.status || null,
+      still: win.still || null,
       frames: win.frames || [],
       log: win.log || [],
       logMs: win.logMs || 1500,
@@ -219,7 +222,8 @@ function showStep(index) {
         fallback: win.preview,
         frames: [],
         log: win.log || [],
-        logMs: 900,
+        logMs: 1400,
+        mode: "scan",
         minimizing: false,
       },
     });
@@ -343,18 +347,23 @@ export function shouldStartDemo(agentId, text) {
   return wantsDemoRun(agentId, text);
 }
 
-/** User line is already on screen. CHIEF types, then the floor run starts. */
-export function ackAndStartOrquesta() {
+let runSerial = 0;
+
+/** User line is already on screen. CHIEF types, then the floor run starts. One webhook per start. */
+export function ackAndStartOrquesta(entry) {
+  const serial = ++runSerial;
   chiefSays(CHIEF_ACK, () => {
-    postOrquesta();
+    if (serial !== runSerial) return;
+    postOrquesta(entry);
     startDemoRun();
   });
 }
 
-/** URL and the D key: the exchange is already written, then the floor runs. */
+/** Hidden URL and the D key. The greeting stays, then the floor runs. */
 export function beginScriptedExchange() {
   cancelChiefTalk();
-  patchState({ chat: [], chatOpen: true });
+  const hello = (getState().chat || []).find((msg) => msg.id === "hello");
+  patchState({ chat: hello ? [hello] : [], chatOpen: true });
   pushUserLine(SCRIPTED_USER, SCRIPTED_FILE);
-  ackAndStartOrquesta();
+  ackAndStartOrquesta({ text: `${SCRIPTED_USER} · ${SCRIPTED_FILE}` });
 }

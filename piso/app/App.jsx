@@ -30,7 +30,7 @@ export default function App() {
         <Canvas
           shadows
           dpr={[1, 1.6]}
-          camera={{ position: [18.2, 22.4, 18.2], fov: 39, near: 0.1, far: 140 }}
+          camera={{ position: [15.75, 13.22, 15.65], fov: 44, near: 0.1, far: 160 }}
           gl={{ antialias: true, alpha: false }}
           onCreated={({ gl }) => {
             gl.toneMappingExposure = 1.22;

@@ -1,3 +1,5 @@
+import { AGENT_BY_ID } from "./constants.js";
+
 const fileMods = import.meta.glob("../instruct-config.js", { eager: true });
 const STORE_URL = "minecore.instructUrl";
 const STORE_KEY = "minecore.instructKey";
@@ -61,16 +63,34 @@ export function instructSettings() {
  * Header is the one Cursor documents: Authorization: Bearer <sender key>.
  * Does not throw.
  */
-/** Fire-and-forget notice that the OC run started. Never throws and never surfaces an error. */
-export function postOrquesta() {
+/**
+ * Fire-and-forget notice that the OC run started. One POST per call.
+ * Cross-origin from agentes.minecore.ec: JSON plus Authorization is not a
+ * simple request, so the browser sends OPTIONS first. The endpoint must
+ * allow POST and the headers content-type and authorization.
+ * Never throws and never surfaces an error.
+ */
+export function postOrquesta(entry) {
   const { url, key } = instructSettings();
   if (!url) return;
+  const chief = AGENT_BY_ID.chief;
   const headers = { "Content-Type": "application/json" };
   if (key) headers.Authorization = `Bearer ${key}`;
+  const body = {
+    event: "orquesta_oc",
+    oc: "OC-2026-0417",
+    cliente: "Taluvira",
+    to: "estebanferlito@minecore.ec",
+    agentId: chief.grokId,
+    agentName: chief.name,
+    text: entry?.text || "",
+    ts: new Date().toISOString(),
+  };
   fetch(url, {
     method: "POST",
+    mode: "cors",
     headers,
-    body: JSON.stringify({ event: "orquesta_oc", oc: "OC-2026-0417" }),
+    body: JSON.stringify(body),
   }).catch(() => {});
 }
 
