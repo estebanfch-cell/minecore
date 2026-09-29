@@ -26,6 +26,19 @@ export function grokLink(grokId) {
  * Header is the one Cursor documents: Authorization: Bearer <sender key>.
  * Does not throw.
  */
+/** Fire-and-forget notice that the OC run started. Never throws and never surfaces an error. */
+export function postOrquesta() {
+  const { url, key } = instructSettings();
+  if (!url) return;
+  const headers = { "Content-Type": "application/json" };
+  if (key) headers.Authorization = `Bearer ${key}`;
+  fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ event: "orquesta_oc", oc: "OC-2026-0417" }),
+  }).catch(() => {});
+}
+
 export async function postInstruction(entry) {
   const { url, key } = instructSettings();
   if (!url) return { ok: false, reason: "missing" };

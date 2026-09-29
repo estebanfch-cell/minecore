@@ -1,4 +1,6 @@
 import { ZONE_BY_ID, wantsDemoRun } from "./constants.js";
+import { CHIEF_ACK, SCRIPTED_FILE, SCRIPTED_USER, announceRunStep, cancelChiefTalk, chiefSays, pushUserLine } from "./chatLog.js";
+import { postOrquesta } from "./instruct.js";
 import {
   getState,
   patchState,
@@ -45,6 +47,7 @@ function clearRunTimers() {
 
 export function stopDemoRun() {
   clearRunTimers();
+  cancelChiefTalk();
   if (!getState().demoRun && !getState().carry) return;
   setHandoff(null, null);
   patchState({ demoRun: null, carry: null, deskScreens: {}, previewDoc: null });
@@ -135,7 +138,8 @@ function showStep(index) {
       ? { x: zone.position.x - 0.22, y: 1.35, z: zone.position.z + 0.24 }
       : { x: 0, y: 0.45, z: 0 },
   };
-  patchState({ demoRun: run });
+  patchState({ demoRun: run, chatOpen: true });
+  announceRunStep(step, { last: index === steps.length - 1, closing: script.closing || "" });
 
   if (stepTimer) clearTimeout(stepTimer);
   const wait = step.stepMs || script.stepMs || STEP_MS;
@@ -159,6 +163,7 @@ export async function startDemoRun() {
     deskScreens: {},
     previewDoc: null,
     carry: null,
+    chatOpen: true,
   });
   showStep(0);
 }
@@ -203,4 +208,20 @@ export function restartDemoRun() {
 
 export function shouldStartDemo(agentId, text) {
   return wantsDemoRun(agentId, text);
+}
+
+/** User line is already on screen. CHIEF types, then the floor run starts. */
+export function ackAndStartOrquesta() {
+  chiefSays(CHIEF_ACK, () => {
+    postOrquesta();
+    startDemoRun();
+  });
+}
+
+/** URL and the D key: the exchange is already written, then the floor runs. */
+export function beginScriptedExchange() {
+  cancelChiefTalk();
+  patchState({ chat: [], chatOpen: true });
+  pushUserLine(SCRIPTED_USER, SCRIPTED_FILE);
+  ackAndStartOrquesta();
 }

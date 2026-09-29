@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { DOSSIERS, POPUPS, STATUS_LABEL, actionVerb, wantsMeeting } from "./constants.js";
+import { ChiefChat } from "./ChiefChat.jsx";
 import { shouldStartDemo, startDemoRun } from "./demoRun.js";
 import { playAnnouncement } from "./director.js";
 import { grokLink, instructSettings, postInstruction } from "./instruct.js";
@@ -165,6 +166,9 @@ export function Dossier({ agent, focusInstruction }) {
 
         <section className="instruct">
           <h3>Instrucción</h3>
+          {agent.id === "chief" ? (
+            <ChiefChat embedded focus={!!focusInstruction} />
+          ) : (
           <form onSubmit={onSubmit}>
             <textarea
               ref={box}
@@ -189,6 +193,7 @@ export function Dossier({ agent, focusInstruction }) {
               </button>
             </div>
           </form>
+          )}
           {link && (
             <p className="grok-link">
               <button type="button" onClick={copyLink}>

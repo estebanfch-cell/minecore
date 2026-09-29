@@ -2,8 +2,9 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { Dossier } from "./Dossier.jsx";
 import { TaskFeed } from "./TaskFeed.jsx";
 import { AGENTS } from "./constants.js";
+import { ChiefChat } from "./ChiefChat.jsx";
 import { DemoBar, PreviewPanel } from "./DemoChrome.jsx";
-import { startDemoRun, stopDemoRun } from "./demoRun.js";
+import { beginScriptedExchange, stopDemoRun } from "./demoRun.js";
 import { getState, openChiefInstruction, subscribe } from "./store.js";
 import { runDemo, startLive } from "./director.js";
 
@@ -38,7 +39,7 @@ export function Hud() {
       const tag = e.target?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
       e.preventDefault();
-      startDemoRun();
+      beginScriptedExchange();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -88,7 +89,7 @@ export function Hud() {
 
       <TaskFeed />
 
-      {!selected && !state.announcement && (
+      {!selected && !state.announcement && !state.chatOpen && !state.demoRun && (
         <div className="hint notranslate">Toca CHIEF para anunciar a la sala</div>
       )}
 
@@ -97,6 +98,10 @@ export function Hud() {
           <span>CHIEF · anuncio</span>
           <p>{state.announcement}</p>
         </div>
+      )}
+
+      {(state.chatOpen || state.demoRun) && state.selectedId !== "chief" && (
+        <ChiefChat focus={!!state.focusInstruction || !!state.demoRun} />
       )}
 
       <DemoBar run={state.demoRun} />

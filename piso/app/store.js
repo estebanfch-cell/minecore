@@ -57,6 +57,8 @@ function createInitial() {
     deskScreens: {},
     previewDoc: null,
     carry: null,
+    chatOpen: false,
+    chat: [],
   };
 }
 
@@ -180,7 +182,20 @@ export function selectAgent(id) {
 }
 
 export function openChiefInstruction() {
-  patchState({ selectedId: "chief", focusInstruction: true });
+  patchState({ chatOpen: true, selectedId: null, focusInstruction: true });
+}
+
+export function pushChat(partial) {
+  const msg = { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, at: Date.now(), ...partial };
+  patchState({ chat: [...(getState().chat || []), msg], chatOpen: true });
+  return msg;
+}
+
+export function setChatTyping(on) {
+  const chat = (getState().chat || []).filter((m) => !m.typing);
+  patchState({
+    chat: on ? [...chat, { id: "typing", role: "chief", typing: true, at: Date.now() }] : chat,
+  });
 }
 
 let toastTimer = null;

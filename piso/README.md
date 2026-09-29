@@ -2,7 +2,7 @@
 
 **Taller:** escribe la instrucción en CHIEF → mira la sala.
 
-**Orquesta OC:** en CHIEF escribe algo con `OC`, `Taluvira` u `orquesta` (o abre `?run=taluvira`, o pulsa `D`). Sale de su escritorio (1/6 … 6/6): él recibe la OC, DevOps aplica en el sistema, Stock y Finance, el resumen vuelve a CHIEF y Manuelito envía. Pausa / Siguiente / Reiniciar. Los archivos viven en `piso/run/`.
+**Orquesta OC:** en el chat de CHIEF escribe algo con `OC` o `Taluvira`, o adjunta un PDF con ese nombre, y pulsa Enviar (también `?run=taluvira` o la tecla `D`). CHIEF contesta y el piso recorre los 6 pasos. Pausa / Siguiente / Reiniciar. Los archivos viven en `piso/run/`.
 
 Animated isometric office for the Minecore agents. Replaces the old flat 2D HTML floor. GitHub Pages serves this folder at:
 

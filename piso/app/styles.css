@@ -563,6 +563,168 @@ html { translate: no; }
 }
 .demo-bar button:disabled { opacity: 0.4; cursor: default; }
 
+.chief-chat {
+  position: fixed;
+  top: calc(var(--top) + 16px);
+  left: 16px;
+  z-index: 38;
+  width: min(360px, calc(100vw - var(--panel-w) - 48px));
+  max-height: min(520px, calc(100vh - var(--top) - 120px));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 18px;
+  background: rgba(10, 14, 22, 0.94);
+  border: 1px solid rgba(184, 255, 60, 0.28);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+}
+.chief-chat.is-embedded {
+  position: relative;
+  top: auto;
+  left: auto;
+  width: auto;
+  max-height: 420px;
+  margin-top: 8px;
+  z-index: 1;
+}
+.chief-chat header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.chief-chat header strong {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: var(--lime);
+}
+.chief-chat header button,
+.chief-chat .pending-file button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.chief-chat ol {
+  list-style: none;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 120px;
+  max-height: 320px;
+  padding-right: 2px;
+}
+.chief-chat li {
+  max-width: 92%;
+  padding: 8px 10px;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.35;
+}
+.chief-chat li.user {
+  align-self: flex-end;
+  background: rgba(184, 255, 60, 0.16);
+  border-bottom-right-radius: 4px;
+}
+.chief-chat li.chief {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.06);
+  border-bottom-left-radius: 4px;
+}
+.chief-chat li p { margin: 0; }
+.pdf-chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  margin-top: 6px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(8, 12, 18, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 11px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.chief-chat li p + .pdf-chip { margin-top: 6px; }
+.chief-chat .dots {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px 2px;
+}
+.chief-chat .dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  animation: chat-dot 1s infinite ease-in-out;
+}
+.chief-chat .dots i:nth-child(2) { animation-delay: 0.15s; }
+.chief-chat .dots i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes chat-dot {
+  0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
+  40% { opacity: 1; transform: translateY(-2px); }
+}
+.chief-chat .pending-file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.chief-chat .pending-file .pdf-chip { margin-top: 0; }
+.chief-chat .composer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.chief-chat .clip {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--text);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.chief-chat .clip input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.chief-chat .clip svg { width: 18px; height: 18px; }
+.chief-chat .composer input[type="text"],
+.chief-chat .composer input:not([type="file"]) {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 13px;
+}
+.chief-chat .composer input:focus { outline: none; border-color: rgba(184, 255, 60, 0.55); }
+.chief-chat .send {
+  border: 0;
+  background: var(--lime);
+  color: #12180c;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
 .preview-panel {
   position: fixed;
   top: calc(var(--top) + 16px);
@@ -857,5 +1019,6 @@ html { translate: no; }
   .floor-toast { left: 50%; }
   .portrait-fallback { width: 112px; height: 112px; font-size: 42px; }
   .demo-bar { left: 50%; bottom: 200px; width: min(440px, calc(100vw - 24px)); }
+  .chief-chat { left: 8px; right: 8px; width: auto; max-height: 42vh; }
   .preview-panel { left: 8px; right: 8px; width: auto; top: auto; bottom: 196px; max-height: 46vh; }
 }

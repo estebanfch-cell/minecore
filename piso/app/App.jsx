@@ -4,7 +4,7 @@ import { Hud } from "./Hud.jsx";
 import { Office } from "./scene/Office.jsx";
 import { getState, selectAgent, subscribe } from "./store.js";
 import { bindFeedApi, interruptFloor, startLive, stopDirector } from "./director.js";
-import { bindDemoRun, startDemoRun } from "./demoRun.js";
+import { beginScriptedExchange, bindDemoRun } from "./demoRun.js";
 
 function useStore() {
   return useSyncExternalStore(subscribe, getState, getState);
@@ -18,7 +18,7 @@ export default function App() {
     bindDemoRun({ interrupt: interruptFloor });
     startLive();
     const params = new URLSearchParams(window.location.search);
-    if (params.get("run") === "taluvira" || params.get("demo") === "taluvira") startDemoRun();
+    if (params.get("run") === "taluvira" || params.get("demo") === "taluvira") beginScriptedExchange();
     return () => stopDirector();
   }, []);
 
