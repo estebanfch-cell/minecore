@@ -194,12 +194,18 @@ function Wall({ args, position, glass }) {
   );
 }
 
-function Seat({ x, z, rot }) {
+function Seat({ x, z, rot, hot }) {
   return (
     <group position={[x, PLATFORM_TOP, z]} rotation={[0, rot, 0]}>
+      {hot && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
+          <ringGeometry args={[0.26, 0.4, 28]} />
+          <meshBasicMaterial color={LIME} toneMapped={false} transparent opacity={0.95} />
+        </mesh>
+      )}
       <mesh position={[0, 0.2, 0]} castShadow>
         <boxGeometry args={[0.32, 0.045, 0.3]} />
-        <meshStandardMaterial color="#1a2330" roughness={0.55} metalness={0.15} />
+        <meshStandardMaterial color={hot ? "#243044" : "#1a2330"} emissive={hot ? LIME : "#000"} emissiveIntensity={hot ? 0.35 : 0} roughness={0.55} metalness={0.15} />
       </mesh>
       <mesh position={[0, 0.4, -0.13]} castShadow>
         <boxGeometry args={[0.32, 0.34, 0.04]} />
@@ -220,7 +226,7 @@ function Seat({ x, z, rot }) {
   );
 }
 
-export function Hub({ meeting }) {
+export function Hub({ meeting, focusId }) {
   const { halfX, halfZ, door } = ROOM;
   const wallH = 0.86;
   const wallT = 0.08;
@@ -276,6 +282,7 @@ export function Hub({ meeting }) {
           x={chair.x}
           z={chair.z}
           rot={Math.atan2(-chair.x, -0.08 - chair.z)}
+          hot={focusId === chair.id}
         />
       ))}
 

@@ -9,6 +9,7 @@ import {
   setAgent,
   setHandoff,
   setTicker,
+  settleFloor,
   walkTo,
 } from "./store.js";
 
@@ -17,8 +18,11 @@ const STEP_MS = 7500;
 let script = null;
 let stepTimer = null;
 let frameTimer = null;
+let finishTimer = null;
 let stepRemain = 0;
 let stepDeadline = 0;
+let runEpoch = 0;
+const RESET_PAUSE_MS = 3500;
 let subs = [];
 let interruptFloor = () => {};
 
@@ -59,9 +63,19 @@ function clearRunTimers() {
   if (frameTimer) clearInterval(frameTimer);
   stepTimer = null;
   frameTimer = null;
+  if (finishTimer) clearTimeout(finishTimer);
+  finishTimer = null;
   stepRemain = 0;
   stepDeadline = 0;
   clearSubs();
+}
+
+function settleAndHome(epoch) {
+  finishTimer = null;
+  if (epoch !== runEpoch) return;
+  cancelChiefTalk();
+  setHandoff(null, null);
+  settleFloor();
 }
 
 function scheduleAdvance(index, ms) {
@@ -79,7 +93,7 @@ function standDown() {
     setAgent(a.id, { meeting: false, seated: false, cue: null }, { silent: true });
     goHome(a.id);
   });
-  patchState({ meeting: false, assignments: [] });
+  patchState({ meeting: false, assignments: [], brief: null });
 }
 
 export function stopDemoRun() {
@@ -119,7 +133,7 @@ function releaseRoom() {
     setAgent(a.id, { meeting: false, seated: false, cue: null }, { silent: true });
     goHome(a.id);
   });
-  patchState({ meeting: false, assignments: [] });
+  patchState({ meeting: false, assignments: [], brief: null });
 }
 
 function minimizeWindow() {
@@ -160,13 +174,36 @@ function seatMeeting(step) {
       );
     });
   }, 6800);
-  (step.assignments || []).forEach((item) => {
+  (step.assignments || []).forEach((item, index) => {
+    const at = 7600 + index * 2000;
     later(() => {
-      const cur = getState().assignments || [];
-      patchState({ assignments: [...cur, { id: item.agent, text: item.card }] });
-      setAgent("chief", { cue: "speak", cueAt: Date.now(), meeting: true }, { silent: true });
-      setAgent(item.agent, { cue: "nod", cueAt: Date.now(), seated: true, meeting: true }, { silent: true });
-    }, item.at || 9000);
+      const spot = MEETING_SPOTS[item.agent];
+      setAgent(
+        "chief",
+        {
+          cue: "point",
+          cueAt: Date.now(),
+          cueX: spot?.x,
+          cueZ: spot?.z,
+          meeting: true,
+          seated: false,
+        },
+        { silent: true }
+      );
+      setAgent(
+        item.agent,
+        { cue: "nod", cueAt: Date.now(), seated: false, meeting: true },
+        { silent: true }
+      );
+      patchState({ brief: { id: item.agent, text: item.card, at: Date.now() } });
+    }, at);
+    later(() => {
+      setAgent(item.agent, { seated: true, cue: "listen", meeting: true }, { silent: true });
+    }, at + 1200);
+    later(() => {
+      if (getState().brief?.id === item.agent) patchState({ brief: null });
+      setAgent("chief", { cue: null, meeting: true, seated: false }, { silent: true });
+    }, at + 1900);
   });
 }
 
@@ -210,6 +247,22 @@ function showStep(index) {
   if (phase !== "meeting") releaseRoom();
   setHandoff(null, null);
   patchState({ carry: null });
+  const prev = index > 0 ? steps[index - 1] : null;
+  if (prev?.agent === "finance" && step.agent === "stock-pilot") {
+    setHandoff("finance", "stock-pilot");
+    patchState({
+      carry: {
+        from: "finance",
+        to: "stock-pilot",
+        image: demoAsset("previews", "FINANZAS - MCOR-PO-000379.png"),
+        t0: performance.now(),
+      },
+    });
+    later(() => {
+      setHandoff(null, null);
+      patchState({ carry: null });
+    }, 2900);
+  }
 
   if (phase === "analysis") {
     selectAgent(null);
@@ -277,12 +330,25 @@ function showStep(index) {
         : { x: 0, y: 0.45, z: 0 },
   };
   patchState({ demoRun: run, chatOpen: true });
-  announceRunStep(step, { last: index === steps.length - 1, closing: script.closing || "" });
+  const last = index === steps.length - 1;
+  announceRunStep(step, { last, closing: script.closing || "" });
 
+  if (last) {
+    const epoch = runEpoch;
+    const worked = step.stepMs || script.stepMs || STEP_MS;
+    finishTimer = setTimeout(() => {
+      if (epoch !== runEpoch || orquestaFiredEpoch === epoch) return;
+      orquestaFiredEpoch = epoch;
+      postOrquesta({ text: orquestaText, phase: "manuelito_done" });
+      finishTimer = setTimeout(() => settleAndHome(epoch), RESET_PAUSE_MS);
+    }, worked);
+    return;
+  }
   scheduleAdvance(index, step.stepMs || script.stepMs || STEP_MS);
 }
 
 export async function startDemoRun() {
+  runEpoch += 1;
   interruptFloor();
   clearRunTimers();
   try {
@@ -348,13 +414,15 @@ export function shouldStartDemo(agentId, text) {
 }
 
 let runSerial = 0;
+let orquestaText = "";
+let orquestaFiredEpoch = -1;
 
-/** User line is already on screen. CHIEF types, then the floor run starts. One webhook per start. */
+/** User line is already on screen. CHIEF types, then the floor run starts. The notice waits for Manuelito. */
 export function ackAndStartOrquesta(entry) {
   const serial = ++runSerial;
+  orquestaText = entry?.text || "";
   chiefSays(CHIEF_ACK, () => {
     if (serial !== runSerial) return;
-    postOrquesta(entry);
     startDemoRun();
   });
 }

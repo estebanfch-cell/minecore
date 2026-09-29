@@ -21,9 +21,9 @@
           "Cruzando con cotización MCOR-SQ-001011… 59/59 coinciden ✓",
           "Pago CONTADO · Entrega Campamento Bella Rica · fecha 09-oct",
           "Plan:",
-          "→ DEVOPS: convertir SQ en SO-001209 en el sistema y dividir",
-          "→ STOCK PILOT: verificar stock y generar pick list",
-          "→ FINANCE: alta rotación + costo de importación + recuperación",
+          "→ DEVOPS: convertir SQ en SO-001209, dividir y armar el pick list",
+          "→ FINANCE: analizar rotación y recomendar reposición",
+          "→ STOCK PILOT: orden de compra a Boyles con esa reposición",
           "→ MANUELITO: enviar resumen completo",
           "Convocando reunión…"
         ]
@@ -37,10 +37,10 @@
       "stepMs": 26000,
       "chat": "Convocando reunión…",
       "assignments": [
-        { "agent": "devops", "card": "DEVOPS — SO-001209 + split", "at": 9000 },
-        { "agent": "stock-pilot", "card": "STOCK PILOT — stock y pick list", "at": 13200 },
-        { "agent": "finance", "card": "FINANCE — rotación, importación y recuperación", "at": 17400 },
-        { "agent": "manuelito", "card": "MANUELITO — resumen completo", "at": 21600 }
+        { "agent": "devops", "card": "DevOps: convertir cotización en orden de venta y dividir", "at": 7600 },
+        { "agent": "finance", "card": "Finanzas: analizar historial y alta rotación", "at": 9600 },
+        { "agent": "stock-pilot", "card": "Stock Pilot: armar orden de compra a Boyles", "at": 11600 },
+        { "agent": "manuelito", "card": "Manuelito: notificar al cliente", "at": 13600 }
       ]
     },
     {
@@ -72,14 +72,41 @@
       }
     },
     {
+      "id": "finance",
+      "phase": "desk",
+      "agent": "finance",
+      "caption": "Análisis de rotación",
+      "stepMs": 17000,
+      "chat": "FINANCE cruza inventario, compras, cotizaciones, ventas y pedidos.",
+      "preview": "FINANZAS - MCOR-PO-000379.png",
+      "file": "ORDEN DE COMPRA - MCOR-PO-000379.pdf",
+      "window": {
+        "title": "FINANCE — análisis",
+        "mode": "finance",
+        "logMs": 1500,
+        "frames": [
+          { "preview": "FINANZAS - MCOR-PO-000379.png", "file": "ORDEN DE COMPRA - MCOR-PO-000379.pdf" }
+        ],
+        "log": [
+          "Analizando SKUs del inventario",
+          "Analizando historial de compras de clientes",
+          "Analizando historial de cotizaciones",
+          "Analizando historial de ventas",
+          "Analizando historial de pedidos a proveedores",
+          "Cruzando rotación y stock mínimo",
+          "Recomendación: aprovechar el pedido a Boyles para reponer alta rotación."
+        ]
+      }
+    },
+    {
       "id": "stock",
       "phase": "desk",
       "agent": "stock-pilot",
-      "caption": "Inventario y compra",
+      "caption": "Orden de compra a Boyles con reposición de alta rotación",
       "stepMs": 31000,
-      "chat": "STOCK PILOT abre Inventario.",
-      "preview": "PICK LIST - MCOR-SO-001209-1.png",
-      "file": "PICK LIST - MCOR-SO-001209-1.pdf",
+      "chat": "STOCK PILOT arma la orden de compra a Boyles con la recomendación de FINANCE.",
+      "preview": "ORDEN DE COMPRA - MCOR-PO-000379.png",
+      "file": "ORDEN DE COMPRA - MCOR-PO-000379.pdf",
       "window": {
         "title": "MINECORE · Sistema",
         "erp": "stock",
@@ -89,34 +116,8 @@
           { "preview": "PICK LIST - MCOR-SO-001209-1.png", "file": "PICK LIST - MCOR-SO-001209-1.pdf" }
         ],
         "log": [
-          "Verificando stock de SO-001209",
-          "54 líneas con stock · 5 líneas Boyles sin stock",
-          "Pick list SO-001209-1 · 54 líneas · 1,220 unidades"
-        ]
-      }
-    },
-    {
-      "id": "finance",
-      "phase": "desk",
-      "agent": "finance",
-      "caption": "Rotación y recuperación",
-      "stepMs": 15000,
-      "chat": "split -1/-2",
-      "preview": "FINANZAS - MCOR-PO-000379.png",
-      "file": "ORDEN DE COMPRA - MCOR-PO-000379.pdf",
-      "window": {
-        "title": "FINANCE — rotación",
-        "mode": "finance",
-        "logMs": 2000,
-        "frames": [
-          { "preview": "FINANZAS - MCOR-PO-000379.png", "file": "ORDEN DE COMPRA - MCOR-PO-000379.pdf" },
-          { "preview": "ORDEN DE COMPRA - MCOR-PO-000379.png", "file": "ORDEN DE COMPRA - MCOR-PO-000379.pdf" }
-        ],
-        "log": [
-          "6 SKUs de alta rotación · cobertura bajo 3 meses · objetivo 4 meses",
-          "Parte A urgente $321.06 · parte B $8,469.68",
-          "Importación 18% · puesto en bodega $9,994 · recupera en 4.5 meses",
-          "PO-000379 · total FOB $8,790.74"
+          "Orden de compra a Boyles con reposición de alta rotación",
+          "MCOR-PO-000379 · FOB $8,790.74"
         ]
       }
     },

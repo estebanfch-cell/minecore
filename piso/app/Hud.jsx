@@ -3,7 +3,7 @@ import { Dossier } from "./Dossier.jsx";
 import { TaskFeed } from "./TaskFeed.jsx";
 import { AGENTS } from "./constants.js";
 import { ChiefChat } from "./ChiefChat.jsx";
-import { AssignmentFeed, WorkWindow } from "./WorkWindow.jsx";
+import { WorkWindow } from "./WorkWindow.jsx";
 import { PreviewPanel } from "./DemoChrome.jsx";
 import { beginScriptedExchange, stopDemoRun } from "./demoRun.js";
 import { getState, openChiefInstruction, subscribe } from "./store.js";
@@ -107,7 +107,6 @@ export function Hud() {
       )}
 
       <WorkWindow spec={state.workWindow} sourcePdf={state.sourcePdf} />
-      <AssignmentFeed items={state.assignments} />
 
       <PreviewPanel doc={state.previewDoc} />
 

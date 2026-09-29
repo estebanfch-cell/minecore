@@ -132,13 +132,13 @@ const STOCK_LOG = [
   { at: 6500, text: "Abro Compras › Nueva orden." },
   { at: 9100, text: "Proveedor BOYLES BROS DIAMANTINA S.A." },
   { at: 14000, text: "Cargo la parte A urgente y la parte B." },
-  { at: STOCK_SAVED_AT, text: "Guardé MCOR-PO-000379 · FOB $8,790.74." },
+  { at: STOCK_SAVED_AT, text: "Orden de compra a Boyles con reposición de alta rotación. FOB $8,790.74." },
 ];
 
 const STOCK_NOTES = [
   { at: 1800, text: "Inventario Boyles: 6 SKUs con cobertura bajo 3 meses." },
   { at: 9100, text: "Compra a BOYLES BROS DIAMANTINA S.A. Parte A urgente y parte B de reposición." },
-  { at: STOCK_SAVED_AT, text: "MCOR-PO-000379 guardada · FOB $8,790.74." },
+  { at: STOCK_SAVED_AT, text: "Orden de compra a Boyles con reposición de alta rotación. FOB $8,790.74." },
 ];
 
 function beatAt(beats, elapsed) {
