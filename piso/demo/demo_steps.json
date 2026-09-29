@@ -1,44 +1,58 @@
 {
   "id": "taluvira",
   "title": "OC Taluvira",
-  "stepMs": 7000,
+  "stepMs": 7500,
   "steps": [
     {
-      "agent": "manuelito",
-      "caption": "Encontré OC nueva de Taluvira",
+      "agent": "chief",
+      "caption": "Iniciando orquesta",
       "preview": "OC_cliente_inventado.png",
-      "file": "OC-2026-0417.pdf",
-      "handoffTo": "chief"
+      "file": "OC-2026-0417.pdf"
     },
     {
-      "agent": "chief",
-      "caption": "MCOR-SQ-001011 → MCOR-SO-001209",
-      "preview": "ORDEN DE VENTA - MCOR-SO-001209.png",
-      "file": "MCOR-SO-001209.pdf"
+      "agent": "devops",
+      "caption": "Entrando al sistema",
+      "handoffFrom": "chief",
+      "preview": "ORDEN DE COMPRA - MCOR-PO-000379.png",
+      "file": "MCOR-PO-000379.pdf",
+      "frames": [
+        { "preview": "INFLOW - SQ-001011 a SO-001209.png", "file": "MCOR-SO-001209.pdf" },
+        { "preview": "ORDEN DE VENTA - MCOR-SO-001209.png", "file": "MCOR-SO-001209.pdf" },
+        { "preview": "ORDEN DE VENTA - MCOR-SO-001209-1.png", "file": "MCOR-SO-001209.pdf" },
+        { "preview": "ORDEN DE VENTA - MCOR-SO-001209-2.png", "file": "MCOR-SO-001209.pdf" },
+        { "preview": "ORDEN DE COMPRA - MCOR-PO-000379.png", "file": "MCOR-PO-000379.pdf" }
+      ]
     },
     {
       "agent": "stock-pilot",
-      "caption": "SO-001209-1 sale de bodega · SO-001209-2 pendiente",
+      "caption": "Chequeo de stock y pick list",
+      "handoffFrom": "chief",
       "preview": "PICK LIST - MCOR-SO-001209-1.png",
       "file": "PICK LIST - MCOR-SO-001209-1.pdf",
       "frames": [
-        "ORDEN DE VENTA - MCOR-SO-001209-1.png",
-        "ORDEN DE VENTA - MCOR-SO-001209-2.png",
+        "STOCK - SO-001209.png",
         "PICK LIST - MCOR-SO-001209-1.png"
-      ],
-      "handoffTo": "finance"
+      ]
     },
     {
       "agent": "finance",
-      "caption": "PO MCOR-PO-000379 · alta rotación",
-      "preview": "ORDEN DE COMPRA - MCOR-PO-000379.png",
+      "caption": "Rotación, prorrateo y meses a recuperar",
+      "handoffFrom": "chief",
+      "preview": "FINANZAS - MCOR-PO-000379.png",
       "file": "MCOR-PO-000379.pdf"
     },
     {
-      "agent": "secre",
-      "caption": "Enviado a estebanferlito@minecore.ec",
-      "banner": "Todo ha sido enviado a tu mail",
+      "agent": "chief",
+      "caption": "Resumen consolidado",
       "preview": "RESUMEN DEMO - OC-2026-0417.png",
+      "file": "RESUMEN DEMO - OC-2026-0417.pdf"
+    },
+    {
+      "agent": "manuelito",
+      "caption": "Resumen completo enviado",
+      "banner": "Todo ha sido enviado",
+      "handoffFrom": "chief",
+      "preview": "WHATSAPP - Resumen completo enviado.png",
       "file": "RESUMEN DEMO - OC-2026-0417.pdf"
     }
   ]

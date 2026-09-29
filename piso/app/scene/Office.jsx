@@ -75,7 +75,7 @@ export function Office({ agents, meeting, selectedId, handoff, demoRun, deskScre
       ))}
 
       <DocCarry carry={carry} agents={agents} />
-      <DemoCamera run={demoRun} />
+      <DemoCamera run={demoRun} carry={carry} agents={agents} />
 
       <ContactShadows position={[0, 0, 0]} opacity={0.38} scale={30} blur={2.4} far={5} color="#000" />
 

@@ -8,8 +8,7 @@ import {
   setTicker,
 } from "./store.js";
 
-const STEP_MS = 7000;
-const FRAME_MS = 2200;
+const STEP_MS = 7500;
 
 let script = null;
 let stepTimer = null;
@@ -51,14 +50,25 @@ export function stopDemoRun() {
   patchState({ demoRun: null, carry: null, deskScreens: {}, previewDoc: null });
 }
 
-function screenFor(step, fileName) {
+function resolveFrame(step, frame) {
+  if (frame && typeof frame === "object") {
+    return {
+      preview: frame.preview || step.preview,
+      file: frame.file || step.file,
+    };
+  }
+  return { preview: frame || step.preview, file: step.file };
+}
+
+function screenFor(step, frame) {
+  const spec = resolveFrame(step, frame);
   return {
     agentId: step.agent,
     caption: step.caption,
     banner: step.banner || "",
-    image: demoAsset("previews", fileName),
-    pdf: demoAsset("pdf", step.file),
-    title: fileName.replace(/\.png$/i, ""),
+    image: demoAsset("previews", spec.preview),
+    pdf: demoAsset("pdf", spec.file),
+    title: String(spec.preview).replace(/\.png$/i, ""),
   };
 }
 
@@ -78,22 +88,32 @@ function showStep(index) {
   };
   applyFrame();
   if (frameTimer) clearInterval(frameTimer);
+  frameTimer = null;
   if (frames.length > 1) {
+    const wait = step.stepMs || script.stepMs || STEP_MS;
+    const slice = Math.max(1100, Math.floor(wait / frames.length));
     frameTimer = setInterval(() => {
-      frame = (frame + 1) % frames.length;
+      if (frame >= frames.length - 1) {
+        clearInterval(frameTimer);
+        frameTimer = null;
+        return;
+      }
+      frame += 1;
       applyFrame();
-    }, FRAME_MS);
+    }, slice);
   }
 
   setAgent(step.agent, { activity: step.caption, status: "ok", typing: true });
-  setTicker(step.caption);
-  if (step.handoffTo) {
-    setHandoff(step.agent, step.handoffTo);
+  setTicker(step.banner || step.caption);
+  const from = step.handoffFrom;
+  if (from && from !== step.agent) {
+    setHandoff(from, step.agent);
+    const first = resolveFrame(step, frames[0]);
     patchState({
       carry: {
-        from: step.agent,
-        to: step.handoffTo,
-        image: demoAsset("previews", step.preview),
+        from,
+        to: step.agent,
+        image: demoAsset("previews", first.preview),
         t0: performance.now(),
       },
     });
@@ -118,7 +138,7 @@ function showStep(index) {
   patchState({ demoRun: run });
 
   if (stepTimer) clearTimeout(stepTimer);
-  const wait = script.stepMs || STEP_MS;
+  const wait = step.stepMs || script.stepMs || STEP_MS;
   if (!run.paused && index < steps.length - 1) {
     stepTimer = setTimeout(() => showStep(index + 1), wait);
   }
@@ -134,7 +154,12 @@ export async function startDemoRun() {
     setTicker("No se pudo cargar la demo");
     return;
   }
-  patchState({ demoRun: { paused: false, index: 0, count: script.steps.length } });
+  patchState({
+    demoRun: { paused: false, index: 0, count: script.steps.length },
+    deskScreens: {},
+    previewDoc: null,
+    carry: null,
+  });
   showStep(0);
 }
 
@@ -167,7 +192,12 @@ export function restartDemoRun() {
     return;
   }
   clearRunTimers();
-  patchState({ demoRun: { ...(getState().demoRun || {}), paused: false } });
+  patchState({
+    demoRun: { ...(getState().demoRun || {}), paused: false },
+    deskScreens: {},
+    previewDoc: null,
+    carry: null,
+  });
   showStep(0);
 }
 

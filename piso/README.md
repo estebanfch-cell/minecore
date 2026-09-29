@@ -2,7 +2,7 @@
 
 **Taller:** escribe la instrucción en CHIEF → mira la sala.
 
-**Demo OC:** en CHIEF escribe algo con `OC`, `Taluvira` o `demo` (o abre `?demo=taluvira`, o pulsa `D`). Los monitores muestran el paso. Pausa / Siguiente / Reiniciar. Los archivos viven en `piso/demo/`.
+**Demo OC:** en CHIEF escribe algo con `OC`, `Taluvira` o `demo` (o abre `?demo=taluvira`, o pulsa `D`). La orquesta sale de su escritorio (1/6 … 6/6): él recibe la OC, DevOps aplica en el sistema, Stock y Finance, el resumen vuelve a CHIEF y Manuelito envía. Pausa / Siguiente / Reiniciar. Los archivos viven en `piso/demo/`.
 
 Animated isometric office for the Minecore agents. Replaces the old flat 2D HTML demo. GitHub Pages serves this folder at:
 
