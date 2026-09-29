@@ -10,7 +10,7 @@ Animated isometric office for the Minecore agents. Replaces the old flat 2D HTML
 
 - Dark isometric diorama: every agent on their own desk (CHIEF, LAW, SECRE, FINANCE, MANUELITO, COTE, MARKETING, STOCK PILOT, DEVOPS, Comunicados, PERSONAL, PMV) around a central **sala / núcleo**
 - Low-poly miners with white helmets and the Minecore M mark (approved v5 portraits stay on the ficha)
-- Each desk floor carries the short name and a status dot (green online, grey away, red offline). No plates above the miners. Activity stays in the ficha and the task panel
+- Each platform’s front face (toward the camera) carries the short name and a status dot (green online, grey away, red offline). No plates above the miners. Activity stays in the ficha and the task panel
 - Panel derecho **Estado de tareas** (icono, texto, hora Guayaquil)
 - Barra superior: marca Minecore, reloj America/Guayaquil, Demo / En vivo
 - Click / tap an agent to open a large **ficha**: quién es, para qué está entrenado, historial, siguiente, and an **Instrucción** box
