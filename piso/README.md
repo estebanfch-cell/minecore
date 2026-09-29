@@ -86,14 +86,17 @@ Agent ids on the floor: `chief`, `manuelito`, `cote`, `law`, `secre`, `finance`,
 
 The winning moment is visual: type on CHIEF, press **Enviar**, watch the room gather.
 
+The relay URL lives in `instruct.json` and is fetched on each page load with `cache: "no-store"`. No key is stored or sent. Precedence when Manuelito finishes:
+
+1. `window.MINECORE_INSTRUCT_URL` or `?instructUrl=` (saved to localStorage, then removed from the address bar)
+2. `instruct.json`
+3. localStorage
+
 ```js
-window.MINECORE_INSTRUCT_URL = "https://…"; // CHIEF routine, POST to
-window.MINECORE_INSTRUCT_KEY = "crsr_…";    // sender key
+window.MINECORE_INSTRUCT_URL = "https://…"; // optional override
 ```
 
-Enviar also POSTs `{ agentId, agentName, text, ts }` with `Authorization: Bearer <key>`. It does not wait on that request to play the scene. The floor never shows the URL or the key.
-
-The same values can be passed once as `?instructUrl=` and `?instructKey=`. The page stores them in localStorage and removes them from the address bar. Or copy `instruct-config.example.js` to `instruct-config.js` (gitignored) and rebuild. Window values win over localStorage and the file.
+The POST body is JSON with `Content-Type: text/plain` and no Authorization header. The relay adds the key. The floor never shows the URL.
 
 ```js
 window.MinecoreFeed.enqueueInstruction({

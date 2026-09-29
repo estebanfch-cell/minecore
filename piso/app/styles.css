@@ -574,6 +574,74 @@ html { translate: no; }
   from { top: 6%; }
   to { top: 90%; }
 }
+.finance-scan {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 22px 24px 28px;
+  background: #0c1218;
+  color: #e7eef6;
+}
+.finance-kicker {
+  margin: 0 0 16px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #c6ff3d;
+}
+.finance-scan ol {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.finance-scan li.wait { opacity: 0.38; }
+.fin-row {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  gap: 8px;
+  align-items: baseline;
+}
+.fin-mark {
+  color: #c6ff3d;
+  font-weight: 800;
+}
+.fin-label {
+  font-size: 14px;
+  line-height: 1.35;
+}
+.fin-row strong {
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  color: #c6ff3d;
+}
+.fin-row strong em {
+  font-style: normal;
+  font-weight: 600;
+  color: #8ea0b4;
+}
+.fin-bar {
+  margin: 6px 0 0 30px;
+  height: 6px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.fin-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: #c6ff3d;
+}
+.fin-stream {
+  margin: 6px 0 0 30px;
+  font-family: ui-monospace, "SFMono-Regular", monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: rgba(198, 255, 61, 0.55);
+  white-space: nowrap;
+  overflow: hidden;
+}
 .finance-report,
 .settle-stage {
   min-width: 0;

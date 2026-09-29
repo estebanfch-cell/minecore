@@ -4,10 +4,11 @@ import { AGENTS, YAW, ZONE_BY_ID } from "../constants.js";
 import { DeskTag } from "./DeskTag.jsx";
 import { DemoCamera, DocCarry } from "./DemoFocus.jsx";
 import { Hub, Walkways, ZoneIsland } from "./Furniture.jsx";
+import { InstructCue } from "./InstructCue.jsx";
 import { Miner } from "./Miner.jsx";
 import { openDeskPreview } from "../DemoChrome.jsx";
 
-export function Office({ agents, meeting, selectedId, handoff, demoRun, deskScreens, carry }) {
+export function Office({ agents, meeting, selectedId, handoff, demoRun, deskScreens, carry, brief }) {
   const hotIds = useMemo(() => {
     const ids = new Set();
     if (handoff?.from) ids.add(handoff.from);
@@ -46,7 +47,7 @@ export function Office({ agents, meeting, selectedId, handoff, demoRun, deskScre
       </mesh>
 
       <Walkways hotIds={hotIds} />
-      <Hub meeting={meeting} />
+      <Hub meeting={meeting} focusId={brief?.id || null} />
 
       {AGENTS.map((def, index) => (
         <ZoneIsland
@@ -75,6 +76,7 @@ export function Office({ agents, meeting, selectedId, handoff, demoRun, deskScre
       ))}
 
       <DocCarry carry={carry} agents={agents} />
+      <InstructCue brief={brief} agents={agents} />
       <DemoCamera run={demoRun} carry={carry} agents={agents} />
 
       <ContactShadows position={[0, 0, 0]} opacity={0.38} scale={30} blur={2.4} far={5} color="#000" />

@@ -6,31 +6,34 @@ const STORE_KEY = "minecore.instructKey";
 
 function fileConfig() {
   const mod = Object.values(fileMods)[0];
-  if (!mod) return { url: "", key: "" };
-  return {
-    url: mod.INSTRUCT_WEBHOOK_URL || "",
-    key: mod.INSTRUCT_WEBHOOK_KEY || "",
-  };
+  if (!mod) return { url: "" };
+  return { url: mod.INSTRUCT_WEBHOOK_URL || "" };
 }
 
-function readStore() {
-  if (typeof localStorage === "undefined") return { url: "", key: "" };
+function forgetKey() {
   try {
-    return {
-      url: localStorage.getItem(STORE_URL) || "",
-      key: localStorage.getItem(STORE_KEY) || "",
-    };
+    localStorage.removeItem(STORE_KEY);
   } catch {
-    return { url: "", key: "" };
+    /* private mode */
   }
 }
 
-function writeStore(url, key) {
+function readStore() {
+  if (typeof localStorage === "undefined") return "";
+  forgetKey();
+  try {
+    return localStorage.getItem(STORE_URL) || "";
+  } catch {
+    return "";
+  }
+}
+
+function writeStore(url) {
+  forgetKey();
   try {
     if (url) localStorage.setItem(STORE_URL, url);
-    if (key) localStorage.setItem(STORE_KEY, key);
   } catch {
-    /* private mode: the in-memory window values still work */
+    /* private mode: the in-memory window value still works */
   }
 }
 
@@ -50,14 +53,42 @@ function unwrap(value) {
   return out;
 }
 
-/** Read ?instructUrl=&instructKey= once, keep them in localStorage, and drop them from the address bar. */
+let queryUrl = "";
+let runtimeUrl = "";
+let runtimeLoad = null;
+
+function instructJsonUrl() {
+  const base = import.meta.env.BASE_URL || "./";
+  return new URL("instruct.json", new URL(base, window.location.href)).href;
+}
+
+/** Fetch piso/instruct.json on each load. Nothing here is rendered. */
+export function loadInstructConfig() {
+  if (typeof window === "undefined") return Promise.resolve();
+  if (runtimeLoad) return runtimeLoad;
+  runtimeLoad = fetch(instructJsonUrl(), { cache: "no-store" })
+    .then((res) => (res.ok ? res.json() : null))
+    .then((data) => {
+      runtimeUrl = unwrap(data && data.url);
+    })
+    .catch(() => {
+      runtimeUrl = "";
+    });
+  return runtimeLoad;
+}
+
+/** Read ?instructUrl= once, keep it in localStorage, and drop it from the address bar. */
 export function captureInstructSettings() {
   if (typeof window === "undefined") return;
+  forgetKey();
   const params = new URLSearchParams(window.location.search);
   const url = unwrap(params.get("instructUrl"));
-  const key = unwrap(params.get("instructKey"));
-  if (!url && !key) return;
-  writeStore(url, key);
+  const hadKey = params.has("instructKey");
+  if (url) {
+    queryUrl = url;
+    writeStore(url);
+  }
+  if (!url && !hadKey) return;
   params.delete("instructUrl");
   params.delete("instructKey");
   const next = params.toString();
@@ -65,35 +96,23 @@ export function captureInstructSettings() {
   window.history.replaceState(null, "", path);
 }
 
-/** Window values win. Nothing here is rendered. */
-export function instructSettings() {
-  const file = fileConfig();
-  const saved = readStore();
-  const url = (typeof window !== "undefined" && window.MINECORE_INSTRUCT_URL) || saved.url || file.url || "";
-  const key = (typeof window !== "undefined" && window.MINECORE_INSTRUCT_KEY) || saved.key || file.key || "";
-  return { url: unwrap(url), key: unwrap(key) };
-}
-
-function urlWithKey(url, key) {
-  if (!key) return url;
-  const hashAt = url.indexOf("#");
-  const base = hashAt >= 0 ? url.slice(0, hashAt) : url;
-  const hash = hashAt >= 0 ? url.slice(hashAt) : "";
-  const join = base.includes("?") ? "&" : "?";
-  return `${base}${join}key=${encodeURIComponent(key)}${hash}`;
-}
-
 /**
- * Fire-and-forget notice that the OC run started. Called once per run.
- * Tries a CORS POST with Authorization. If that throws (preflight or network),
- * one simple no-cors POST follows: text/plain body, key on the query and in
- * the JSON. Never throws and never surfaces an error.
+ * Precedence: window.MINECORE_INSTRUCT_URL, then ?instructUrl=, then instruct.json,
+ * then localStorage, then an optional gitignored instruct-config.js.
+ * The page never sends a key.
  */
-export function postOrquesta(entry) {
-  const { url, key } = instructSettings();
-  if (!url) return;
+export function instructSettings() {
+  forgetKey();
+  const windowUrl = typeof window !== "undefined" ? unwrap(window.MINECORE_INSTRUCT_URL || "") : "";
+  const saved = unwrap(readStore());
+  const baked = unwrap(fileConfig().url);
+  const url = windowUrl || queryUrl || runtimeUrl || saved || baked;
+  return { url };
+}
+
+function orquestaBody(entry) {
   const chief = AGENT_BY_ID.chief;
-  const body = {
+  return {
     event: "orquesta_oc",
     oc: "OC-2026-0417",
     cliente: "Taluvira",
@@ -102,34 +121,57 @@ export function postOrquesta(entry) {
     agentName: chief.name,
     text: entry?.text || "",
     ts: new Date().toISOString(),
+    phase: "manuelito_done",
   };
-  const headers = { "Content-Type": "application/json" };
-  if (key) headers.Authorization = `Bearer ${key}`;
-  const simpleBody = key ? { ...body, key } : body;
-  fetch(url, {
+}
+
+function deliver(url, body) {
+  return fetch(url, {
     method: "POST",
-    mode: "cors",
-    headers,
+    headers: { "Content-Type": "text/plain" },
     body: JSON.stringify(body),
-  }).catch(() => {
-    fetch(urlWithKey(url, key), {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "text/plain;charset=UTF-8" },
-      body: JSON.stringify(simpleBody),
-    }).catch(() => {});
+  }).then((res) => {
+    console.debug("orquesta-post", res.status);
+    return res.ok;
+  });
+}
+
+/**
+ * One simple CORS POST when Manuelito finishes. No Authorization, no preflight.
+ * Retries once after 1.5s if the network fails or the status is not 2xx.
+ */
+export function postOrquesta(entry) {
+  loadInstructConfig().then(() => {
+    const { url } = instructSettings();
+    if (!url) {
+      console.debug("orquesta-post", "skipped");
+      return;
+    }
+    const body = orquestaBody(entry);
+    const retry = () => {
+      deliver(url, body).catch(() => {
+        console.debug("orquesta-post", "error");
+      });
+    };
+    deliver(url, body)
+      .then((ok) => {
+        if (!ok) setTimeout(retry, 1500);
+      })
+      .catch(() => {
+        console.debug("orquesta-post", "error");
+        setTimeout(retry, 1500);
+      });
   });
 }
 
 export async function postInstruction(entry) {
-  const { url, key } = instructSettings();
+  await loadInstructConfig();
+  const { url } = instructSettings();
   if (!url) return { ok: false, reason: "missing" };
   try {
-    const headers = { "Content-Type": "application/json" };
-    if (key) headers.Authorization = `Bearer ${key}`;
     const res = await fetch(url, {
       method: "POST",
-      headers,
+      headers: { "Content-Type": "text/plain" },
       body: JSON.stringify({
         agentId: entry.agentId,
         agentName: entry.agentName,

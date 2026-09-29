@@ -61,6 +61,7 @@ function createInitial() {
     chat: [{ id: "hello", role: "chief", text: "¿En qué te puedo ayudar hoy?", at: boot }],
     workWindow: null,
     assignments: [],
+    brief: null,
     sourcePdf: null,
   };
 }
@@ -305,6 +306,62 @@ export function resetAllHome() {
 
 export function setHandoff(from, to) {
   patchState({ handoff: from && to ? { from, to } : null });
+}
+
+/** Floor back to the opening: desks occupied, task list settled, chat ready. */
+export function settleFloor() {
+  if (state.sourcePdf?.url) URL.revokeObjectURL(state.sourcePdf.url);
+  const agents = {};
+  const feed = [];
+  const now = Date.now();
+  AGENTS.forEach((def, i) => {
+    const seed = SEEDS[def.id] || {};
+    const home = HOMES[def.id];
+    agents[def.id] = {
+      ...state.agents[def.id],
+      ...seed,
+      status: "ok",
+      x: home.x,
+      z: home.z,
+      walking: false,
+      meeting: false,
+      seated: false,
+      cue: null,
+      typing: true,
+    };
+    feed.push({
+      agentId: def.id,
+      name: def.name,
+      text: "Listo",
+      status: "ok",
+      at: now - i * 1000,
+    });
+  });
+  state = {
+    ...state,
+    agents,
+    mode: "live",
+    ticker: "Listo",
+    meeting: false,
+    handoff: null,
+    selectedId: null,
+    popupFlash: null,
+    feed,
+    announcement: null,
+    toast: null,
+    demoRun: null,
+    deskScreens: {},
+    previewDoc: null,
+    carry: null,
+    chatOpen: true,
+    chat: [{ id: "hello", role: "chief", text: "¿En qué te puedo ayudar hoy?", at: now }],
+    workWindow: null,
+    assignments: [],
+    brief: null,
+    sourcePdf: null,
+    focusInstruction: false,
+  };
+  emit();
 }
 
 export function restoreSeeds() {

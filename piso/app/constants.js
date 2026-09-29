@@ -112,8 +112,8 @@ function roomLocal(lx, lz) {
   return localToWorld(HUB.x, HUB.z, lx, lz);
 }
 
-/** CHIEF stands at the head, behind the far seats, facing the room and the camera. */
-export const CHIEF_PODIUM = roomLocal(0, -0.94);
+/** CHIEF stands in the doorway closest to the camera, back to the viewer, facing the seats. */
+export const CHIEF_PODIUM = roomLocal(0, ROOM.halfZ - 0.32);
 
 /**
  * Seats on the far side and the two flanks. Nobody sits on the near edge,

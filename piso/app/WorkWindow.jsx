@@ -157,59 +157,118 @@ export function WorkWindow({ spec, sourcePdf }) {
   );
 }
 
+/** Counter targets for Finance. Tune these without touching the sequence. */
+const FINANCE_SKU_TARGET = 4280;
+const FINANCE_CLIENT_PURCHASES = 2140;
+const FINANCE_QUOTES = 980;
+const FINANCE_SALES = 3560;
+const FINANCE_SUPPLIER_ORDERS = 640;
+const FINANCE_CROSSCHECK = 4280;
+/** Each phase, in order. Six of these plus a short pause and the still report fit in the finance step. */
+const FINANCE_PHASE_MS = 1500;
+const FINANCE_CHECK_MS = 450;
+const FINANCE_PHASES = [
+  { id: "skus", label: "Analizando SKUs del inventario", target: FINANCE_SKU_TARGET },
+  { id: "compras", label: "Analizando historial de compras de clientes", target: FINANCE_CLIENT_PURCHASES },
+  { id: "cotizaciones", label: "Analizando historial de cotizaciones", target: FINANCE_QUOTES },
+  { id: "ventas", label: "Analizando historial de ventas", target: FINANCE_SALES },
+  { id: "pedidos", label: "Analizando historial de pedidos a proveedores", target: FINANCE_SUPPLIER_ORDERS },
+  { id: "cruce", label: "Cruzando rotación y stock mínimo", target: FINANCE_CROSSCHECK },
+];
+
+function financeStream(seed, elapsed) {
+  const tick = Math.floor(elapsed / 80);
+  const parts = [];
+  for (let i = 0; i < 6; i += 1) {
+    const n = Math.abs(((seed * 97 + i * 131 + tick * 17) % 9000) + 120);
+    parts.push(String(n).padStart(4, "0"));
+  }
+  return parts.join("   ");
+}
+
 function FinanceReport({ log, shown }) {
-  const total = 240;
-  const [count, setCount] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
   const hot = STOCK_ROWS.filter((row) => row.hot);
   useEffect(() => {
-    let n = 0;
-    const timer = setInterval(() => {
-      n = Math.min(total, n + 6);
-      setCount(n);
-      if (n >= total) clearInterval(timer);
-    }, 90);
-    return () => clearInterval(timer);
+    const start = performance.now();
+    const limit = FINANCE_PHASES.length * FINANCE_PHASE_MS + FINANCE_CHECK_MS;
+    let frame = 0;
+    const tick = (now) => {
+      const next = now - start;
+      setElapsed(next);
+      if (next < limit) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
   }, []);
-  const done = count >= total;
+  const done = elapsed >= FINANCE_PHASES.length * FINANCE_PHASE_MS + FINANCE_CHECK_MS;
   const partB = PO_LINES.filter((line) => line.part === "B");
   return (
     <>
+      {done ? (
       <div className="finance-report">
-        <p className="finance-count">{done ? `${total} SKUs revisados` : `Revisando inventario · ${count} / ${total} SKUs`}</p>
-        {done && (
-          <>
-            <h3>Alta rotación · cobertura bajo 3 meses</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th>SKU</th>
-                  <th>Pieza</th>
-                  <th>Cobertura</th>
-                  <th>Recupera</th>
-                  <th>Reponer</th>
+        <p className="finance-count">Análisis listo</p>
+        <h3>Alta rotación · cobertura bajo 3 meses</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>SKU</th>
+              <th>Pieza</th>
+              <th>Cobertura</th>
+              <th>Recupera</th>
+              <th>Reponer</th>
+            </tr>
+          </thead>
+          <tbody>
+            {hot.map((row) => {
+              const po = partB.find((line) => line.sku === row.sku);
+              return (
+                <tr key={row.sku}>
+                  <td>{row.sku}</td>
+                  <td>{row.name}</td>
+                  <td>{row.cobertura.toFixed(1)} m</td>
+                  <td>{RECOVERY_MONTHS[row.sku]} m</td>
+                  <td>{po ? `${po.qty} · ${money(po.ext)}` : ""}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {hot.map((row) => {
-                  const po = partB.find((line) => line.sku === row.sku);
-                  return (
-                    <tr key={row.sku}>
-                      <td>{row.sku}</td>
-                      <td>{row.name}</td>
-                      <td>{row.cobertura.toFixed(1)} m</td>
-                      <td>{RECOVERY_MONTHS[row.sku]} m</td>
-                      <td>{po ? `${po.qty} · ${money(po.ext)}` : ""}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            <p className="finance-note">
-              Reponer a 4 meses. Parte B FOB {money(PART_B)}. Puesto en bodega $9,994. Se recupera en 4.5 meses.
-            </p>
-          </>
-        )}
+              );
+            })}
+          </tbody>
+        </table>
+        <p className="finance-note">
+          Reponer a 4 meses. Parte B FOB {money(PART_B)}. Puesto en bodega $9,994. Se recupera en 4.5 meses.
+        </p>
+        <p className="finance-note">Recomendación: aprovechar el pedido a Boyles para reponer alta rotación.</p>
       </div>
+      ) : (
+      <div className="finance-scan">
+        <p className="finance-kicker">FINANCE · análisis</p>
+        <ol>
+          {FINANCE_PHASES.map((phase, index) => {
+            const phaseStart = index * FINANCE_PHASE_MS;
+            const state = elapsed >= phaseStart + FINANCE_PHASE_MS ? "done" : elapsed >= phaseStart ? "run" : "wait";
+            const local = elapsed - phaseStart;
+            const progress = state === "done" ? 1 : state === "run" ? Math.min(1, Math.max(0, local / FINANCE_PHASE_MS)) : 0;
+            const value = Math.round(phase.target * progress);
+            return (
+              <li key={phase.id} className={state}>
+                <div className="fin-row">
+                  <span className="fin-mark" aria-hidden="true">{state === "done" ? "✓" : ""}</span>
+                  <span className="fin-label">{phase.label}</span>
+                  <strong>
+                    {value.toLocaleString("en-US")}
+                    <em> / {phase.target.toLocaleString("en-US")}</em>
+                  </strong>
+                </div>
+                <div className="fin-bar" aria-hidden="true">
+                  <i style={{ width: `${progress * 100}%` }} />
+                </div>
+                {state === "run" && <p className="fin-stream">{financeStream(index + 3, elapsed)}</p>}
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+      )}
       <ol className="work-log">
         {log.slice(0, shown).map((line) => (
           <li key={line}>{line}</li>

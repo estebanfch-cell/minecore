@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import { HOMES, HUB, LOOKS, PLATFORM_TOP, YAW } from "../constants.js";
+import { CHIEF_PODIUM, HOMES, HUB, LOOKS, PLATFORM_TOP, YAW } from "../constants.js";
 import { selectAgent } from "../store.js";
 import { getMarkTexture } from "./markTexture.js";
 
@@ -61,8 +61,9 @@ export function Miner({ agent, selected }) {
     const bend = inChair ? 0.5 : 1.15;
     const type = atDesk && agent.typing ? Math.sin(time * 10) : 0;
     const cueAge = agent.cueAt ? (time - agent.cueAt / 1000) : 9;
-    const nodding = agent.cue === "nod" && cueAge >= 0 && cueAge < 1.3;
+    const nodding = agent.cue === "nod" && cueAge >= 0 && cueAge < 1.4;
     const speaking = agent.cue === "speak" && cueAge >= 0 && cueAge < 1.8;
+    const pointing = agent.cue === "point" && cueAge >= 0 && cueAge < 2.1;
 
     node.position.x = d.x;
     node.position.z = d.z;
@@ -70,17 +71,24 @@ export function Miner({ agent, selected }) {
     node.position.y = PLATFORM_TOP + (inChair ? 0.22 * s : 0);
     let face = YAW;
     if (moving && dist > 0.02) face = Math.atan2(dx, dz);
-    else if (agent.meeting && agent.id !== "chief") {
-      const toHub = Math.atan2(HUB.x - d.x, HUB.z - d.z);
-      face = lerpAngle(toHub, YAW, 0.42);
+    else if (agent.meeting && agent.id === "chief") {
+      const tx = pointing && agent.cueX != null ? agent.cueX : HUB.x;
+      const tz = pointing && agent.cueZ != null ? agent.cueZ : HUB.z;
+      face = Math.atan2(tx - d.x, tz - d.z);
+    } else if (agent.meeting) {
+      face = Math.atan2(CHIEF_PODIUM.x - d.x, CHIEF_PODIUM.z - d.z);
     }
     node.rotation.y = lerpAngle(node.rotation.y, face, 1 - Math.exp(-6 * dt));
 
     if (legL.current) legL.current.rotation.x = -bend * s + walk * (1 - s) * 0.45;
     if (legR.current) legR.current.rotation.x = -bend * s - walk * (1 - s) * 0.45;
     const hand = speaking ? Math.sin(Math.min(cueAge, 1) * Math.PI) * 0.55 : 0;
+    const point = pointing ? 1.15 : 0;
     if (armL.current) armL.current.rotation.x = -(inChair ? 0.45 : 1.02) * s + walk * (1 - s) * 0.4 + type * 0.22 * s;
-    if (armR.current) armR.current.rotation.x = -(inChair ? 0.45 : 1.02) * s - walk * (1 - s) * 0.4 - type * 0.22 * s - hand;
+    if (armR.current) {
+      armR.current.rotation.x = -(inChair ? 0.45 : 1.02) * s - walk * (1 - s) * 0.4 - type * 0.22 * s - hand - point;
+      armR.current.rotation.z = pointing ? -0.35 : 0;
+    }
     if (chest.current) {
       chest.current.position.y = (inChair ? -0.08 : -0.26) * s;
       const nod = nodding ? Math.sin(cueAge * 9) * 0.16 * (1 - cueAge / 1.3) : 0;

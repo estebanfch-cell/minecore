@@ -8,7 +8,7 @@ let talkGen = 0;
 let talkTimer = null;
 
 export function fileStartsOrquesta(name) {
-  return /oc|taluvira/i.test(name || "");
+  return String(name || "").trim().length > 0;
 }
 
 export function textStartsOrquesta(text) {
