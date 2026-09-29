@@ -1,6 +1,35 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { resolve } from "node:path";
+import { createReadStream, existsSync, cpSync, statSync } from "node:fs";
+import { extname, resolve, sep } from "node:path";
+
+const runDir = resolve(__dirname, "run");
+
+function runFiles() {
+  const types = {
+    ".png": "image/png",
+    ".pdf": "application/pdf",
+    ".json": "application/json",
+  };
+  return {
+    name: "piso-run-files",
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const raw = (req.url || "").split("?")[0];
+        const prefix = "/minecore/piso/run/";
+        if (!raw.startsWith(prefix)) return next();
+        const rel = decodeURIComponent(raw.slice(prefix.length));
+        const file = resolve(runDir, rel);
+        if (!file.startsWith(runDir + sep) || !existsSync(file) || !statSync(file).isFile()) return next();
+        res.setHeader("Content-Type", types[extname(file).toLowerCase()] || "application/octet-stream");
+        createReadStream(file).pipe(res);
+      });
+    },
+    closeBundle() {
+      cpSync(runDir, resolve(__dirname, "dist/run"), { recursive: true });
+    },
+  };
+}
 
 export default defineConfig(({ command }) => ({
   root: resolve(__dirname, "app"),
@@ -9,7 +38,7 @@ export default defineConfig(({ command }) => ({
   // Dev keeps the project-site prefix so `npm run dev` stays on /minecore/piso/.
   base: command === "build" ? "./" : "/minecore/piso/",
   publicDir: resolve(__dirname, "public"),
-  plugins: [react()],
+  plugins: [react(), runFiles()],
   build: {
     outDir: resolve(__dirname, "dist"),
     emptyOutDir: true,

@@ -2,6 +2,10 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { Dossier } from "./Dossier.jsx";
 import { TaskFeed } from "./TaskFeed.jsx";
 import { AGENTS } from "./constants.js";
+import { ChiefChat } from "./ChiefChat.jsx";
+import { AssignmentFeed, WorkWindow } from "./WorkWindow.jsx";
+import { DemoBar, PreviewPanel } from "./DemoChrome.jsx";
+import { beginScriptedExchange, stopDemoRun } from "./demoRun.js";
 import { getState, openChiefInstruction, subscribe } from "./store.js";
 import { runDemo, startLive } from "./director.js";
 
@@ -29,6 +33,19 @@ export function Hud() {
     return () => clearInterval(t);
   }, []);
 
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== "d" && e.key !== "D") return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const tag = e.target?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      e.preventDefault();
+      beginScriptedExchange();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   return (
     <>
       <header className="topbar notranslate" translate="no">
@@ -51,14 +68,20 @@ export function Hud() {
           <button
             className={`mode ${state.mode === "demo" ? "active" : ""}`}
             type="button"
-            onClick={runDemo}
+            onClick={() => {
+              stopDemoRun();
+              runDemo();
+            }}
           >
-            Demo
+            Ejecutar
           </button>
           <button
             className={`mode ${state.mode === "live" ? "active" : ""}`}
             type="button"
-            onClick={startLive}
+            onClick={() => {
+              stopDemoRun();
+              startLive();
+            }}
           >
             En vivo
           </button>
@@ -67,7 +90,7 @@ export function Hud() {
 
       <TaskFeed />
 
-      {!selected && !state.announcement && (
+      {!selected && !state.announcement && !state.chatOpen && !state.demoRun && (
         <div className="hint notranslate">Toca CHIEF para anunciar a la sala</div>
       )}
 
@@ -77,6 +100,17 @@ export function Hud() {
           <p>{state.announcement}</p>
         </div>
       )}
+
+      {state.demoRun && <ChiefChat runDock />}
+      {state.chatOpen && !state.demoRun && state.selectedId !== "chief" && (
+        <ChiefChat focus={!!state.focusInstruction} />
+      )}
+
+      <WorkWindow spec={state.workWindow} sourcePdf={state.sourcePdf} />
+      <AssignmentFeed items={state.assignments} />
+
+      <DemoBar run={state.demoRun} />
+      <PreviewPanel doc={state.previewDoc} />
 
       {state.toast && (
         <div className={`floor-toast notranslate ${state.toast.tone || "ok"}`} role="status" translate="no">
