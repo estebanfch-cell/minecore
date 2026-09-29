@@ -71,8 +71,8 @@ export function MonitorScreen({ kind, position = [0, 0, 0], imageUrl, onOpen }) 
 
   const meta = POPUP_META[kind] || { accent: "#b8ff3c" };
   const featured = !!photo;
-  const w = featured ? 2.42 : 0.72;
-  const h = featured ? 1.55 : 0.46;
+  const w = featured ? 2.35 : 0.72;
+  const h = featured ? 1.6 : 0.46;
 
   return (
     <group position={position}>

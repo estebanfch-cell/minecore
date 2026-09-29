@@ -7,20 +7,20 @@
       "agent": "chief",
       "caption": "Iniciando orquesta",
       "preview": "OC_cliente_inventado.png",
-      "file": "OC-2026-0417.pdf"
+      "file": "OC_cliente_inventado.pdf"
     },
     {
       "agent": "devops",
       "caption": "Entrando al sistema",
       "handoffFrom": "chief",
       "preview": "ORDEN DE COMPRA - MCOR-PO-000379.png",
-      "file": "MCOR-PO-000379.pdf",
+      "file": "ORDEN DE COMPRA - MCOR-PO-000379.pdf",
       "frames": [
-        { "preview": "INFLOW - SQ-001011 a SO-001209.png", "file": "MCOR-SO-001209.pdf" },
-        { "preview": "ORDEN DE VENTA - MCOR-SO-001209.png", "file": "MCOR-SO-001209.pdf" },
-        { "preview": "ORDEN DE VENTA - MCOR-SO-001209-1.png", "file": "MCOR-SO-001209.pdf" },
-        { "preview": "ORDEN DE VENTA - MCOR-SO-001209-2.png", "file": "MCOR-SO-001209.pdf" },
-        { "preview": "ORDEN DE COMPRA - MCOR-PO-000379.png", "file": "MCOR-PO-000379.pdf" }
+        { "preview": "INFLOW - SQ-001011 a SO-001209.png", "file": "ORDEN DE VENTA - MCOR-SO-001209.pdf" },
+        { "preview": "ORDEN DE VENTA - MCOR-SO-001209.png", "file": "ORDEN DE VENTA - MCOR-SO-001209.pdf" },
+        { "preview": "ORDEN DE VENTA - MCOR-SO-001209-1.png", "file": "ORDEN DE VENTA - MCOR-SO-001209-1.pdf" },
+        { "preview": "ORDEN DE VENTA - MCOR-SO-001209-2.png", "file": "ORDEN DE VENTA - MCOR-SO-001209-2.pdf" },
+        { "preview": "ORDEN DE COMPRA - MCOR-PO-000379.png", "file": "ORDEN DE COMPRA - MCOR-PO-000379.pdf" }
       ]
     },
     {
@@ -30,8 +30,8 @@
       "preview": "PICK LIST - MCOR-SO-001209-1.png",
       "file": "PICK LIST - MCOR-SO-001209-1.pdf",
       "frames": [
-        "STOCK - SO-001209.png",
-        "PICK LIST - MCOR-SO-001209-1.png"
+        { "preview": "STOCK - SO-001209.png", "file": "ORDEN DE VENTA - MCOR-SO-001209-1.pdf" },
+        { "preview": "PICK LIST - MCOR-SO-001209-1.png", "file": "PICK LIST - MCOR-SO-001209-1.pdf" }
       ]
     },
     {
@@ -39,7 +39,7 @@
       "caption": "Rotación, prorrateo y meses a recuperar",
       "handoffFrom": "chief",
       "preview": "FINANZAS - MCOR-PO-000379.png",
-      "file": "MCOR-PO-000379.pdf"
+      "file": "ORDEN DE COMPRA - MCOR-PO-000379.pdf"
     },
     {
       "agent": "chief",
