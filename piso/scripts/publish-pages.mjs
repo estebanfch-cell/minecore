@@ -11,4 +11,4 @@ await rm(resolve(root, "avatars"), { recursive: true, force: true });
 await cp(resolve(dist, "index.html"), resolve(root, "index.html"));
 await cp(resolve(dist, "assets"), resolve(root, "assets"), { recursive: true });
 await cp(resolve(dist, "avatars"), resolve(root, "avatars"), { recursive: true });
-console.log("Published dist → piso/ for GitHub Pages (/minecore/piso/)");
+console.log("Published dist → piso/ for GitHub Pages (relative /piso/ assets)");

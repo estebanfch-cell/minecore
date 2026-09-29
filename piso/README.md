@@ -31,7 +31,7 @@ Opens Vite at `http://localhost:5173/minecore/piso/`. Source lives in `app/`. Ap
 
 ## Build for GitHub Pages
 
-Pages deploys the repo **from `main`**. The built files must sit in `piso/` (not only `piso/dist`), with asset URLs prefixed by `/minecore/piso/`.
+Pages deploys the repo **from `main`**. The built files must sit in `piso/` (not only `piso/dist`). Asset URLs are relative (`./assets/…`) so the floor works at `https://estebanfch-cell.github.io/minecore/piso/` and at `https://agentes.minecore.ec/piso/`.
 
 ```bash
 npm run build
@@ -43,9 +43,9 @@ npm run build
 - `piso/assets/` — hashed JS/CSS
 - `piso/avatars/` — copied portraits
 
-Do **not** point Pages at `piso/dist` (gitignored). After merge, the live URL is `/minecore/piso/`.
+Do **not** point Pages at `piso/dist` (gitignored). After merge, the floor is at `/piso/` on the Pages host (`/minecore/piso/` on github.io, `/piso/` on agentes.minecore.ec).
 
-`vite.config.js` always uses `base: '/minecore/piso/'` so `dev`, `preview`, and Pages share the same asset URLs.
+`vite.config.js` uses `base: '/minecore/piso/'` while developing, and `base: './'` for the production build.
 
 Preview the production build locally:
 
