@@ -69,8 +69,8 @@ const ZONE_META = {
   pmv: { title: "PMV", detail: "Ecuación", accent: "#d6ff6a", lines: ["Modelo"] },
 };
 
-const INNER = ["chief", "law", "secre", "finance", "manuelito", "cote"];
-const OUTER = ["marketing", "stock-pilot", "devops", "comunicados", "personal", "pmv"];
+const INNER = ["devops", "law", "secre", "finance", "manuelito", "cote"];
+const OUTER = ["marketing", "stock-pilot", "chief", "comunicados", "personal", "pmv"];
 
 export function localToWorld(px, pz, lx, lz) {
   const c = Math.cos(YAW);
