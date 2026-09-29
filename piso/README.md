@@ -91,9 +91,9 @@ window.MINECORE_INSTRUCT_URL = "https://…"; // CHIEF routine, POST to
 window.MINECORE_INSTRUCT_KEY = "crsr_…";    // sender key
 ```
 
-Enviar also POSTs `{ agentId, agentName, text, ts }` with `Authorization: Bearer <key>`. It does not wait on that request to play the scene. Toasts: “Escena + enviado” or “Escena ok · webhook pendiente”.
+Enviar also POSTs `{ agentId, agentName, text, ts }` with `Authorization: Bearer <key>`. It does not wait on that request to play the scene. The floor never shows the URL or the key.
 
-Or copy `instruct-config.example.js` to `instruct-config.js` (gitignored) and rebuild. Window values win over the file.
+The same values can be passed once as `?instructUrl=` and `?instructKey=`. The page stores them in localStorage and removes them from the address bar. Or copy `instruct-config.example.js` to `instruct-config.js` (gitignored) and rebuild. Window values win over localStorage and the file.
 
 ```js
 window.MinecoreFeed.enqueueInstruction({
@@ -104,7 +104,7 @@ window.MinecoreFeed.enqueueInstruction({
 });
 ```
 
-CHIEF’s Grok id is `865dd2df-e29f-40a4-9631-41ca5624e03e`. The ficha also shows `grokbot://app/v1/sidebar?agent=<uuid>&tab=overview`.
+CHIEF’s id on the floor is `chief`.
 
 ## Do not touch
 

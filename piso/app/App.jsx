@@ -5,6 +5,7 @@ import { Office } from "./scene/Office.jsx";
 import { getState, selectAgent, subscribe } from "./store.js";
 import { bindFeedApi, interruptFloor, startLive, stopDirector } from "./director.js";
 import { beginScriptedExchange, bindDemoRun } from "./demoRun.js";
+import { captureInstructSettings } from "./instruct.js";
 
 function useStore() {
   return useSyncExternalStore(subscribe, getState, getState);
@@ -16,6 +17,7 @@ export default function App() {
   useEffect(() => {
     bindFeedApi();
     bindDemoRun({ interrupt: interruptFloor });
+    captureInstructSettings();
     startLive();
     const params = new URLSearchParams(window.location.search);
     if (params.get("run") === "taluvira" || params.get("demo") === "taluvira") beginScriptedExchange();

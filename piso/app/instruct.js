@@ -1,4 +1,6 @@
 const fileMods = import.meta.glob("../instruct-config.js", { eager: true });
+const STORE_URL = "minecore.instructUrl";
+const STORE_KEY = "minecore.instructKey";
 
 function fileConfig() {
   const mod = Object.values(fileMods)[0];
@@ -9,16 +11,49 @@ function fileConfig() {
   };
 }
 
-/** Window values win so the workshop can paste URL and key without a rebuild. */
-export function instructSettings() {
-  const file = fileConfig();
-  const url = (typeof window !== "undefined" && window.MINECORE_INSTRUCT_URL) || file.url || "";
-  const key = (typeof window !== "undefined" && window.MINECORE_INSTRUCT_KEY) || file.key || "";
-  return { url: String(url).trim(), key: String(key).trim() };
+function readStore() {
+  if (typeof localStorage === "undefined") return { url: "", key: "" };
+  try {
+    return {
+      url: localStorage.getItem(STORE_URL) || "",
+      key: localStorage.getItem(STORE_KEY) || "",
+    };
+  } catch {
+    return { url: "", key: "" };
+  }
 }
 
-export function grokLink(grokId) {
-  return `grokbot://app/v1/sidebar?agent=${encodeURIComponent(grokId)}&tab=overview`;
+function writeStore(url, key) {
+  try {
+    if (url) localStorage.setItem(STORE_URL, url);
+    if (key) localStorage.setItem(STORE_KEY, key);
+  } catch {
+    /* private mode: the in-memory window values still work */
+  }
+}
+
+/** Read ?instructUrl=&instructKey= once, keep them in localStorage, and drop them from the address bar. */
+export function captureInstructSettings() {
+  if (typeof window === "undefined") return;
+  const params = new URLSearchParams(window.location.search);
+  const url = (params.get("instructUrl") || "").trim();
+  const key = (params.get("instructKey") || "").trim();
+  if (!url && !key) return;
+  writeStore(url, key);
+  params.delete("instructUrl");
+  params.delete("instructKey");
+  const next = params.toString();
+  const path = `${window.location.pathname}${next ? `?${next}` : ""}${window.location.hash}`;
+  window.history.replaceState(null, "", path);
+}
+
+/** Window values win. Nothing here is rendered. */
+export function instructSettings() {
+  const file = fileConfig();
+  const saved = readStore();
+  const url = (typeof window !== "undefined" && window.MINECORE_INSTRUCT_URL) || saved.url || file.url || "";
+  const key = (typeof window !== "undefined" && window.MINECORE_INSTRUCT_KEY) || saved.key || file.key || "";
+  return { url: String(url).trim(), key: String(key).trim() };
 }
 
 /**

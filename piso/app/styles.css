@@ -472,11 +472,6 @@ html { translate: no; }
   outline: none;
   border-color: rgba(184, 255, 60, 0.55);
 }
-.instruct-hint {
-  margin-top: 8px;
-  font-size: 12px !important;
-  color: var(--muted) !important;
-}
 .instruct-row { margin-top: 10px; }
 .instruct .send {
   border: 0;
@@ -488,28 +483,6 @@ html { translate: no; }
   font-size: 13px;
   font-weight: 750;
   cursor: pointer;
-}
-.grok-link {
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.grok-link button {
-  align-self: flex-start;
-  border: 1px solid var(--line);
-  background: transparent;
-  color: var(--muted);
-  border-radius: 999px;
-  padding: 5px 10px;
-  font: inherit;
-  font-size: 11px;
-  cursor: pointer;
-}
-.grok-link code {
-  font-size: 11px;
-  color: var(--muted);
-  word-break: break-all;
 }
 .portrait-fallback {
   width: 168px;
@@ -911,6 +884,31 @@ html { translate: no; }
   font-family: inherit;
 }
 .dossier-close:hover { border-color: var(--lime); }
+
+.dossier.dossier-chat {
+  width: min(400px, calc(100vw - var(--panel-w) - 48px));
+  bottom: auto;
+  height: auto;
+  max-height: min(640px, calc(100vh - var(--top) - 28px));
+  padding: 14px 14px 12px;
+  overflow: hidden;
+}
+.dossier.dossier-chat .chief-chat.is-embedded {
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.dossier.dossier-chat .chief-chat header {
+  min-height: 28px;
+  padding-right: 78px;
+}
+.dossier.dossier-chat .chief-chat ol {
+  min-height: 240px;
+  max-height: min(420px, calc(100vh - 280px));
+}
 
 .dossier-head {
   display: flex;

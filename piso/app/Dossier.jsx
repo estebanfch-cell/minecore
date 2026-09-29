@@ -3,7 +3,7 @@ import { DOSSIERS, POPUPS, STATUS_LABEL, actionVerb, wantsMeeting } from "./cons
 import { ChiefChat } from "./ChiefChat.jsx";
 import { shouldStartDemo, startDemoRun } from "./demoRun.js";
 import { playAnnouncement } from "./director.js";
-import { grokLink, instructSettings, postInstruction } from "./instruct.js";
+import { postInstruction } from "./instruct.js";
 import { recordInstruction, selectAgent, setToast } from "./store.js";
 
 function planned(agent) {
@@ -27,7 +27,6 @@ function when(at) {
 export function Dossier({ agent, focusInstruction }) {
   const [draft, setDraft] = useState("");
   const [imgOk, setImgOk] = useState(true);
-  const [copied, setCopied] = useState(false);
   const box = useRef(null);
 
   useEffect(() => {
@@ -42,7 +41,6 @@ export function Dossier({ agent, focusInstruction }) {
   useEffect(() => {
     setDraft("");
     setImgOk(true);
-    setCopied(false);
   }, [agent?.id]);
 
   useEffect(() => {
@@ -57,8 +55,6 @@ export function Dossier({ agent, focusInstruction }) {
   if (!agent) return null;
   const bio = DOSSIERS[agent.id] || { title: agent.role, mission: agent.activity };
   const history = agent.history?.length ? agent.history : [{ text: agent.activity, at: Date.now() }];
-  const { url } = instructSettings();
-  const link = agent.grokId ? grokLink(agent.grokId) : "";
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -70,22 +66,34 @@ export function Dossier({ agent, focusInstruction }) {
     if (demo) startDemoRun();
     else if (scene) playAnnouncement(text);
     const result = entry ? await postInstruction(entry) : { ok: false, reason: "missing" };
-    const visual = demo || scene;
-    if (visual && result.ok) setToast("Escena + enviado", "ok");
-    else if (visual && result.reason === "missing") setToast("Escena ok · webhook pendiente", "wait");
-    else if (visual) setToast("Escena ok · no se pudo enviar", "wait");
-    else if (result.ok) setToast("Enviado a CHIEF", "ok");
-    else setToast("Falta configurar el webhook", "wait");
+    if (!demo && !scene && result.ok) setToast("Enviado", "ok");
     setDraft("");
   }
 
-  async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(link);
-      setCopied(true);
-    } catch {
-      setCopied(false);
-    }
+  if (agent.id === "chief") {
+    return (
+      <>
+        <button
+          className="dossier-scrim notranslate"
+          type="button"
+          aria-label="Cerrar chat"
+          onClick={() => selectAgent(null)}
+        />
+        <aside
+          className="dossier dossier-chat notranslate"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Chat con CHIEF"
+          translate="no"
+          data-agent="chief"
+        >
+          <ChiefChat embedded focus={!!focusInstruction} />
+          <button className="dossier-close" type="button" onClick={() => selectAgent(null)}>
+            Cerrar
+          </button>
+        </aside>
+      </>
+    );
   }
 
   return (
@@ -102,7 +110,7 @@ export function Dossier({ agent, focusInstruction }) {
         aria-modal="true"
         aria-label={`Ficha ${agent.name}`}
         translate="no"
-        data-agent-id={agent.grokId || ""}
+        data-agent={agent.id}
       >
         <button className="dossier-close" type="button" onClick={() => selectAgent(null)}>
           Cerrar
@@ -166,42 +174,21 @@ export function Dossier({ agent, focusInstruction }) {
 
         <section className="instruct">
           <h3>Instrucción</h3>
-          {agent.id === "chief" ? (
-            <ChiefChat embedded focus={!!focusInstruction} />
-          ) : (
           <form onSubmit={onSubmit}>
             <textarea
               ref={box}
               value={draft}
               rows={5}
               onChange={(e) => setDraft(e.target.value)}
-              placeholder={
-                agent.id === "chief"
-                  ? "Ej. por favor haz una reunión con todos para anunciarles que vamos a hacer un cambio de 8%"
-                  : "Escribe la instrucción para este agente"
-              }
+              placeholder="Escribe la instrucción para este agente"
               aria-label="Instrucción"
             />
-            {!url && (
-              <p className="instruct-hint">
-                Pega la URL y la clave en window.MINECORE_INSTRUCT_URL y window.MINECORE_INSTRUCT_KEY. La escena se ve igual.
-              </p>
-            )}
             <div className="instruct-row">
               <button className="send" type="submit">
                 Enviar
               </button>
             </div>
           </form>
-          )}
-          {link && (
-            <p className="grok-link">
-              <button type="button" onClick={copyLink}>
-                {copied ? "Copiado" : "Copiar enlace del agente"}
-              </button>
-              <code>{link}</code>
-            </p>
-          )}
         </section>
       </aside>
     </>

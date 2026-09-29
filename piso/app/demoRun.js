@@ -4,7 +4,6 @@ import { postOrquesta } from "./instruct.js";
 import {
   getState,
   patchState,
-  selectAgent,
   setAgent,
   setHandoff,
   setTicker,
@@ -150,7 +149,6 @@ function showStep(index) {
 
 export async function startDemoRun() {
   interruptFloor();
-  selectAgent(null);
   clearRunTimers();
   try {
     await loadDemoScript();
