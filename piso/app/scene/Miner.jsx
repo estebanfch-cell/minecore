@@ -52,35 +52,37 @@ export function Miner({ agent, selected }) {
     const dist = Math.hypot(dx, dz);
     const moving = dist > 0.07;
     const homeDist = Math.hypot(d.x - home.x, d.z - home.z);
-    const wantSit = !moving && !agent.meeting && homeDist < 0.55;
-    sit.current += ((wantSit ? 1 : 0) - sit.current) * (1 - Math.exp(-7 * dt));
+    const atDesk = !moving && !agent.meeting && homeDist < 0.55;
+    const inChair = !moving && !!agent.seated;
+    sit.current += (((atDesk || inChair) ? 1 : 0) - sit.current) * (1 - Math.exp(-6 * dt));
     const s = sit.current;
     const time = performance.now() / 1000;
-    const walk = moving ? Math.sin(time * 9) : 0;
-    const type = wantSit && agent.typing ? Math.sin(time * 12) : 0;
+    const walk = moving ? Math.sin(time * 7.2) : 0;
+    const type = atDesk && agent.typing ? Math.sin(time * 10) : 0;
+    const cueAge = agent.cueAt ? (time - agent.cueAt / 1000) : 9;
+    const nodding = agent.cue === "nod" && cueAge >= 0 && cueAge < 1.3;
+    const speaking = agent.cue === "speak" && cueAge >= 0 && cueAge < 1.8;
 
     node.position.x = d.x;
     node.position.z = d.z;
-    node.position.y = PLATFORM_TOP + (moving ? Math.abs(walk) * 0.05 : 0);
+    node.position.y = PLATFORM_TOP - (inChair ? 0.2 * s : 0);
     let face = YAW;
     if (moving && dist > 0.02) face = Math.atan2(dx, dz);
-    else if (agent.meeting) face = Math.atan2(HUB.x - d.x, HUB.z - d.z);
-    node.rotation.y = lerpAngle(node.rotation.y, face, 1 - Math.exp(-8 * dt));
+    else if (agent.meeting && agent.id !== "chief") face = Math.atan2(HUB.x - d.x, HUB.z - d.z);
+    node.rotation.y = lerpAngle(node.rotation.y, face, 1 - Math.exp(-6 * dt));
 
-    const listening = agent.meeting && !moving;
-    if (legL.current) legL.current.rotation.x = -1.15 * s + walk * (1 - s) * 0.75;
-    if (legR.current) legR.current.rotation.x = -1.15 * s - walk * (1 - s) * 0.75;
-    if (armL.current) armL.current.rotation.x = -1.02 * s + walk * (1 - s) * 0.7 + type * 0.32 * s;
-    if (armR.current) armR.current.rotation.x = -1.02 * s - walk * (1 - s) * 0.7 - type * 0.32 * s;
+    if (legL.current) legL.current.rotation.x = -1.15 * s + walk * (1 - s) * 0.45;
+    if (legR.current) legR.current.rotation.x = -1.15 * s - walk * (1 - s) * 0.45;
+    const hand = speaking ? Math.sin(Math.min(cueAge, 1) * Math.PI) * 0.55 : 0;
+    if (armL.current) armL.current.rotation.x = -1.02 * s + walk * (1 - s) * 0.4 + type * 0.22 * s;
+    if (armR.current) armR.current.rotation.x = -1.02 * s - walk * (1 - s) * 0.4 - type * 0.22 * s - hand;
     if (chest.current) {
-      chest.current.position.y = -0.26 * s;
-      const nod = listening && agent.id !== "chief" ? Math.sin(time * 1.7 + d.x * 2) * 0.14 : 0;
-      chest.current.rotation.x = 0.1 * s + nod;
-      chest.current.rotation.z = Math.sin(time * 1.35 + d.x) * 0.028;
-    }
-    if (listening && agent.id === "chief") {
-      if (armL.current) armL.current.rotation.x = -0.35 + Math.sin(time * 2.1) * 0.28;
-      if (armR.current) armR.current.rotation.x = -0.2 + Math.sin(time * 2.1 + 0.8) * 0.22;
+      chest.current.position.y = -0.26 * s - (inChair ? 0.06 : 0);
+      const nod = nodding ? Math.sin(cueAge * 9) * 0.16 * (1 - cueAge / 1.3) : 0;
+      const look = inChair ? Math.sin(time * 0.45 + home.x) * 0.07 : 0;
+      chest.current.rotation.x = (inChair ? 0.32 : 0.08) * s + nod;
+      chest.current.rotation.y = look;
+      chest.current.rotation.z = 0;
     }
   });
 

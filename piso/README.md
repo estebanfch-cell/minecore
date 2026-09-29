@@ -2,7 +2,9 @@
 
 **Taller:** escribe la instrucción en CHIEF → mira la sala.
 
-Animated isometric office for the Minecore agents. Replaces the old flat 2D HTML demo. GitHub Pages serves this folder at:
+**Orquesta OC:** en el chat de CHIEF escribe algo con `OC` o `Taluvira`, o adjunta un PDF con ese nombre, y pulsa Enviar (también `?run=taluvira` o la tecla `D`). CHIEF contesta y el piso recorre los 6 pasos. Pausa / Siguiente / Reiniciar. Los archivos viven en `piso/run/`.
+
+Animated isometric office for the Minecore agents. Replaces the old flat 2D HTML floor. GitHub Pages serves this folder at:
 
 **https://estebanfch-cell.github.io/minecore/piso/**
 
@@ -12,10 +14,10 @@ Animated isometric office for the Minecore agents. Replaces the old flat 2D HTML
 - Low-poly miners with white helmets and the Minecore M mark (approved v5 portraits stay on the ficha)
 - Each platform’s front face (toward the camera) carries the short name and a status dot (green online, grey away, red offline). No plates above the miners. Activity stays in the ficha and the task panel
 - Panel derecho **Estado de tareas** (icono, texto, hora Guayaquil)
-- Barra superior: marca Minecore, reloj America/Guayaquil, Demo / En vivo
+- Barra superior: marca Minecore, reloj America/Guayaquil, Ejecutar / En vivo
 - Click / tap an agent to open a large **ficha**: quién es, para qué está entrenado, historial, siguiente, and an **Instrucción** box
 - **Dar instrucción** (or click CHIEF) → type the announcement → **Enviar**. Everyone walks in through the sala door, CHIEF delivers the line (ticker + one speech panel), then they leave and return to their desks. The scene plays even if the webhook is not set yet
-- **Demo** loops desk work, handoffs (SECRE→Finance, COTE→Manuelito) and a stand-up in the sala. Status dots follow each agent’s `status`
+- **Ejecutar** loops desk work, handoffs (SECRE→Finance, COTE→Manuelito) and a stand-up in the sala. Status dots follow each agent’s `status`
 - **En vivo** waits for `window.MinecoreFeed.setAgent` or `window.MINECORE_FEED_URL`. Until a heartbeat arrives, the floor keeps the last known state and the panel says so
 
 ## Develop
@@ -89,9 +91,9 @@ window.MINECORE_INSTRUCT_URL = "https://…"; // CHIEF routine, POST to
 window.MINECORE_INSTRUCT_KEY = "crsr_…";    // sender key
 ```
 
-Enviar also POSTs `{ agentId, agentName, text, ts }` with `Authorization: Bearer <key>`. It does not wait on that request to play the scene. Toasts: “Escena + enviado” or “Escena ok · webhook pendiente”.
+Enviar also POSTs `{ agentId, agentName, text, ts }` with `Authorization: Bearer <key>`. It does not wait on that request to play the scene. The floor never shows the URL or the key.
 
-Or copy `instruct-config.example.js` to `instruct-config.js` (gitignored) and rebuild. Window values win over the file.
+The same values can be passed once as `?instructUrl=` and `?instructKey=`. The page stores them in localStorage and removes them from the address bar. Or copy `instruct-config.example.js` to `instruct-config.js` (gitignored) and rebuild. Window values win over localStorage and the file.
 
 ```js
 window.MinecoreFeed.enqueueInstruction({
@@ -102,7 +104,7 @@ window.MinecoreFeed.enqueueInstruction({
 });
 ```
 
-CHIEF’s Grok id is `865dd2df-e29f-40a4-9631-41ca5624e03e`. The ficha also shows `grokbot://app/v1/sidebar?agent=<uuid>&tab=overview`.
+CHIEF’s id on the floor is `chief`.
 
 ## Do not touch
 

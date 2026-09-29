@@ -53,6 +53,15 @@ function createInitial() {
     instructions: [],
     announcement: null,
     toast: null,
+    demoRun: null,
+    deskScreens: {},
+    previewDoc: null,
+    carry: null,
+    chatOpen: false,
+    chat: [],
+    workWindow: null,
+    assignments: [],
+    sourcePdf: null,
   };
 }
 
@@ -176,7 +185,20 @@ export function selectAgent(id) {
 }
 
 export function openChiefInstruction() {
-  patchState({ selectedId: "chief", focusInstruction: true });
+  patchState({ chatOpen: true, selectedId: null, focusInstruction: true });
+}
+
+export function pushChat(partial) {
+  const msg = { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, at: Date.now(), ...partial };
+  patchState({ chat: [...(getState().chat || []), msg], chatOpen: true });
+  return msg;
+}
+
+export function setChatTyping(on) {
+  const chat = (getState().chat || []).filter((m) => !m.typing);
+  patchState({
+    chat: on ? [...chat, { id: "typing", role: "chief", typing: true, at: Date.now() }] : chat,
+  });
 }
 
 let toastTimer = null;
@@ -240,6 +262,8 @@ export function goHome(id) {
       z: home.z,
       walking: false,
       meeting: false,
+      seated: false,
+      cue: null,
       typing: true,
     },
     { silent: true }
@@ -254,7 +278,7 @@ export function walkTo(id, x, z) {
       z,
       walking: true,
       typing: false,
-      meeting: false,
+      seated: false,
     },
     { silent: true }
   );
@@ -270,10 +294,12 @@ export function resetAllHome() {
       z: home.z,
       walking: false,
       meeting: false,
+      seated: false,
+      cue: null,
       typing: true,
     };
   }
-  state = { ...state, agents, meeting: false, handoff: null };
+  state = { ...state, agents, meeting: false, handoff: null, assignments: [] };
   emit();
 }
 

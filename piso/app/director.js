@@ -94,7 +94,7 @@ async function playRound(token) {
   resetAllHome();
   setHandoff(null, null);
   patchState({ meeting: false });
-  pushNote("Demo · jornada en los escritorios", "ok");
+  pushNote("Ejecutar · jornada en los escritorios", "ok");
   await sleep(500, token);
   if (token.aborted) return;
 
@@ -103,7 +103,7 @@ async function playRound(token) {
     ["cote", "Costeo semanal · cruce de packing list", "pending"],
     ["law", "Oficio 74310716 · PDF sin digitalizar", "pending"],
     ["secre", "SRI en línea · retenciones del día", "pending"],
-    ["finance", "inFlow abierto · esperando OK_aplicar", "pending"],
+    ["finance", "Sistema abierto · esperando OK_aplicar", "pending"],
     ["marketing", "liq.minecore.ec · espera deploy EFCH", "pending"],
     ["stock-pilot", "Stock · sync de existencias", "pending"],
     ["devops", "CI del Admin App en curso", "pending"],
@@ -119,7 +119,7 @@ async function playRound(token) {
   }
   if (token.aborted) return;
 
-  setTicker("Demo · SECRE lleva OK_aplicar a Finance");
+  setTicker("Ejecutar · SECRE lleva OK_aplicar a Finance");
   setHandoff("secre", "finance");
   setAgent("secre", { activity: "Sale con OK_aplicar hacia Finance", status: "ok" });
   flashPopup("secre", "Retenciones OK");
@@ -128,8 +128,8 @@ async function playRound(token) {
   const fin = beside("finance", -1);
   await arrive("secre", fin.x, fin.z, token, 1600);
   if (token.aborted) return;
-  setAgent("finance", { activity: "Recibe OK_aplicar · abre inFlow", status: "ok" });
-  flashPopup("finance", "inFlow: listo aplicar");
+  setAgent("finance", { activity: "Recibe OK_aplicar · abre el Sistema", status: "ok" });
+  flashPopup("finance", "Sistema: listo aplicar");
   await sleep(1100, token);
   if (token.aborted) return;
   goHome("secre");
@@ -137,7 +137,7 @@ async function playRound(token) {
   await sleep(900, token);
   if (token.aborted) return;
 
-  setTicker("Demo · COTE pasa la OC a Manuelito");
+  setTicker("Ejecutar · COTE pasa la OC a Manuelito");
   setHandoff("cote", "manuelito");
   setAgent("cote", { activity: "Pide aviso a Majo por la OC", status: "pending" });
   flashPopup("cote", "Gmail: OC pendiente");
@@ -171,9 +171,9 @@ async function playRound(token) {
   await sleep(700, token);
   if (token.aborted) return;
 
-  await runGathering(token, "Demo · stand-up en el núcleo", null);
+  await runGathering(token, "Ejecutar · stand-up en el núcleo", null);
   if (token.aborted) return;
-  setTicker("Demo · ciclo listo, se repite");
+  setTicker("Ejecutar · ciclo listo, se repite");
 }
 
 function clipLine(text, n = 140) {
@@ -200,12 +200,18 @@ async function runGathering(token, ticker, announcement) {
   });
   await sleep(2600, token);
   if (token.aborted) return;
-  AGENTS.forEach((a) => setAgent(a.id, { walking: false, meeting: true }, { silent: true }));
+  AGENTS.forEach((a) =>
+    setAgent(
+      a.id,
+      { walking: false, meeting: true, seated: a.id !== "chief", cue: "listen", cueAt: Date.now() },
+      { silent: true }
+    )
+  );
   await sleep(announcement ? 14000 : 3600, token);
   if (token.aborted) return;
   patchState({ announcement: null, meeting: false });
   AGENTS.forEach((a) => {
-    setAgent(a.id, { meeting: false }, { silent: true });
+    setAgent(a.id, { meeting: false, seated: false, cue: null }, { silent: true });
     const door = DOOR_QUEUE[a.id];
     if (door) walkTo(a.id, door.x, door.z);
   });
@@ -233,7 +239,7 @@ export async function runDemo() {
   const token = { aborted: false };
   demoAbort = token;
   resetAllHome();
-  setTicker("Demo · intensificando actividad");
+  setTicker("Ejecutar · intensificando actividad");
   while (!token.aborted) {
     await playRound(token);
     await sleep(1400, token);
@@ -242,6 +248,12 @@ export async function runDemo() {
 
 export function stopDirector() {
   clearTimers();
+}
+
+/** Stop the looped Demo / a meeting so a recorded run can take the floor. */
+export function interruptFloor() {
+  clearTimers();
+  patchState({ meeting: false, announcement: null });
 }
 
 export function bindFeedApi() {

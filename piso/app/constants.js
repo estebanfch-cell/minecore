@@ -13,7 +13,7 @@ export const AGENTS = [
   { id: "cote", name: "MINECORE COTE", tag: "COTE", role: "Costeo", popupKind: "gmail", grokId: "ca3b12a2-90aa-41c6-bdca-995384ed931d" },
   { id: "law", name: "MINECORE LAW", tag: "LAW", role: "Legal", popupKind: "pdf", grokId: "155d5508-70d9-4d5a-95e4-619da13d5a44" },
   { id: "secre", name: "MINECORE SECRE", tag: "SECRE", role: "Retenciones", popupKind: "sri", grokId: "3823e65f-b1cf-4561-ab73-8f0c00a5f0da" },
-  { id: "finance", name: "MINECORE FINANCE", tag: "FINANCE", role: "inFlow", popupKind: "inflow", grokId: "4c8dbbed-7889-4328-9121-d8a5883f2139" },
+  { id: "finance", name: "MINECORE FINANCE", tag: "FINANCE", role: "Sistema", popupKind: "inflow", grokId: "4c8dbbed-7889-4328-9121-d8a5883f2139" },
   { id: "marketing", name: "MINECORE MARKETING", tag: "MARKETING", role: "Liquidación", popupKind: "liq", grokId: "5ebf12eb-13d0-463b-85d0-2634b273de79" },
   { id: "stock-pilot", name: "MINECORE STOCK PILOT", tag: "STOCK", role: "Stock", popupKind: "stock", grokId: "b9f678f9-a153-4cc0-9046-16125fb928fb" },
   { id: "devops", name: "MINECORE DEVOPS", tag: "DEVOPS", role: "DevOps", popupKind: "gh", grokId: "3411110b-4ab8-4687-8df2-831b21505adf" },
@@ -29,7 +29,7 @@ export const POPUPS = {
   gmail: ["Gmail: OC pendiente", "Excel costeo semanal", "Aprobación Stratega", "Cruce packing list"],
   pdf: ["Oficio 74310716", "PDF no digitalizado", "Impacto Rumi +/−", "Expediente abierto"],
   sri: ["SRI portal…", "Retenciones OK", "Banco: espera OK_aplicar", "Kluane pagos"],
-  inflow: ["inFlow: listo aplicar", "Comprobante pendiente", "Saldo mapeo", "Stamp PAID"],
+  inflow: ["Sistema: listo aplicar", "Comprobante pendiente", "Saldo mapeo", "Stamp PAID"],
   liq: ["liq.minecore.ec", "Campaña liquidación", "Links deploy EFCH", "Flyer publicado"],
   gh: ["GitHub PR #42", "Admin App build", "CI passed", "Deploy verde"],
   stock: ["Stock sync OK", "Existencias Admin App", "Conteo de patio", "Alerta mínimo"],
@@ -44,7 +44,7 @@ export const POPUP_META = {
   gmail: { app: "Gmail", accent: "#ea4335", host: "mail.google.com" },
   pdf: { app: "PDF · Legal", accent: "#ffb020", host: "drive" },
   sri: { app: "SRI", accent: "#5b8cff", host: "srienlinea.sri.gob.ec" },
-  inflow: { app: "inFlow", accent: "#3ec6ff", host: "inflowinventory.com" },
+  inflow: { app: "Sistema", accent: "#e8ff00", host: "admin.minecore.ec" },
   liq: { app: "Liquidación", accent: "#b8ff3c", host: "liq.minecore.ec" },
   gh: { app: "GitHub", accent: "#e6edf3", host: "github.com" },
   stock: { app: "Stock", accent: "#ff8a3d", host: "admin app" },
@@ -60,7 +60,7 @@ const ZONE_META = {
   cote: { title: "COSTEO", detail: "Semanal", accent: "#e2b15a", lines: ["OC y packing"] },
   law: { title: "JUICIO RUMI", detail: "Legal", accent: "#d07bff", lines: ["Oficios PDF"] },
   secre: { title: "RETENCIONES", detail: "SRI", accent: "#6b93ff", lines: ["Portal SRI"] },
-  finance: { title: "INFLOW", detail: "CFO", accent: "#3ec6ff", lines: ["Stamp PAID"] },
+  finance: { title: "SISTEMA", detail: "CFO", accent: "#e8ff00", lines: ["Stamp PAID"] },
   marketing: { title: "LIQUIDACIÓN", detail: "Campañas", accent: "#b8ff3c", lines: ["liq.minecore.ec"] },
   "stock-pilot": { title: "STOCK PILOT", detail: "Existencias", accent: "#ff8a3d", lines: ["Sync de stock"] },
   devops: { title: "DEVOPS", detail: "CI", accent: "#9fb4ff", lines: ["PRs y deploys"] },
@@ -112,24 +112,25 @@ function roomLocal(lx, lz) {
   return localToWorld(HUB.x, HUB.z, lx, lz);
 }
 
-function spreadRow(ids, z, halfSpan) {
-  return ids.map((agent, i) => {
-    const t = ids.length === 1 ? 0.5 : i / (ids.length - 1);
-    const x = -halfSpan + t * halfSpan * 2;
-    return [agent.id, roomLocal(x, z)];
-  });
-}
+/** CHIEF stands at the head of the table and faces the room. */
+export const CHIEF_PODIUM = roomLocal(0, -0.86);
 
-/** CHIEF stands at the far wall and faces the room. */
-export const CHIEF_PODIUM = roomLocal(0, -0.66);
+/** Seats around the table, in room-local coordinates. CHIEF does not sit. */
+export const CHAIRS = [
+  { id: "devops", x: -0.86, z: -0.46 },
+  { id: "stock-pilot", x: -0.86, z: -0.08 },
+  { id: "finance", x: -0.86, z: 0.3 },
+  { id: "manuelito", x: 0.86, z: -0.46 },
+  { id: "law", x: 0.86, z: -0.08 },
+  { id: "secre", x: 0.86, z: 0.3 },
+  { id: "cote", x: -0.46, z: 0.7 },
+  { id: "marketing", x: 0, z: 0.7 },
+  { id: "comunicados", x: 0.46, z: 0.7 },
+  { id: "personal", x: -0.58, z: -0.72 },
+  { id: "pmv", x: 0.58, z: -0.72 },
+];
 
-const LISTENERS = AGENTS.filter((a) => a.id !== "chief");
-const BACK_ROW = LISTENERS.slice(0, 5);
-const FRONT_ROW = LISTENERS.slice(5);
-export const MEETING_SPOTS = Object.fromEntries([
-  ...spreadRow(BACK_ROW, -0.14, 0.62),
-  ...spreadRow(FRONT_ROW, 0.4, 0.7),
-]);
+export const MEETING_SPOTS = Object.fromEntries(CHAIRS.map((c) => [c.id, roomLocal(c.x, c.z)]));
 
 /** Queue just outside the door, then the director walks them in. */
 export const DOOR_QUEUE = Object.fromEntries(
@@ -167,9 +168,9 @@ export const DOSSIERS = {
     next: "Reintentar SRI y avisar Kluane a Finance.",
   },
   finance: {
-    title: "inFlow",
-    mission: "Aplica comprobantes en inFlow, mapea saldos y deja el stamp PAID cuando hay respaldo.",
-    next: "Aplicar el siguiente comprobante en inFlow.",
+    title: "Sistema",
+    mission: "Aplica comprobantes en el sistema Minecore, mapea saldos y deja el stamp PAID cuando hay respaldo.",
+    next: "Aplicar el siguiente comprobante en el sistema.",
   },
   marketing: {
     title: "Liquidación",
@@ -232,7 +233,7 @@ export const SEEDS = {
   chief: { activity: "En el núcleo · esperando instrucción", status: "ok", popup: "Jornada del piso" },
   law: { activity: "Oficio 74310716 — PDF no digitalizado", status: "pending", popup: "Oficio 74310716" },
   secre: { activity: "Retenciones OK · SRI caído · Kluane espera", status: "pending", popup: "SRI portal…" },
-  finance: { activity: "Listo para inFlow · sin comprobante nuevo", status: "pending", popup: "inFlow: listo aplicar" },
+  finance: { activity: "Listo en el Sistema · sin comprobante nuevo", status: "pending", popup: "Sistema: listo aplicar" },
   manuelito: { activity: "Hub WA · alerta retención enviada", status: "ok", popup: "Alerta retención enviada" },
   marketing: { activity: "Liq esperando deploy EFCH", status: "pending", popup: "liq.minecore.ec" },
   cote: { activity: "Semanal regenerado · Gmail aprobaciones", status: "pending", popup: "Gmail: OC pendiente" },
@@ -285,4 +286,10 @@ export function hubGate(id) {
 export function wantsMeeting(agentId, text) {
   if (agentId === "chief") return true;
   return /reuni[oó]n|anunci|convo[ck]/i.test(text || "");
+}
+
+/** Client-side recorded run. CHIEF text about the OC, Taluvira, or the orquesta. "demo" stays as a silent alias. */
+export function wantsDemoRun(agentId, text) {
+  if (agentId !== "chief") return false;
+  return /taluvira|orquesta|\boc\b|\bdemo\b/i.test(text || "");
 }
