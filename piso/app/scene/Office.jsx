@@ -57,6 +57,8 @@ export function Office({ agents, meeting, selectedId, handoff, demoRun, deskScre
           hot={hotIds.has(def.id)}
           index={index}
           screen={deskScreens?.[def.id]}
+          quiet={!!demoRun?.split && !hotIds.has(def.id)}
+          mark={!!demoRun?.split && hotIds.has(def.id)}
           onMonitor={() => openDeskPreview(def.id)}
         />
       ))}

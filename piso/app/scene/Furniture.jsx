@@ -119,7 +119,7 @@ function Props({ accent, flip }) {
   );
 }
 
-export function ZoneIsland({ zone, kind, hot, index, screen, onMonitor }) {
+export function ZoneIsland({ zone, kind, hot, index, screen, onMonitor, quiet, mark }) {
   const top = mixHex("#2a3548", zone.accent, 0.58);
   const side = mixHex("#1c2636", zone.accent, 0.42);
   const s = zone.scale || 1;
@@ -141,10 +141,16 @@ export function ZoneIsland({ zone, kind, hot, index, screen, onMonitor }) {
     <group position={[zone.position.x, 0, zone.position.z]} rotation={[0, YAW, 0]} scale={[s, 1, s]}>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]}>
         <circleGeometry args={[2.15, 24]} />
-        <meshBasicMaterial color="#000000" transparent opacity={0.35} />
+        <meshBasicMaterial color="#000000" transparent opacity={quiet ? 0.2 : 0.35} />
       </mesh>
+      {mark && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.09, 0]}>
+          <ringGeometry args={[2.12, 2.4, 48]} />
+          <meshBasicMaterial color={LIME} transparent opacity={0.92} toneMapped={false} depthWrite={false} />
+        </mesh>
+      )}
       <RoundedBox args={[SLAB_W + 0.08, 0.07, SLAB_D + 0.08]} radius={0.08} smoothness={3} position={[0, 0.05, 0]}>
-        <meshStandardMaterial color={zone.accent} emissive={zone.accent} emissiveIntensity={hot ? 0.85 : 0.45} />
+        <meshStandardMaterial color={zone.accent} emissive={zone.accent} emissiveIntensity={hot ? 0.95 : quiet ? 0.12 : 0.45} />
       </RoundedBox>
       <RoundedBox
         args={[SLAB_W, SLAB_H, SLAB_D]}
@@ -160,7 +166,7 @@ export function ZoneIsland({ zone, kind, hot, index, screen, onMonitor }) {
         <planeGeometry args={[SLAB_W - 0.18, SLAB_D - 0.18]} />
         <meshStandardMaterial color={top} roughness={0.78} metalness={0.08} />
       </mesh>
-      <pointLight position={[0, 1.6, 0]} color={zone.accent} intensity={hot ? 0.55 : 0.22} distance={3.4} />
+      <pointLight position={[0, 1.6, 0]} color={zone.accent} intensity={hot ? 0.7 : quiet ? 0.06 : 0.22} distance={3.4} />
       {furniture}
     </group>
   );

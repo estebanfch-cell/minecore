@@ -1595,7 +1595,23 @@ html { translate: no; }
   --split-gap: 10px;
 }
 #root.is-split .canvas-wrap {
-  visibility: hidden;
+  position: fixed;
+  z-index: 44;
+  top: calc(var(--top) + var(--split-inset) + 1px);
+  left: calc(var(--split-inset) + 1px);
+  right: auto;
+  bottom: calc(var(--split-inset) + 39px);
+  width: calc(var(--split-left) - var(--split-inset) - 2px);
+  border-radius: 16px 16px 0 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+#root.is-split .canvas-wrap::after {
+  background: radial-gradient(ellipse at 50% 46%, transparent 18%, rgba(4, 6, 10, 0.42) 58%, rgba(4, 6, 10, 0.84) 100%);
+}
+#root.is-split .split-portrait {
+  background: transparent;
+  pointer-events: none;
 }
 #root.is-split .work-window {
   left: calc(var(--split-left) + var(--split-gap));
@@ -1631,14 +1647,18 @@ html { translate: no; }
   display: block;
 }
 .split-portrait-name {
-  flex: 0 0 auto;
-  padding: 2px 8px 12px;
+  flex: 0 0 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  padding: 0 8px;
   text-align: center;
   font-size: 13px;
   font-weight: 800;
   letter-spacing: 0.06em;
   line-height: 1.15;
   color: #e7eef6;
+  background: #0c1118;
 }
 
 .handoff-caption {

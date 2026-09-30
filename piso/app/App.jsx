@@ -48,7 +48,7 @@ export default function App() {
             selectedId={state.selectedId}
             handoff={state.handoff}
             demoRun={state.demoRun}
-            deskScreens={state.deskScreens}
+            deskScreens={state.demoRun?.split ? {} : state.deskScreens}
             carry={state.carry}
             brief={state.brief}
           />

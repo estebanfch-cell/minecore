@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { AGENT_BY_ID, agentCallName } from "./constants.js";
-import { PortraitBot } from "./scene/PortraitBot.jsx";
 
 export function SplitBrief({ run }) {
   const [now, setNow] = useState(() => Date.now());
@@ -50,9 +49,7 @@ export function SplitPortrait({ run }) {
   const agent = AGENT_BY_ID[run.agentId];
   return (
     <aside className="split-portrait notranslate is-swap" translate="no" key={run.agentId} aria-label={agentCallName(agent)}>
-      <div className="split-portrait-stage">
-        <PortraitBot agentId={run.agentId} />
-      </div>
+      <div className="split-portrait-stage" />
       <p className="split-portrait-name">{agentCallName(agent)}</p>
     </aside>
   );
