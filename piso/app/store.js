@@ -59,6 +59,8 @@ function createInitial() {
     carry: null,
     chatOpen: false,
     chat: [{ id: "hello", role: "chief", text: "¿En qué te puedo ayudar hoy?", at: boot }],
+    noraOpen: false,
+    noraChat: [{ id: "nora-hello", role: "nora", text: "¿En qué te ayudo?", at: boot }],
     workWindow: null,
     assignments: [],
     brief: null,
@@ -182,11 +184,21 @@ export function pushNote(text, status = "pending") {
 }
 
 export function selectAgent(id) {
-  patchState({ selectedId: id || null, focusInstruction: id === "chief" });
+  if (id === "secre") {
+    if (!state.demoRun) {
+      patchState({ selectedId: null, noraOpen: true, focusInstruction: false, chatOpen: false });
+    }
+    return;
+  }
+  patchState({
+    selectedId: id || null,
+    focusInstruction: id === "chief",
+    noraOpen: id ? false : state.noraOpen,
+  });
 }
 
 export function openChiefInstruction() {
-  patchState({ chatOpen: true, selectedId: null, focusInstruction: true });
+  patchState({ chatOpen: true, selectedId: null, focusInstruction: true, noraOpen: false });
 }
 
 export function pushChat(partial) {
@@ -355,6 +367,8 @@ export function settleFloor() {
     carry: null,
     chatOpen: false,
     chat: [{ id: "hello", role: "chief", text: "¿En qué te puedo ayudar hoy?", at: now }],
+    noraOpen: false,
+    noraChat: [{ id: "nora-hello", role: "nora", text: "¿En qué te ayudo?", at: now }],
     workWindow: null,
     assignments: [],
     brief: null,

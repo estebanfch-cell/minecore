@@ -1,6 +1,7 @@
 import { AGENTS, CHIEF_PODIUM, DOOR_QUEUE, HOMES, MEETING_SPOTS, ZONE_BY_ID, beside, wantsDemoRun } from "./constants.js";
 import { CHIEF_ACK, CHIEF_ACK_MS, SCRIPTED_FILE, SCRIPTED_USER, announceRunStep, cancelChiefTalk, chiefSays, pushUserLine } from "./chatLog.js";
 import { postOrquesta } from "./instruct.js";
+import { haltSecreRun } from "./secreRun.js";
 import {
   getState,
   goHome,
@@ -105,6 +106,7 @@ function standDown() {
 }
 
 export function stopDemoRun() {
+  haltSecreRun();
   clearRunTimers();
   cancelChiefTalk();
   if (!getState().demoRun && !getState().carry && !getState().workWindow && !getState().meeting) return;
@@ -382,6 +384,7 @@ function showStep(index) {
 }
 
 export async function startDemoRun() {
+  haltSecreRun();
   runEpoch += 1;
   interruptFloor();
   clearRunTimers();
