@@ -169,6 +169,14 @@ function Sri({ elapsed }) {
           </div>
           {table && (
             <table className="sri-table">
+              <colgroup>
+                <col className="c-num" />
+                <col className="c-who" />
+                <col className="c-date" />
+                <col className="c-state" />
+                <col className="c-money" />
+                <col className="c-badge" />
+              </colgroup>
               <thead>
                 <tr>
                   <th>Número</th>
@@ -387,7 +395,15 @@ function Sale({ elapsed, phase }) {
               </ul>
             )}
             <div className="erp-scroll">
-              <table className="erp-table">
+              <table className="erp-table secre-fit">
+                <colgroup>
+                  <col className="c-sku" />
+                  <col className="c-name" />
+                  <col className="c-qty" />
+                  <col className="c-money" />
+                  <col className="c-qty" />
+                  <col className="c-money" />
+                </colgroup>
                 <thead>
                   <tr>
                     <th>SKU</th>
@@ -443,6 +459,15 @@ function Bank({ elapsed, fileName }) {
         {fileName ? <p className="bank-file">{fileName}</p> : null}
       </header>
       <table className="bank-table">
+        <colgroup>
+          <col className="c-concept" />
+          <col className="c-date" />
+          <col className="c-doc" />
+          <col className="c-tipo" />
+          <col className="c-office" />
+          <col className="c-money" />
+          <col className="c-money" />
+        </colgroup>
         <thead>
           <tr>
             <th>Concepto</th>
@@ -554,7 +579,14 @@ function Proposal() {
           <span>Antes de registrar</span>
         </div>
         <div className="erp-scroll">
-          <table className="erp-table">
+          <table className="erp-table secre-fit">
+            <colgroup>
+              <col className="c-who" />
+              <col className="c-ref" />
+              <col className="c-name" />
+              <col className="c-money" />
+              <col className="c-state" />
+            </colgroup>
             <thead>
               <tr>
                 <th>Crédito</th>
@@ -610,7 +642,16 @@ function Collect({ elapsed }) {
           {done && <b className="chip ok">Registrado</b>}
         </div>
         <div className="erp-scroll">
-          <table className="erp-table">
+          <table className="erp-table secre-fit secre-pays">
+            <colgroup>
+              <col className="c-fac" />
+              <col className="c-who" />
+              <col className="c-met" />
+              <col className="c-ref" />
+              <col className="c-money" />
+              <col className="c-money" />
+              <col className="c-state" />
+            </colgroup>
             <thead>
               <tr>
                 <th>Factura</th>

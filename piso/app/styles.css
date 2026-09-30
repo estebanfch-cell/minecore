@@ -1779,10 +1779,36 @@ html { translate: no; }
 .secre-stage.is-sheet { overflow: auto; background: #e7edf4; }
 .secre-stage.is-erp { overflow: hidden; background: #f5f5f0; }
 .secre-stage button, .secre-stage a { text-decoration: none; }
-.secre-stage .erp { height: 100%; grid-template-columns: 132px minmax(0, 1fr) 168px; }
-.secre-stage .erp-head h2 { font-size: 18px; }
-.secre-stage .erp-table th, .secre-stage .erp-table td { font-size: 12px; padding: 6px 8px; }
-.secre-stage .erp-table small { display: block; color: #6d8094; font-size: 10px; font-weight: 650; }
+.secre-stage .erp { height: 100%; grid-template-columns: 96px minmax(0, 1fr) 112px; }
+.secre-stage .erp-side { padding: 10px 6px; }
+.secre-stage .erp-side button { font-size: 12px; padding: 7px 8px; white-space: normal; text-align: left; }
+.secre-stage .erp-head h2 { font-size: 16px; }
+.secre-stage .erp-main { min-width: 0; }
+.secre-stage .erp-scroll { overflow-x: auto; }
+.secre-stage .erp-table { table-layout: fixed; width: 100%; }
+.secre-stage .erp-table th, .secre-stage .erp-table td {
+  font-size: 11px;
+  padding: 5px 4px;
+  overflow-wrap: anywhere;
+  vertical-align: top;
+}
+.secre-stage .erp-table .num { white-space: nowrap; overflow-wrap: normal; }
+.secre-stage .erp-table small { display: block; color: #6d8094; font-size: 10px; font-weight: 650; overflow-wrap: anywhere; }
+.secre-stage .chip { font-size: 10px; letter-spacing: 0; padding: 1px 5px; white-space: nowrap; }
+.secre-fit col.c-fac { width: 18%; }
+.secre-fit col.c-who { width: 14%; }
+.secre-fit col.c-met { width: 15%; }
+.secre-fit col.c-ref { width: 12%; }
+.secre-fit col.c-money { width: 12%; }
+.secre-fit col.c-state { width: 17%; }
+.secre-fit col.c-sku { width: 16%; }
+.secre-fit col.c-name { width: 36%; }
+.secre-fit col.c-qty { width: 8%; }
+.secre-pays col.c-who { width: 13%; }
+.secre-pays col.c-met { width: 16%; }
+.secre-pays col.c-ref { width: 11%; }
+.secre-pays col.c-money { width: 12%; }
+.secre-pays col.c-state { width: 18%; }
 .chip.mid { background: #fff3d6; color: #8a5a00; }
 
 .sri-app { min-height: 100%; display: flex; flex-direction: column; background: #f4f7fb; }
@@ -1837,8 +1863,14 @@ html { translate: no; }
   cursor: default;
 }
 .sri-login button.is-pressed, .sri-filters button.is-pressed { outline: 3px solid #b8ff3c; }
-.sri-table { width: calc(100% - 36px); margin: 0 18px 18px; border-collapse: collapse; background: #fff; }
-.sri-table th, .sri-table td { padding: 8px 10px; border-bottom: 1px solid #e1e8f0; font-size: 13px; text-align: left; }
+.sri-table { width: calc(100% - 24px); margin: 0 12px 16px; border-collapse: collapse; background: #fff; table-layout: fixed; }
+.sri-table col.c-num { width: 22%; }
+.sri-table col.c-who { width: 26%; }
+.sri-table col.c-date { width: 13%; }
+.sri-table col.c-state { width: 14%; }
+.sri-table col.c-money { width: 11%; }
+.sri-table col.c-badge { width: 14%; }
+.sri-table th, .sri-table td { padding: 6px 6px; border-bottom: 1px solid #e1e8f0; font-size: 12px; text-align: left; overflow-wrap: anywhere; vertical-align: top; }
 .sri-table th { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: #5d6d80; }
 .sri-table .num { text-align: right; font-variant-numeric: tabular-nums; }
 .sri-table tr.is-pending td { background: #f3ffd2; }
@@ -1888,8 +1920,14 @@ html { translate: no; }
 .bank-head strong { display: block; font-size: 15px; font-weight: 750; }
 .bank-head p { margin: 4px 0 0; color: #b7c3d1; font-size: 13px; }
 .bank-file { color: #d5e8a8; }
-.bank-table { width: 100%; border-collapse: collapse; }
-.bank-table th, .bank-table td { padding: 7px 8px; border-bottom: 1px solid #e1e8f0; font-size: 12px; text-align: left; vertical-align: top; }
+.bank-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.bank-table col.c-concept { width: 30%; }
+.bank-table col.c-date { width: 12%; }
+.bank-table col.c-doc { width: 12%; }
+.bank-table col.c-tipo { width: 6%; }
+.bank-table col.c-office { width: 18%; }
+.bank-table col.c-money { width: 11%; }
+.bank-table th, .bank-table td { padding: 6px 5px; border-bottom: 1px solid #e1e8f0; font-size: 11px; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
 .bank-table th { font-size: 10px; letter-spacing: 0.05em; text-transform: uppercase; color: #5d6d80; background: #f4f7f2; }
 .bank-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .bank-table tr.is-credit td { background: #e9ffc2; }
@@ -1934,7 +1972,7 @@ html { translate: no; }
 .secre-cards p { margin: 2px 0; font-size: 13px; }
 .secre-cards .match { font-weight: 750; }
 .secre-cards article.is-gap { background: #fffaf0; }
-.secre-wait { display: inline-block; margin-left: 6px; font-size: 11px; font-style: normal; color: #8a5a00; }
+.secre-wait { display: block; margin: 3px 0 0; font-size: 10px; font-style: normal; line-height: 1.25; color: #8a5a00; }
 .secre-result {
   max-width: 760px;
   margin: 48px auto;
