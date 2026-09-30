@@ -11,6 +11,17 @@ const WIDE_OFFSET = new THREE.Vector3(6.6, 8.1, 6.6);
 const ROOM_OFFSET = new THREE.Vector3(7.4, 3.7, 7.4);
 const HANDOFF_OFFSET = new THREE.Vector3(6.5, 7.7, 6.5);
 const WALK_OFFSET = new THREE.Vector3(4.6, 3.15, 4.6);
+const PORTRAIT_FOV = 40;
+const PORTRAIT_PHI = 0.74;
+const PORTRAIT_DIST = 13.9;
+const PORTRAIT_SIDE = 0.7;
+const portraitTheta = YAW + PORTRAIT_SIDE;
+const portraitSinPhi = Math.sin(PORTRAIT_PHI);
+const PORTRAIT_OFFSET = new THREE.Vector3(
+  PORTRAIT_DIST * portraitSinPhi * Math.sin(portraitTheta),
+  PORTRAIT_DIST * Math.cos(PORTRAIT_PHI),
+  PORTRAIT_DIST * portraitSinPhi * Math.cos(portraitTheta),
+);
 
 export function DemoCamera({ run, carry, agents }) {
   const { camera, controls } = useThree();
@@ -23,6 +34,7 @@ export function DemoCamera({ run, carry, agents }) {
     if (!controls?.target) return;
     const focus = run?.focus;
     const active = !!focus;
+    const split = !!run?.split;
     if (active) homing.current = true;
     else if (wasActive.current) homing.current = true;
     wasActive.current = active;
@@ -34,12 +46,14 @@ export function DemoCamera({ run, carry, agents }) {
 
     controls.minDistance = active || homing.current ? 5.2 : 14;
     controls.maxDistance = 42;
-    controls.minPolarAngle = 0.62;
+    const az = split ? 0.95 : 0.28;
+    controls.minPolarAngle = split ? 0.42 : 0.62;
     controls.maxPolarAngle = 1.22;
-    controls.minAzimuthAngle = YAW - 0.28;
-    controls.maxAzimuthAngle = YAW + 0.28;
-    if (Math.abs(camera.fov - 44) > 0.4) {
-      camera.fov = 44;
+    controls.minAzimuthAngle = YAW - az;
+    controls.maxAzimuthAngle = YAW + az;
+    const fov = split ? PORTRAIT_FOV : 44;
+    if (Math.abs(camera.fov - fov) > 0.4) {
+      camera.fov = fov;
       camera.updateProjectionMatrix();
     }
     const alpha = 1 - Math.exp((run?.walk ? -3.4 : -1.6) * dt);
@@ -48,10 +62,15 @@ export function DemoCamera({ run, carry, agents }) {
       : flying
         ? desired.current.set((from.x + to.x) / 2, 1.45, (from.z + to.z) / 2)
         : desired.current.set(focus.x, focus.y ?? 1.2, focus.z);
-    const goal = !active ? HOME_OFFSET : flying ? HANDOFF_OFFSET : run?.walk ? WALK_OFFSET : run?.room ? ROOM_OFFSET : run?.wide ? WIDE_OFFSET : FOCUS_OFFSET;
-    offset.current.copy(camera.position).sub(controls.target);
-    offset.current.lerp(goal, alpha);
-    controls.target.lerp(target, alpha);
+    const goal = !active ? HOME_OFFSET : flying ? HANDOFF_OFFSET : split ? PORTRAIT_OFFSET : run?.walk ? WALK_OFFSET : run?.room ? ROOM_OFFSET : run?.wide ? WIDE_OFFSET : FOCUS_OFFSET;
+    if (split) {
+      offset.current.copy(goal);
+      controls.target.copy(target);
+    } else {
+      offset.current.copy(camera.position).sub(controls.target);
+      offset.current.lerp(goal, alpha);
+      controls.target.lerp(target, alpha);
+    }
     camera.position.copy(controls.target).add(offset.current);
     controls.update();
 

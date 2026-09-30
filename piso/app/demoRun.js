@@ -357,7 +357,9 @@ function showStep(index) {
     briefing: step.brief || null,
     briefAt: Date.now(),
     focus: split
-      ? null
+      ? zone
+        ? { x: zone.position.x, y: 0.62, z: zone.position.z }
+        : { x: 0, y: 0.62, z: 0 }
       : walkFocus
         ? walkFocus
         : wide

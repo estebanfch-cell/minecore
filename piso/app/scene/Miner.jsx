@@ -2,6 +2,8 @@ import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { CHIEF_PODIUM, HOMES, HUB, LOOKS, PLATFORM_TOP, YAW } from "../constants.js";
 import { selectAgent } from "../store.js";
+import { deskAct, held } from "./deskFidget.js";
+import { Handset, Mug } from "./Furniture.jsx";
 import { getMarkTexture } from "./markTexture.js";
 
 function lerpAngle(a, b, t) {
@@ -11,7 +13,7 @@ function lerpAngle(a, b, t) {
   return a + d * t;
 }
 
-function Arm({ side, color, skin, armRef }) {
+function Arm({ side, color, skin, armRef, children }) {
   return (
     <group ref={armRef} position={[side * 0.2, 0.62, 0]}>
       <mesh position={[0, -0.13, 0]} castShadow>
@@ -22,11 +24,16 @@ function Arm({ side, color, skin, armRef }) {
         <sphereGeometry args={[0.042, 8, 8]} />
         <meshStandardMaterial color={skin} roughness={0.65} />
       </mesh>
+      {children}
     </group>
   );
 }
 
-export function MinerAvatar({ look, mark, legL, legR, armL, armR, chest }) {
+function mix(base, target, amount) {
+  return base + (target - base) * amount;
+}
+
+export function MinerAvatar({ look, mark, legL, legR, armL, armR, chest, phoneRef, mugRef }) {
   const pants = look.coverall ? look.shirt : "#1b2130";
   return (
     <group scale={1.12}>
@@ -69,8 +76,16 @@ export function MinerAvatar({ look, mark, legL, legR, armL, armR, chest }) {
           </mesh>
         )}
 
-        <Arm side={-1} color={look.shirt} skin={look.skin} armRef={armL} />
-        <Arm side={1} color={look.shirt} skin={look.skin} armRef={armR} />
+        <Arm side={-1} color={look.shirt} skin={look.skin} armRef={armL}>
+          <group ref={mugRef} position={[0, -0.3, 0.04]} visible={false}>
+            <Mug />
+          </group>
+        </Arm>
+        <Arm side={1} color={look.shirt} skin={look.skin} armRef={armR}>
+          <group ref={phoneRef} position={[0, -0.3, 0.05]} visible={false}>
+            <Handset />
+          </group>
+        </Arm>
 
         <group position={[0, 0.8, 0.02]}>
           <mesh position={[0, 0, 0.04]} castShadow>
@@ -138,6 +153,8 @@ export function Miner({ agent, selected }) {
   const legR = useRef();
   const armL = useRef();
   const armR = useRef();
+  const phoneRef = useRef();
+  const mugRef = useRef();
   const display = useRef({ x: agent.x, z: agent.z });
   const sit = useRef(1);
   const look = LOOKS[agent.id];
@@ -163,7 +180,6 @@ export function Miner({ agent, selected }) {
     const time = performance.now() / 1000;
     const walk = moving ? Math.sin(time * 7.2) : 0;
     const bend = inChair ? 0.5 : 1.15;
-    const type = atDesk && agent.typing ? Math.sin(time * 10) : 0;
     const cueAge = agent.cueAt ? (time - agent.cueAt / 1000) : 9;
     const nodding = agent.cue === "nod" && cueAge >= 0 && cueAge < 1.4;
     const speaking = agent.cue === "speak" && cueAge >= 0 && cueAge < 1.8;
@@ -184,20 +200,71 @@ export function Miner({ agent, selected }) {
     }
     node.rotation.y = lerpAngle(node.rotation.y, face, 1 - Math.exp(-6 * dt));
 
+    const fidget = atDesk ? deskAct(agent.id, time, !!agent.typing) : null;
+    const amount = fidget ? fidget.amount : 0;
+    const act = fidget ? fidget.name : "";
+    const typing = act === "type" ? Math.sin(time * 10) : act === "scroll" ? Math.sin(time * 7) * 0.45 : 0;
+    if (act === "phone" && amount > 0.45) held.phone.add(agent.id);
+    else held.phone.delete(agent.id);
+    if (act === "coffee" && amount > 0.45) held.mug.add(agent.id);
+    else held.mug.delete(agent.id);
+    if (phoneRef.current) phoneRef.current.visible = held.phone.has(agent.id);
+    if (mugRef.current) mugRef.current.visible = held.mug.has(agent.id);
+
     if (legL.current) legL.current.rotation.x = -bend * s + walk * (1 - s) * 0.45;
     if (legR.current) legR.current.rotation.x = -bend * s - walk * (1 - s) * 0.45;
     const hand = speaking ? Math.sin(Math.min(cueAge, 1) * Math.PI) * 0.55 : 0;
     const point = pointing ? 1.15 : 0;
-    if (armL.current) armL.current.rotation.x = -(inChair ? 0.45 : 1.02) * s + walk * (1 - s) * 0.4 + type * 0.22 * s;
+    const sitArm = -(inChair ? 0.45 : 1.02) * s;
+    let armLx = sitArm + walk * (1 - s) * 0.4 + typing * 0.2 * s;
+    let armRx = sitArm - walk * (1 - s) * 0.4 - typing * 0.2 * s - hand - point;
+    let armLz = 0;
+    let armRz = pointing ? -0.35 : 0;
+    let armLy = 0;
+    let armRy = 0;
+    if (act === "phone") {
+      armRx = mix(armRx, -0.38, amount);
+      armRz = mix(armRz, -0.72, amount);
+      armRy = mix(armRy, 0.35, amount);
+    } else if (act === "coffee") {
+      armLx = mix(armLx, -0.42, amount);
+      armLz = mix(armLz, 0.68, amount);
+      armLy = mix(armLy, -0.3, amount);
+    } else if (act === "stretch") {
+      armLx = mix(armLx, -0.22, amount);
+      armRx = mix(armRx, -0.22, amount);
+      armLz = mix(armLz, 0.42, amount);
+      armRz = mix(armRz, -0.42, amount);
+    } else if (act === "scroll") {
+      armRx = mix(armRx, -0.72 + Math.sin(time * 6) * 0.08, amount);
+      armRy = mix(armRy, 0.9, amount);
+    }
+    if (armL.current) {
+      armL.current.rotation.x = armLx;
+      armL.current.rotation.y = armLy;
+      armL.current.rotation.z = armLz;
+    }
     if (armR.current) {
-      armR.current.rotation.x = -(inChair ? 0.45 : 1.02) * s - walk * (1 - s) * 0.4 - type * 0.22 * s - hand - point;
-      armR.current.rotation.z = pointing ? -0.35 : 0;
+      armR.current.rotation.x = armRx;
+      armR.current.rotation.y = armRy;
+      armR.current.rotation.z = armRz;
     }
     if (chest.current) {
-      chest.current.position.y = (inChair ? -0.08 : -0.26) * s;
+      let chestY = (inChair ? -0.08 : -0.26) * s;
+      let chestX = 0.08 * s;
       const nod = nodding ? Math.sin(cueAge * 9) * 0.16 * (1 - cueAge / 1.3) : 0;
       const look = inChair ? Math.sin(time * 0.45 + home.x) * 0.07 : 0;
-      chest.current.rotation.x = 0.08 * s + nod;
+      if (atDesk) chestY += Math.sin(time * 1.25 + home.x) * 0.01;
+      if (act === "stretch") {
+        chestX = mix(chestX, -0.28, amount);
+        chestY = mix(chestY, chestY + 0.05, amount);
+      } else if (act === "nod" || act === "phone") {
+        chestX += Math.sin(time * 7.5) * 0.1 * amount;
+      } else if (act === "coffee") {
+        chestX += 0.06 * amount;
+      }
+      chest.current.position.y = chestY;
+      chest.current.rotation.x = chestX + nod;
       chest.current.rotation.y = look;
       chest.current.rotation.z = 0;
     }
@@ -223,7 +290,17 @@ export function Miner({ agent, selected }) {
         />
       </mesh>
 
-      <MinerAvatar look={look} mark={mark} legL={legL} legR={legR} armL={armL} armR={armR} chest={chest} />
+      <MinerAvatar
+        look={look}
+        mark={mark}
+        legL={legL}
+        legR={legR}
+        armL={armL}
+        armR={armR}
+        chest={chest}
+        phoneRef={phoneRef}
+        mugRef={mugRef}
+      />
 
       <mesh
         position={[0, 0.55, 0]}

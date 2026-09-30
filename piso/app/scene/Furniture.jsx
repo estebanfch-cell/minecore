@@ -1,7 +1,10 @@
+import { useRef } from "react";
+import { useFrame } from "@react-three/fiber";
 import { RoundedBox } from "@react-three/drei";
 import {
   DESK_LOCAL_Z,
   HUB,
+  ISLAND_SCALE,
   LIME,
   PLATFORM_TOP,
   POPUP_META,
@@ -12,11 +15,67 @@ import {
   ZONES,
   mixHex,
 } from "../constants.js";
+import { held } from "./deskFidget.js";
 import { MonitorScreen } from "./MonitorScreen.jsx";
 
 export const SLAB_W = 3.45;
 export const SLAB_D = 2.55;
 export const SLAB_H = 0.28;
+
+export function Mug() {
+  return (
+    <group>
+      <mesh position={[0, 0.028, 0]} castShadow>
+        <cylinderGeometry args={[0.03, 0.026, 0.05, 12]} />
+        <meshStandardMaterial color="#f3efe6" roughness={0.42} />
+      </mesh>
+      <mesh position={[0.034, 0.03, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.014, 0.0045, 6, 10]} />
+        <meshStandardMaterial color="#f3efe6" roughness={0.42} />
+      </mesh>
+      <mesh position={[0, 0.052, 0]}>
+        <cylinderGeometry args={[0.024, 0.024, 0.006, 10]} />
+        <meshStandardMaterial color="#6a3d28" roughness={0.55} />
+      </mesh>
+    </group>
+  );
+}
+
+export function Handset() {
+  return (
+    <group rotation={[0.5, 0, Math.PI / 2]}>
+      <mesh castShadow>
+        <capsuleGeometry args={[0.011, 0.05, 3, 6]} />
+        <meshStandardMaterial color="#2a3548" roughness={0.38} metalness={0.35} />
+      </mesh>
+      <mesh position={[0.028, 0, 0]}>
+        <sphereGeometry args={[0.013, 8, 6]} />
+        <meshStandardMaterial color="#1a2230" metalness={0.4} roughness={0.35} />
+      </mesh>
+    </group>
+  );
+}
+
+function DeskLife({ id }) {
+  const mug = useRef();
+  const phone = useRef();
+  useFrame(() => {
+    if (mug.current) mug.current.visible = !held.mug.has(id);
+    if (phone.current) phone.current.visible = !held.phone.has(id);
+  });
+  const inv = 1 / ISLAND_SCALE;
+  const deskZ = DESK_LOCAL_Z * ISLAND_SCALE;
+  return (
+    <group scale={[inv, 1, inv]}>
+      <group ref={mug} position={[0.2, 0.5, deskZ + 0.05]}>
+        <Mug />
+      </group>
+      <group ref={phone} position={[-0.18, 0.49, deskZ - 0.02]}>
+        <Handset />
+      </group>
+    </group>
+  );
+}
 
 export function Desk({ kind, accent, screen, onMonitor }) {
   const meta = POPUP_META[kind] || { accent };
@@ -119,14 +178,15 @@ function Props({ accent, flip }) {
   );
 }
 
-export function ZoneIsland({ zone, kind, hot, index, screen, onMonitor }) {
+export function ZoneIsland({ zone, kind, hot, index, screen, onMonitor, quiet, mark }) {
   const top = mixHex("#2a3548", zone.accent, 0.58);
   const side = mixHex("#1c2636", zone.accent, 0.42);
   const s = zone.scale || 1;
   const furniture = (
     <group position={[0, PLATFORM_TOP, 0]}>
       <Chair />
-        <Desk kind={kind} accent={zone.accent} screen={screen} onMonitor={onMonitor} />
+      <Desk kind={kind} accent={zone.accent} screen={screen} onMonitor={onMonitor} />
+      <DeskLife id={zone.id} />
       <Props accent={zone.accent} flip={index % 2 === 0} />
     </group>
   );
@@ -141,10 +201,16 @@ export function ZoneIsland({ zone, kind, hot, index, screen, onMonitor }) {
     <group position={[zone.position.x, 0, zone.position.z]} rotation={[0, YAW, 0]} scale={[s, 1, s]}>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]}>
         <circleGeometry args={[2.15, 24]} />
-        <meshBasicMaterial color="#000000" transparent opacity={0.35} />
+        <meshBasicMaterial color="#000000" transparent opacity={quiet ? 0.2 : 0.35} />
       </mesh>
+      {mark && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.09, 0]}>
+          <ringGeometry args={[2.12, 2.4, 48]} />
+          <meshBasicMaterial color={LIME} transparent opacity={0.92} toneMapped={false} depthWrite={false} />
+        </mesh>
+      )}
       <RoundedBox args={[SLAB_W + 0.08, 0.07, SLAB_D + 0.08]} radius={0.08} smoothness={3} position={[0, 0.05, 0]}>
-        <meshStandardMaterial color={zone.accent} emissive={zone.accent} emissiveIntensity={hot ? 0.85 : 0.45} />
+        <meshStandardMaterial color={zone.accent} emissive={zone.accent} emissiveIntensity={hot ? 0.95 : quiet ? 0.34 : 0.45} />
       </RoundedBox>
       <RoundedBox
         args={[SLAB_W, SLAB_H, SLAB_D]}
@@ -160,7 +226,7 @@ export function ZoneIsland({ zone, kind, hot, index, screen, onMonitor }) {
         <planeGeometry args={[SLAB_W - 0.18, SLAB_D - 0.18]} />
         <meshStandardMaterial color={top} roughness={0.78} metalness={0.08} />
       </mesh>
-      <pointLight position={[0, 1.6, 0]} color={zone.accent} intensity={hot ? 0.55 : 0.22} distance={3.4} />
+      <pointLight position={[0, 1.6, 0]} color={zone.accent} intensity={hot ? 0.7 : quiet ? 0.18 : 0.22} distance={3.4} />
       {furniture}
     </group>
   );
