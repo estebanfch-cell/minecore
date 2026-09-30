@@ -14,11 +14,11 @@ import {
 } from "../constants.js";
 import { MonitorScreen } from "./MonitorScreen.jsx";
 
-const SLAB_W = 3.45;
+export const SLAB_W = 3.45;
 export const SLAB_D = 2.55;
 export const SLAB_H = 0.28;
 
-function Desk({ kind, accent, screen, onMonitor }) {
+export function Desk({ kind, accent, screen, onMonitor }) {
   const meta = POPUP_META[kind] || { accent };
   return (
     <group position={[0, 0, DESK_LOCAL_Z]}>
@@ -78,7 +78,7 @@ function Desk({ kind, accent, screen, onMonitor }) {
   );
 }
 
-function Chair() {
+export function Chair() {
   return (
     <group position={[0, 0, SEAT_LOCAL_Z]}>
       <mesh position={[0, 0.28, 0]} castShadow>

@@ -1,7 +1,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { Dossier } from "./Dossier.jsx";
 import { TaskFeed } from "./TaskFeed.jsx";
-import { AGENTS } from "./constants.js";
+import { AGENT_BY_ID, AGENTS, agentCallName } from "./constants.js";
 import { ChiefChat } from "./ChiefChat.jsx";
 import { SplitBrief, SplitPortrait } from "./SplitBrief.jsx";
 import { WorkWindow } from "./WorkWindow.jsx";
@@ -92,6 +92,12 @@ export function Hud() {
       <TaskFeed />
       <SplitPortrait run={state.demoRun} />
       <SplitBrief run={state.demoRun} />
+      {state.demoRun?.handoffLine && (
+        <div className="handoff-caption notranslate" translate="no" role="status">
+          <strong>{agentCallName(AGENT_BY_ID[state.demoRun.agentId])}</strong>
+          <p>{state.demoRun.handoffLine}</p>
+        </div>
+      )}
 
       {!selected && !state.announcement && !state.chatOpen && !state.demoRun && (
         <div className="hint notranslate">Toca CHIEF para anunciar a la sala</div>
@@ -104,7 +110,6 @@ export function Hud() {
         </div>
       )}
 
-      {state.demoRun && <ChiefChat runDock />}
       {state.chatOpen && !state.demoRun && state.selectedId !== "chief" && (
         <ChiefChat focus={!!state.focusInstruction} />
       )}

@@ -10,6 +10,7 @@ const FOCUS_OFFSET = new THREE.Vector3(3.55, 4.15, 3.55);
 const WIDE_OFFSET = new THREE.Vector3(6.6, 8.1, 6.6);
 const ROOM_OFFSET = new THREE.Vector3(7.4, 3.7, 7.4);
 const HANDOFF_OFFSET = new THREE.Vector3(6.5, 7.7, 6.5);
+const WALK_OFFSET = new THREE.Vector3(4.6, 3.15, 4.6);
 
 export function DemoCamera({ run, carry, agents }) {
   const { camera, controls } = useThree();
@@ -41,13 +42,13 @@ export function DemoCamera({ run, carry, agents }) {
       camera.fov = 44;
       camera.updateProjectionMatrix();
     }
-    const alpha = 1 - Math.exp(-1.6 * dt);
+    const alpha = 1 - Math.exp((run?.walk ? -3.4 : -1.6) * dt);
     const target = !active
       ? HOME_TARGET
       : flying
         ? desired.current.set((from.x + to.x) / 2, 1.45, (from.z + to.z) / 2)
         : desired.current.set(focus.x, focus.y ?? 1.2, focus.z);
-    const goal = !active ? HOME_OFFSET : flying ? HANDOFF_OFFSET : run?.room ? ROOM_OFFSET : run?.wide ? WIDE_OFFSET : FOCUS_OFFSET;
+    const goal = !active ? HOME_OFFSET : flying ? HANDOFF_OFFSET : run?.walk ? WALK_OFFSET : run?.room ? ROOM_OFFSET : run?.wide ? WIDE_OFFSET : FOCUS_OFFSET;
     offset.current.copy(camera.position).sub(controls.target);
     offset.current.lerp(goal, alpha);
     controls.target.lerp(target, alpha);

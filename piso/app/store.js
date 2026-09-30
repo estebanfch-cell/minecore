@@ -57,7 +57,7 @@ function createInitial() {
     deskScreens: {},
     previewDoc: null,
     carry: null,
-    chatOpen: true,
+    chatOpen: false,
     chat: [{ id: "hello", role: "chief", text: "¿En qué te puedo ayudar hoy?", at: boot }],
     workWindow: null,
     assignments: [],
@@ -191,7 +191,7 @@ export function openChiefInstruction() {
 
 export function pushChat(partial) {
   const msg = { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, at: Date.now(), ...partial };
-  patchState({ chat: [...(getState().chat || []), msg], chatOpen: true });
+  patchState({ chat: [...(getState().chat || []), msg] });
   return msg;
 }
 
@@ -353,7 +353,7 @@ export function settleFloor() {
     deskScreens: {},
     previewDoc: null,
     carry: null,
-    chatOpen: true,
+    chatOpen: false,
     chat: [{ id: "hello", role: "chief", text: "¿En qué te puedo ayudar hoy?", at: now }],
     workWindow: null,
     assignments: [],
