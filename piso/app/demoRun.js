@@ -1,4 +1,4 @@
-import { AGENTS, CHIEF_PODIUM, DOOR_QUEUE, MEETING_SPOTS, ZONE_BY_ID, wantsDemoRun } from "./constants.js";
+import { AGENTS, CHIEF_PODIUM, DOOR_QUEUE, HOMES, MEETING_SPOTS, ZONE_BY_ID, beside, wantsDemoRun } from "./constants.js";
 import { CHIEF_ACK, CHIEF_ACK_MS, SCRIPTED_FILE, SCRIPTED_USER, announceRunStep, cancelChiefTalk, chiefSays, pushUserLine } from "./chatLog.js";
 import { postOrquesta } from "./instruct.js";
 import {
@@ -166,7 +166,7 @@ function seatMeeting(step) {
       if (spot) walkTo(a.id, spot.x, spot.z);
       setAgent(a.id, { meeting: true }, { silent: true });
     });
-  }, 3000);
+  }, 1500);
   later(() => {
     AGENTS.forEach((a) => {
       setAgent(
@@ -181,9 +181,9 @@ function seatMeeting(step) {
         { silent: true }
       );
     });
-  }, 6800);
+  }, 3400);
   (step.assignments || []).forEach((item, index) => {
-    const at = 7600 + index * 2000;
+    const at = item.at ?? 4000 + index * 1400;
     later(() => {
       const spot = MEETING_SPOTS[item.agent];
       setAgent(
@@ -213,6 +213,19 @@ function seatMeeting(step) {
       setAgent("chief", { cue: null, meeting: true, seated: false }, { silent: true });
     }, at + 1900);
   });
+  later(() => {
+    const spot = MEETING_SPOTS.manuelito;
+    setAgent(
+      "chief",
+      { cue: "point", cueAt: Date.now(), cueX: spot?.x, cueZ: spot?.z, meeting: true, seated: false },
+      { silent: true }
+    );
+    setAgent("manuelito", { cue: "nod", cueAt: Date.now(), seated: true, meeting: true }, { silent: true });
+  }, 11000);
+  later(() => {
+    setAgent("devops", { cue: "nod", cueAt: Date.now(), seated: true, meeting: true }, { silent: true });
+    setAgent("finance", { cue: "nod", cueAt: Date.now(), seated: true, meeting: true }, { silent: true });
+  }, 11800);
 }
 
 function openDeskWindow(step) {
@@ -243,7 +256,8 @@ function showStep(index) {
   frameTimer = null;
   const zone = ZONE_BY_ID[step.agent];
   const phase = step.phase || "desk";
-  const wide = phase === "analysis" || phase === "meeting";
+  const wide = phase === "meeting";
+  const split = phase === "desk" || phase === "analysis";
   const frames = step.window?.frames?.length
     ? step.window.frames
     : step.frames?.length
@@ -256,20 +270,17 @@ function showStep(index) {
   setHandoff(null, null);
   patchState({ carry: null });
   const prev = index > 0 ? steps[index - 1] : null;
-  if (prev?.agent === "finance" && step.agent === "stock-pilot") {
-    setHandoff("finance", "stock-pilot");
-    patchState({
-      carry: {
-        from: "finance",
-        to: "stock-pilot",
-        image: demoAsset("previews", "FINANZAS - MCOR-PO-000379.png"),
-        t0: performance.now(),
-      },
-    });
+
+  if (phase === "handoff") {
+    patchState({ workWindow: null, previewDoc: null });
+    const spot = beside(step.to, 1);
+    setAgent(step.from, { typing: false, meeting: false, seated: false }, { silent: true });
+    walkTo(step.from, spot.x, spot.z);
+    setAgent(step.to, { typing: true }, { silent: true });
+    const backAt = Math.max(1800, (step.stepMs || 4400) - 1500);
     later(() => {
-      setHandoff(null, null);
-      patchState({ carry: null });
-    }, 2900);
+      if (getState().demoRun?.walk) goHome(step.from);
+    }, backAt);
   }
 
   if (phase === "analysis") {
@@ -291,7 +302,7 @@ function showStep(index) {
   } else if (phase === "meeting") {
     minimizeWindow();
     seatMeeting(step);
-  } else {
+  } else if (phase !== "handoff") {
     const fromDesk = prev && (prev.phase || "desk") === "desk";
     if (!fromDesk) minimizeWindow();
     if (frames.length) {
@@ -318,10 +329,17 @@ function showStep(index) {
     openDeskWindow(step);
   }
 
-  setAgent(step.agent, { activity: step.caption, status: "ok", typing: phase === "desk" });
+  setAgent(step.agent, { activity: step.caption, status: "ok", typing: phase === "desk" || phase === "analysis" });
   setTicker(step.banner || step.caption);
 
-  const split = phase === "desk";
+  const walkFocus =
+    phase === "handoff" && HOMES[step.from] && HOMES[step.to]
+      ? {
+          x: (HOMES[step.from].x + HOMES[step.to].x) / 2,
+          y: 1.05,
+          z: (HOMES[step.from].z + HOMES[step.to].z) / 2,
+        }
+      : null;
   const run = {
     id: script.id,
     title: script.title,
@@ -334,17 +352,21 @@ function showStep(index) {
     wide,
     room: phase === "meeting",
     split,
+    walk: phase === "handoff",
+    handoffLine: phase === "handoff" ? "Listo, te toca" : "",
     briefing: step.brief || null,
     briefAt: Date.now(),
     focus: split
       ? null
-      : wide
-        ? { x: 0.1, y: 1.15, z: 0.15 }
-        : zone
-          ? { x: zone.position.x - 0.22, y: 1.35, z: zone.position.z + 0.24 }
-          : { x: 0, y: 0.45, z: 0 },
+      : walkFocus
+        ? walkFocus
+        : wide
+          ? { x: 0.1, y: 1.15, z: 0.15 }
+          : zone
+            ? { x: zone.position.x - 0.22, y: 1.35, z: zone.position.z + 0.24 }
+            : { x: 0, y: 0.45, z: 0 },
   };
-  patchState({ demoRun: run, chatOpen: true });
+  patchState({ demoRun: run });
   const last = index === steps.length - 1;
   announceRunStep(step, { last, closing: script.closing || "" });
 
@@ -373,7 +395,7 @@ export async function startDemoRun() {
     deskScreens: {},
     previewDoc: null,
     carry: null,
-    chatOpen: true,
+    chatOpen: false,
     meeting: false,
     workWindow: null,
     assignments: [],
@@ -512,7 +534,7 @@ loadDemoScript().catch(() => {});
 export function beginScriptedExchange() {
   cancelChiefTalk();
   const hello = (getState().chat || []).find((msg) => msg.id === "hello");
-  patchState({ chat: hello ? [hello] : [], chatOpen: true });
+  patchState({ chat: hello ? [hello] : [], chatOpen: false });
   pushUserLine(SCRIPTED_USER, SCRIPTED_FILE);
   ackAndStartOrquesta({ text: `${SCRIPTED_USER} · ${SCRIPTED_FILE}` });
 }

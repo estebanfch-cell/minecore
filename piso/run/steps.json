@@ -27,6 +27,16 @@
           "→ MANUELITO: enviar resumen completo",
           "Convocando reunión…"
         ]
+      },
+      "brief": {
+        "role": "Orquestador",
+        "purpose": "Lee la orden de Taluvira y reparte el trabajo.",
+        "steps": [
+          { "text": "Leyendo la orden de compra", "at": 0 },
+          { "text": "Cruzando con la cotización", "at": 7000 },
+          { "text": "Armando el plan del piso", "at": 15000 },
+          { "text": "Convocando la reunión", "at": 23000 }
+        ]
       }
     },
     {
@@ -34,13 +44,13 @@
       "phase": "meeting",
       "agent": "chief",
       "caption": "Reunión en la sala",
-      "stepMs": 26000,
+      "stepMs": 12800,
       "chat": "Convocando reunión…",
       "assignments": [
-        { "agent": "devops", "card": "DevOps: convertir cotización en orden de venta y dividir", "at": 7600 },
-        { "agent": "finance", "card": "Finanzas: analizar historial y alta rotación", "at": 9600 },
-        { "agent": "stock-pilot", "card": "Stock Pilot: armar orden de compra a Boyles", "at": 11600 },
-        { "agent": "manuelito", "card": "Manuelito: notificar al cliente", "at": 13600 }
+        { "agent": "devops", "card": "DevOps: convertir cotización en orden de venta y dividir", "at": 4000 },
+        { "agent": "finance", "card": "Finanzas: analizar historial y alta rotación", "at": 5600 },
+        { "agent": "stock-pilot", "card": "Stock Pilot: armar orden de compra a Boyles", "at": 7200 },
+        { "agent": "manuelito", "card": "Manuelito: notificar al cliente", "at": 8800 }
       ]
     },
     {
@@ -82,6 +92,15 @@
       }
     },
     {
+      "id": "handoff-devops",
+      "phase": "handoff",
+      "agent": "devops",
+      "from": "devops",
+      "to": "finance",
+      "caption": "Listo, te toca",
+      "stepMs": 4400
+    },
+    {
       "id": "finance",
       "phase": "desk",
       "agent": "finance",
@@ -119,6 +138,15 @@
       }
     },
     {
+      "id": "handoff-finance",
+      "phase": "handoff",
+      "agent": "finance",
+      "from": "finance",
+      "to": "stock-pilot",
+      "caption": "Listo, te toca",
+      "stepMs": 4400
+    },
+    {
       "id": "stock",
       "phase": "desk",
       "agent": "stock-pilot",
@@ -150,6 +178,15 @@
           { "text": "Cerrando el pedido", "at": 25000 }
         ]
       }
+    },
+    {
+      "id": "handoff-stock",
+      "phase": "handoff",
+      "agent": "stock-pilot",
+      "from": "stock-pilot",
+      "to": "manuelito",
+      "caption": "Listo, te toca",
+      "stepMs": 4400
     },
     {
       "id": "resumen",
