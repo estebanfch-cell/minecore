@@ -102,6 +102,7 @@ function present(ep, beat, index, count, briefing, briefAt, fileName) {
       system: !!beat.system,
       fileName: fileName || "",
       note: beat.note || "",
+      since: Date.now(),
       minimizing: false,
       log: [],
       frames: [],

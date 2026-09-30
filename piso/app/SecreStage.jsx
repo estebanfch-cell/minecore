@@ -53,24 +53,13 @@ function typed(full, elapsed, start, dur) {
   return full.slice(0, Math.ceil(p * full.length));
 }
 
-function useElapsed(key) {
-  const [elapsed, setElapsed] = useState(0);
+function useTicker() {
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    const start = performance.now();
-    let frame = 0;
-    let last = -1;
-    const loop = (now) => {
-      const next = now - start;
-      if (next - last > 40) {
-        last = next;
-        setElapsed(next);
-      }
-      frame = requestAnimationFrame(loop);
-    };
-    frame = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(frame);
-  }, [key]);
-  return elapsed;
+    const timer = window.setInterval(() => setNow(Date.now()), 50);
+    return () => window.clearInterval(timer);
+  }, []);
+  return now;
 }
 
 function readyFor(screen, elapsed) {
@@ -677,8 +666,9 @@ function Summary({ note }) {
 
 const ERP_SCREENS = new Set(["so", "checks", "pay", "save", "match", "proposal", "collect"]);
 
-export function SecreStage({ screen, fileName, note }) {
-  const elapsed = useElapsed(screen);
+export function SecreStage({ screen, fileName, note, since }) {
+  const now = useTicker();
+  const elapsed = Math.max(0, now - (since || now));
   const ready = readyFor(screen, elapsed);
   return (
     <div

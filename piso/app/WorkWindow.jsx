@@ -133,7 +133,7 @@ export function WorkWindow({ spec, sourcePdf }) {
       </header>
       <div className={`work-body ${spec.erp || spec.secre ? "work-body-erp" : ""}`}>
         {spec.secre ? (
-          <SecreStage screen={spec.secre} fileName={spec.fileName} note={spec.note} />
+          <SecreStage screen={spec.secre} fileName={spec.fileName} note={spec.note} since={spec.since} />
         ) : spec.erp ? (
           <ErpStage phase={spec.erp} />
         ) : spec.mode === "finance" ? (
