@@ -79,6 +79,21 @@ export function Office({ agents, meeting, selectedId, handoff, demoRun, deskScre
 
       <DocCarry carry={carry} agents={agents} />
       <InstructCue brief={brief} agents={agents} />
+      {demoRun?.split && demoRun.focus && (
+        <group>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[demoRun.focus.x, -0.02, demoRun.focus.z]}>
+            <circleGeometry args={[12, 48]} />
+            <meshStandardMaterial color="#1a2836" roughness={0.92} metalness={0.04} />
+          </mesh>
+          <pointLight
+            position={[demoRun.focus.x, 3.1, demoRun.focus.z]}
+            intensity={5}
+            distance={11}
+            decay={2}
+            color="#d7e4f4"
+          />
+        </group>
+      )}
       <DemoCamera run={demoRun} carry={carry} agents={agents} />
 
       <ContactShadows position={[0, 0, 0]} opacity={0.38} scale={30} blur={2.4} far={5} color="#000" />
