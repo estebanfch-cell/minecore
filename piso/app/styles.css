@@ -1607,7 +1607,7 @@ html { translate: no; }
   pointer-events: none;
 }
 #root.is-split .canvas-wrap::after {
-  background: radial-gradient(ellipse at 50% 46%, transparent 18%, rgba(4, 6, 10, 0.42) 58%, rgba(4, 6, 10, 0.84) 100%);
+  background: radial-gradient(ellipse at 50% 48%, transparent 34%, rgba(4, 6, 10, 0.22) 68%, rgba(4, 6, 10, 0.55) 100%);
 }
 #root.is-split .split-portrait {
   background: transparent;

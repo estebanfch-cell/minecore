@@ -358,8 +358,8 @@ function showStep(index) {
     briefAt: Date.now(),
     focus: split
       ? zone
-        ? { x: zone.position.x, y: 0.68, z: zone.position.z }
-        : { x: 0, y: 0.68, z: 0 }
+        ? { x: zone.position.x, y: 0.85, z: zone.position.z }
+        : { x: 0, y: 0.85, z: 0 }
       : walkFocus
         ? walkFocus
         : wide

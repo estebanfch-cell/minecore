@@ -150,7 +150,7 @@ export function ZoneIsland({ zone, kind, hot, index, screen, onMonitor, quiet, m
         </mesh>
       )}
       <RoundedBox args={[SLAB_W + 0.08, 0.07, SLAB_D + 0.08]} radius={0.08} smoothness={3} position={[0, 0.05, 0]}>
-        <meshStandardMaterial color={zone.accent} emissive={zone.accent} emissiveIntensity={hot ? 0.95 : quiet ? 0.12 : 0.45} />
+        <meshStandardMaterial color={zone.accent} emissive={zone.accent} emissiveIntensity={hot ? 0.95 : quiet ? 0.34 : 0.45} />
       </RoundedBox>
       <RoundedBox
         args={[SLAB_W, SLAB_H, SLAB_D]}
@@ -166,7 +166,7 @@ export function ZoneIsland({ zone, kind, hot, index, screen, onMonitor, quiet, m
         <planeGeometry args={[SLAB_W - 0.18, SLAB_D - 0.18]} />
         <meshStandardMaterial color={top} roughness={0.78} metalness={0.08} />
       </mesh>
-      <pointLight position={[0, 1.6, 0]} color={zone.accent} intensity={hot ? 0.7 : quiet ? 0.06 : 0.22} distance={3.4} />
+      <pointLight position={[0, 1.6, 0]} color={zone.accent} intensity={hot ? 0.7 : quiet ? 0.18 : 0.22} distance={3.4} />
       {furniture}
     </group>
   );
