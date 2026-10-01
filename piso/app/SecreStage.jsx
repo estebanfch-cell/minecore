@@ -1,14 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { demoAsset } from "./demoRun.js";
+import { anchorSecreVideo, SRI_CUES } from "./secreRun.js";
 
-const ACCESS = "3009202607179278049700110019990000123451234567819";
-const QUERY = "001-001-000001166";
-
-const SRI_ROWS = [
-  ["001-002-000045821", "MINERA ANDES SUR SA", "18/09/2026", "AUTORIZADO", "$48.20", true],
-  ["001-004-000008812", "SERVICIOS PETROLEROS DEL NORTE", "12/09/2026", "AUTORIZADO", "$15.40", true],
-  ["001-999-000012345", "JC PORTAL DRILLING SUPPLIES SA", "30/09/2026", "AUTORIZADO", "$22.07", false],
-  ["001-011-000077301", "CONSTRUCTORA QUITO SUR CIA", "04/09/2026", "AUTORIZADO", "$96.15", true],
-];
+const ACCESS = "2509202607179133506600120019990000345240004354918";
+const QUERY = "001-001-000001223";
+const RET_REF = "001-999-000034524";
+const RET_AMT = 28.01;
+const SALE_TOTAL = 495.42;
+const SALE_LEFT = 467.41;
 
 const BANK_ROWS = [
   ["TRANSFERENCIA INTERBANCARIA DE GOLDTECH DRILLING CIA LTDA", "30/09/2026", "14820367", "C", "CENTRO SERVIC. OPERAT. SS. QTO", 2511.08, 36164.23],
@@ -21,9 +20,9 @@ const BANK_ROWS = [
 ];
 
 const CHECKS = [
-  "Cliente RUC 1792780497001 coincide",
-  "Factura coincide",
-  "Base coincide",
+  "El sustento es la factura 001-001-000001223",
+  "La base de renta coincide con el subtotal",
+  "La base de IVA coincide con el IVA",
   "Sin retención previa",
 ];
 
@@ -63,8 +62,8 @@ function useTicker() {
 }
 
 function readyFor(screen, elapsed) {
-  if (screen === "sri") return elapsed > 10500;
-  if (screen === "ride") return elapsed > 11500;
+  if (screen === "sri") return elapsed > 19000;
+  if (screen === "ride") return elapsed > 6500;
   if (screen === "so") return elapsed > 3200;
   if (screen === "checks") return elapsed > 5600;
   if (screen === "pay") return elapsed > 2000;
@@ -124,126 +123,112 @@ function Sistema({ active, search, typing, log, children }) {
   );
 }
 
-function Sri({ elapsed }) {
-  const logged = elapsed > 2800;
-  const table = elapsed > 9000;
-  const hot = elapsed > 10500;
-  const ruc = typed("1793194965001", elapsed, 250, 1100);
-  const dots = "•".repeat(Math.min(8, Math.max(0, Math.floor((elapsed - 1400) / 140))));
-  const pressing = elapsed > 2400 && elapsed < 2750;
-  const consulting = elapsed > 7600 && elapsed < 8000;
+function SriFilm() {
+  const video = useRef(null);
+  const [failed, setFailed] = useState(false);
+  const [mediaMs, setMediaMs] = useState(0);
+  const notes = [
+    "Ingreso con el RUC de Minecore",
+    mediaMs >= SRI_CUES.filter ? "Filtro septiembre · Retenciones" : "",
+    mediaMs >= SRI_CUES.found ? `Encontré la retención de Kluane ${RET_REF}` : "",
+    mediaMs >= SRI_CUES.download ? "Descargo XML y RIDE" : "",
+  ].filter(Boolean);
+  const frame = mediaMs < SRI_CUES.menu
+    ? "sri-01.png"
+    : mediaMs < SRI_CUES.filter
+      ? "sri-03.png"
+      : mediaMs < SRI_CUES.found
+        ? "sri-04.png"
+        : mediaMs < SRI_CUES.download
+          ? "sri-05.png"
+          : "sri-06.png";
+  useEffect(() => {
+    const node = video.current;
+    if (!node) return undefined;
+    node.muted = true;
+    const play = node.play();
+    if (play && typeof play.catch === "function") {
+      play.catch(() => setFailed(true));
+    }
+    const onError = () => setFailed(true);
+    const onPlaying = () => {
+      if (node.currentTime < 1) anchorSecreVideo();
+    };
+    const onTime = () => setMediaMs(node.currentTime * 1000);
+    node.addEventListener("error", onError);
+    node.addEventListener("playing", onPlaying);
+    node.addEventListener("timeupdate", onTime);
+    return () => {
+      node.removeEventListener("error", onError);
+      node.removeEventListener("playing", onPlaying);
+      node.removeEventListener("timeupdate", onTime);
+    };
+  }, []);
   return (
-    <div className="sri-app">
-      <header className="sri-bar">
-        <strong>SRI · Comprobantes electrónicos recibidos</strong>
-        <span>{logged ? "Sesión activa" : "Ingreso"}</span>
-      </header>
-      {!logged ? (
-        <form className="sri-login" onSubmit={(e) => e.preventDefault()}>
-          <label>
-            RUC
-            <input readOnly value={ruc} aria-label="RUC" />
-          </label>
-          <label>
-            Clave
-            <input readOnly value={dots} aria-label="Clave" />
-          </label>
-          <button type="button" className={pressing ? "is-pressed" : ""}>
-            Ingresar
-          </button>
-        </form>
-      ) : (
-        <div className="sri-body">
-          <div className="sri-filters">
-            <label>
-              Tipo
-              <input readOnly value={elapsed > 5200 ? "Comprobante de Retención" : ""} aria-label="Tipo" />
-            </label>
-            <label>
-              Periodo
-              <input readOnly value={elapsed > 6800 ? "09/2026" : ""} aria-label="Periodo" />
-            </label>
-            <button type="button" className={consulting ? "is-pressed" : ""}>
-              Consultar
-            </button>
-          </div>
-          {table && (
-            <table className="sri-table">
-              <colgroup>
-                <col className="c-num" />
-                <col className="c-who" />
-                <col className="c-date" />
-                <col className="c-state" />
-                <col className="c-money" />
-                <col className="c-badge" />
-              </colgroup>
-              <thead>
-                <tr>
-                  <th>Número</th>
-                  <th>Emisor</th>
-                  <th>Fecha</th>
-                  <th>Estado</th>
-                  <th>Valor</th>
-                  <th>Aplicación</th>
-                </tr>
-              </thead>
-              <tbody>
-                {SRI_ROWS.map((row) => (
-                  <tr key={row[0]} className={!row[5] && hot ? "is-pending" : ""}>
-                    <td>{row[0]}</td>
-                    <td>{row[1]}</td>
-                    <td>{row[2]}</td>
-                    <td>{row[3]}</td>
-                    <td className="num">{row[4]}</td>
-                    <td>
-                      {row[5] || hot ? (
-                        <b className={row[5] ? "chip ok" : "chip mid"}>{row[5] ? "Aplicada" : "Sin aplicar"}</b>
-                      ) : null}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      )}
+    <div className="sri-film">
+      <div className="sri-film-stage">
+        {failed ? (
+          <img src={demoAsset("secre", frame)} alt="" />
+        ) : (
+          <video
+            ref={video}
+            src={demoAsset("secre", "sri-recorrido.mp4")}
+            poster={demoAsset("secre", "sri-01.png")}
+            muted
+            autoPlay
+            playsInline
+            preload="auto"
+          />
+        )}
+      </div>
+      <aside className="erp-agent">
+        <header>
+          <i />
+          SECRE · agente
+        </header>
+        <ol>
+          {notes.map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ol>
+      </aside>
     </div>
   );
 }
 
 function Ride({ elapsed }) {
-  const scan = Math.min(1, Math.max(0, (elapsed - 400) / 13000));
+  const scan = Math.min(1, Math.max(0, (elapsed - 200) / 8000));
   const hot = {
-    num: elapsed > 2500,
-    fac: elapsed > 5000,
-    renta: elapsed > 7500,
-    iva: elapsed > 10000,
-    total: elapsed > 11500,
+    num: elapsed > 800,
+    fac: elapsed > 2000,
+    renta: elapsed > 3500,
+    iva: elapsed > 5000,
+    total: elapsed > 6500,
   };
   return (
     <div className="ride-wrap">
-      {elapsed > 900 && <p className="ride-dl">XML descargado · RIDE descargado</p>}
+      {elapsed > 400 && <p className="ride-dl">XML descargado · RIDE descargado</p>}
       <article className="ride">
         <header>
           <div>
-            <strong>JC PORTAL DRILLING SUPPLIES SA</strong>
-            <p>RUC 1792780497001</p>
-            <p>Calle San José de Morán, Quito, Pichincha</p>
+            <strong>KLUANE DRILLING ECUADOR S.A.</strong>
+            <p>RUC 1791335066001</p>
+            <p>Juan Barrezueta N72 Lote 2 y Rodrigo de Villalobos</p>
           </div>
           <div className={hot.num ? "ride-hot" : ""}>
             <span>COMPROBANTE DE RETENCIÓN</span>
-            <strong>No. 001-999-000012345</strong>
+            <strong>No. {RET_REF}</strong>
           </div>
         </header>
         <p className="ride-key">
           <span>Clave de acceso</span>
           {ACCESS}
         </p>
-        <p className="ride-meta">Autorizado 30/09/2026 10:42:15</p>
+        <p className="ride-meta">Autorizado 29/09/2026 16:04:04</p>
         <div className="ride-who">
           <p>
             <span>Sujeto retenido</span>
-            MINECORE S.A.S
+            MINECORE S.A.S.
           </p>
           <p>
             <span>RUC</span>
@@ -251,7 +236,7 @@ function Ride({ elapsed }) {
           </p>
           <p>
             <span>Fecha de emisión</span>
-            30/09/2026
+            25/09/2026
           </p>
           <p>
             <span>Periodo fiscal</span>
@@ -259,7 +244,7 @@ function Ride({ elapsed }) {
           </p>
         </div>
         <p className={`ride-sustento ${hot.fac ? "ride-hot" : ""}`}>
-          Factura sustento <strong>001-001-000001166</strong>
+          Factura sustento <strong>001-001-000001223</strong> del 25/09/2026
         </p>
         <table>
           <thead>
@@ -275,21 +260,21 @@ function Ride({ elapsed }) {
             <tr className={hot.renta ? "ride-hot" : ""}>
               <td>Renta</td>
               <td>312</td>
-              <td>1.75%</td>
-              <td className="num">352.97</td>
-              <td className="num">6.18</td>
+              <td>2.00%</td>
+              <td className="num">430.80</td>
+              <td className="num">8.62</td>
             </tr>
             <tr className={hot.iva ? "ride-hot" : ""}>
               <td>IVA</td>
               <td />
               <td>30%</td>
-              <td className="num">52.95</td>
-              <td className="num">15.89</td>
+              <td className="num">64.62</td>
+              <td className="num">19.39</td>
             </tr>
           </tbody>
         </table>
         <p className={`ride-total ${hot.total ? "ride-hot" : ""}`}>
-          TOTAL RETENIDO <strong>$22.07</strong>
+          TOTAL RETENIDO <strong>$28.01</strong>
         </p>
         <div className="ride-bars" aria-hidden="true">
           {ACCESS.split("").map((digit, index) => (
@@ -306,17 +291,17 @@ function Sale({ elapsed, phase }) {
   const search = phase === "so" ? typed(QUERY, elapsed, 200, 2000) : QUERY;
   const found = phase !== "so" || elapsed > 2800;
   const showPay = phase === "pay" || phase === "save";
-  const u = phase === "save" ? ease((elapsed - 600) / 1600) : 0;
-  const pagado = 22.07 * u;
-  const saldo = 405.92 - pagado;
+  const u = phase === "save" ? ease((elapsed - 400) / 1600) : 0;
+  const pagado = RET_AMT * u;
+  const saldo = SALE_TOTAL - pagado;
   const done = phase === "save" && u > 0.98;
   const checksOn = phase === "checks";
   const log = [
     elapsed >= 0 ? "Abro la orden de la factura sustento." : "",
-    found ? "MCOR-SO-001156 · JC PORTAL DRILLING SUPPLIES SA." : "Escribo 001-001-000001166.",
-    checksOn && elapsed > 5200 ? "RUC, factura y base coinciden. Sin retención previa." : "",
-    showPay ? "Cargo la retención 001-999-000012345." : "",
-    done ? "Registrado. Saldo $383.85 · Parcial." : "",
+    found ? "MCOR-SO-001205 · KLUANE DRILLING ECUADOR S.A." : "Escribo 001-001-000001223.",
+    checksOn && elapsed > 4000 ? "Sustento y bases coinciden. Sin retención previa." : "",
+    showPay ? `Cargo la retención ${RET_REF}.` : "",
+    done ? "Registrado. Saldo $467.41 · Parcial." : "",
   ].filter(Boolean);
   return (
     <Sistema active={showPay ? "pay" : "orders"} search={search} typing={phase === "so" && !found} log={log}>
@@ -339,10 +324,10 @@ function Sale({ elapsed, phase }) {
                 </thead>
                 <tbody>
                   <tr className="is-new">
-                    <td>MCOR-SO-001156</td>
-                    <td>JC PORTAL DRILLING SUPPLIES SA</td>
-                    <td>001-001-000001166</td>
-                    <td className="num">$405.92</td>
+                    <td>MCOR-SO-001205</td>
+                    <td>KLUANE DRILLING ECUADOR S.A.</td>
+                    <td>001-001-000001223</td>
+                    <td className="num">{usd(SALE_TOTAL)}</td>
                   </tr>
                 </tbody>
               </table>
@@ -351,7 +336,7 @@ function Sale({ elapsed, phase }) {
         ) : (
           <>
             <div className="erp-head">
-              <h2>Orden de venta MCOR-SO-001156</h2>
+              <h2>Orden de venta MCOR-SO-001205</h2>
               <b className={done ? "chip mid" : "erp-pill"} data-estado={done ? "Parcial" : "Facturada"}>
                 {done ? "Parcial" : "Facturada"}
               </b>
@@ -360,23 +345,23 @@ function Sale({ elapsed, phase }) {
             <div className="erp-meta">
               <div>
                 <span>Cliente</span>
-                <strong>JC PORTAL DRILLING SUPPLIES SA</strong>
+                <strong>KLUANE DRILLING ECUADOR S.A.</strong>
               </div>
               <div>
                 <span>RUC</span>
-                <strong>1792780497001</strong>
+                <strong>1791335066001</strong>
               </div>
               <div>
                 <span>Fecha</span>
-                <strong>27/08/2026</strong>
+                <strong>25/09/2026</strong>
               </div>
               <div>
                 <span>Factura</span>
-                <strong>001-001-000001166</strong>
+                <strong>001-001-000001223</strong>
               </div>
               <div>
                 <span>Vence</span>
-                <strong>26/09/2026</strong>
+                <strong>25/10/2026</strong>
               </div>
             </div>
             {checksOn && (
@@ -419,26 +404,26 @@ function Sale({ elapsed, phase }) {
                     <td>MCOR000965</td>
                     <td>ZAPATA IMP., HO, 60715, SERIE 2, DL, 8WW - BOYLES BROS</td>
                     <td>1</td>
-                    <td className="num">$415.26</td>
-                    <td>15%</td>
-                    <td className="num">$352.97</td>
+                    <td className="num">$478.67</td>
+                    <td>10%</td>
+                    <td className="num">$430.80</td>
                   </tr>
                 </tbody>
               </table>
             </div>
             <div className="erp-totals secre-totals">
-              <span>Subtotal {usd(352.97)}</span>
-              <span>IVA 15% {usd(52.95)}</span>
-              <span>Total {usd(405.92)}</span>
+              <span>Subtotal {usd(430.8)}</span>
+              <span>IVA 15% {usd(64.62)}</span>
+              <span>Total {usd(SALE_TOTAL)}</span>
               <span>Pagado {usd(phase === "save" ? pagado : 0)}</span>
-              <strong data-saldo={done ? "383.85" : "405.92"}>Saldo {usd(phase === "save" ? saldo : 405.92)}</strong>
+              <strong data-saldo={done ? money(SALE_LEFT) : money(SALE_TOTAL)}>Saldo {usd(phase === "save" ? saldo : SALE_TOTAL)}</strong>
             </div>
-            {showPay && (phase === "save" || elapsed > 800) && (
+            {showPay && (
               <div className="secre-pay">
                 <h3>Pagos</h3>
                 <p>
-                  Método RETENCIÓN · Ref 001-999-000012345 · $22.07 · 30/09/2026
-                  {(phase === "save" || elapsed > 1800) && <span className="pdf-chip">RIDE-retencion-001-999-000012345.pdf</span>}
+                  Método RETENCIÓN · Ref {RET_REF} · {usd(RET_AMT)} · 25/09/2026
+                  <span className="pdf-chip">RIDE-retencion-001-999-000034524.pdf</span>
                 </p>
               </div>
             )}
@@ -717,7 +702,7 @@ export function SecreStage({ screen, fileName, note, since }) {
       data-secre-screen={screen}
       data-secre-ready={ready ? "1" : "0"}
     >
-      {screen === "sri" && <Sri elapsed={elapsed} />}
+      {screen === "sri" && <SriFilm />}
       {screen === "ride" && <Ride elapsed={elapsed} />}
       {(screen === "so" || screen === "checks" || screen === "pay" || screen === "save") && (
         <Sale elapsed={elapsed} phase={screen} />

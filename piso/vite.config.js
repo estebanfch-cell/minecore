@@ -11,6 +11,8 @@ function runFiles() {
     ".png": "image/png",
     ".pdf": "application/pdf",
     ".json": "application/json",
+    ".mp4": "video/mp4",
+    ".xml": "application/xml",
   };
   return {
     name: "piso-run-files",

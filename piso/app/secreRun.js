@@ -1,24 +1,50 @@
 import { AGENTS, ZONE_BY_ID } from "./constants.js";
 import { interruptFloor } from "./director.js";
+import { postSecreRetencion } from "./instruct.js";
 import { getState, goHome, patchState, selectAgent, setAgent, setTicker, settleFloor } from "./store.js";
 
 export const SRI_SUMMARY =
-  "Retención 001-999-000012345 · factura 001-001-000001166 · SO MCOR-SO-001156 · $22.07 · JC PORTAL · aplicada y RIDE adjunto. No hay más retenciones pendientes.";
+  "Encontré en el SRI la retención 001-999-000034524 de Kluane por $28.01 (renta 312 2% $8.62 + IVA 30% $19.39) y la apliqué a la factura 1223 (MCOR-SO-001205). Saldo $495.42 → $467.41, estado Parcial. Te mandé el informe por correo.";
 
 export const BANK_SUMMARY =
   "Apliqué 3 créditos por $14,173.21: Goldtech FAC 1122+1188 pagadas, Agrícola Cañapalm FAC 1212 pagada, Kluane FAC 1207 parcial (saldo $656.24 = retención pendiente). 4 débitos ignorados.";
 
+/** Natural length of sri-recorrido.mp4. The first beat plays it once, at 1x. */
+export const SRI_VIDEO_MS = 46700;
+const SRI_RIDE_MS = 9000;
+const SRI_SO_MS = 10000;
+const SRI_CHECKS_MS = 7000;
+const SRI_SAVE_MS = 10000;
+const SRI_SUMMARY_MS = 8000;
+const SRI_MAIL_LEAD_MS = 50000;
+
+export const SRI_CUES = {
+  menu: 16900,
+  filter: 31300,
+  found: 37000,
+  download: 39200,
+};
+
+const SRI_RIDE_AT = SRI_VIDEO_MS;
+const SRI_SO_AT = SRI_RIDE_AT + SRI_RIDE_MS;
+const SRI_CHECKS_AT = SRI_SO_AT + SRI_SO_MS;
+const SRI_SAVE_AT = SRI_CHECKS_AT + SRI_CHECKS_MS;
+/** When the closing summary screen appears, measured from the start of the run. */
+export const SRI_SUMMARY_AT = SRI_SAVE_AT + SRI_SAVE_MS;
+/** Single pre_send, 50s before that summary. */
+export const SRI_MAIL_AT = SRI_SUMMARY_AT - SRI_MAIL_LEAD_MS;
+
 const SRI_STEPS = [
   { text: "Entrar al SRI", at: 0 },
-  { text: "Consultar retenciones recibidas", at: 5000 },
-  { text: "Detectar retención sin aplicar", at: 11000 },
-  { text: "Descargar XML y RIDE", at: 16000 },
-  { text: "Leer retención", at: 21000 },
-  { text: "Buscar factura en el Sistema", at: 31000 },
-  { text: "Validar datos", at: 44000 },
-  { text: "Aplicar retención", at: 53000 },
-  { text: "Registrar y adjuntar RIDE", at: 64000 },
-  { text: "Informar a Esteban", at: 76000 },
+  { text: "Comprobantes recibidos", at: SRI_CUES.menu },
+  { text: "Filtrar retenciones", at: SRI_CUES.filter },
+  { text: "Encontrar retención", at: SRI_CUES.found },
+  { text: "Descargar XML y RIDE", at: SRI_CUES.download },
+  { text: "Leer retención", at: SRI_RIDE_AT },
+  { text: "Buscar factura en el Sistema", at: SRI_SO_AT },
+  { text: "Validar datos", at: SRI_CHECKS_AT },
+  { text: "Aplicar retención", at: SRI_SAVE_AT },
+  { text: "Informar a Esteban", at: SRI_SUMMARY_AT },
 ];
 
 const BANK_STEPS = [
@@ -34,13 +60,12 @@ const BANK_STEPS = [
 ];
 
 const SRI_BEATS = [
-  { screen: "sri", ms: 16000, title: "SRI · Comprobantes electrónicos recibidos", caption: "Entra al SRI" },
-  { screen: "ride", ms: 15000, title: "RIDE · Comprobante de retención", caption: "Lee el comprobante de retención" },
-  { screen: "so", ms: 13000, title: "Sistema", system: true, caption: "Busca la factura en el Sistema" },
-  { screen: "checks", ms: 9000, title: "Sistema", system: true, caption: "Valida los datos" },
-  { screen: "pay", ms: 11000, title: "Sistema", system: true, caption: "Aplica la retención" },
-  { screen: "save", ms: 12000, title: "Sistema", system: true, caption: "Registra y adjunta el RIDE" },
-  { screen: "summary", ms: 8000, title: "SECRE", caption: "Informa a Esteban", note: SRI_SUMMARY },
+  { screen: "sri", ms: SRI_VIDEO_MS, title: "SRI en Línea", caption: "Entra al SRI" },
+  { screen: "ride", ms: SRI_RIDE_MS, title: "RIDE · Comprobante de retención", caption: "Lee el comprobante de retención" },
+  { screen: "so", ms: SRI_SO_MS, title: "Sistema", system: true, caption: "Busca la factura en el Sistema" },
+  { screen: "checks", ms: SRI_CHECKS_MS, title: "Sistema", system: true, caption: "Valida los datos" },
+  { screen: "save", ms: SRI_SAVE_MS, title: "Sistema", system: true, caption: "Aplica la retención" },
+  { screen: "summary", ms: SRI_SUMMARY_MS, title: "SECRE", caption: "Informa a Esteban", note: SRI_SUMMARY },
 ];
 
 const BANK_BEATS = [
@@ -55,11 +80,52 @@ const RESET_PAUSE_MS = 3500;
 
 let epoch = 0;
 let timers = [];
+let mailTimer = null;
+let mailedEpoch = -1;
+
+function clearBeatTimers() {
+  timers.forEach((timer) => clearTimeout(timer));
+  timers = [];
+  if (mailTimer) clearTimeout(mailTimer);
+  mailTimer = null;
+}
 
 export function haltSecreRun() {
   epoch += 1;
-  timers.forEach((timer) => clearTimeout(timer));
-  timers = [];
+  clearBeatTimers();
+}
+
+/** Line the checklist and the later beats up with the moment the recording actually starts. */
+export function anchorSecreVideo() {
+  const run = getState().demoRun;
+  if (!run || run.id !== "secre") return;
+  const ep = epoch;
+  clearBeatTimers();
+  const now = Date.now();
+  const fileName = getState().workWindow?.fileName || "";
+  patchState({ demoRun: { ...run, briefAt: now } });
+  let cursor = 0;
+  SRI_BEATS.forEach((beat, index) => {
+    if (index === 0) {
+      cursor += beat.ms;
+      return;
+    }
+    const at = cursor;
+    later(ep, () => present(ep, beat, index, SRI_BEATS.length, run.briefing, now, fileName), at);
+    cursor += beat.ms;
+  });
+  later(ep, () => settleFloor(), cursor + RESET_PAUSE_MS);
+  armSecreMail(ep);
+}
+
+function armSecreMail(ep) {
+  if (mailTimer) clearTimeout(mailTimer);
+  mailTimer = setTimeout(() => {
+    mailTimer = null;
+    if (ep !== epoch || mailedEpoch === ep) return;
+    mailedEpoch = ep;
+    postSecreRetencion();
+  }, SRI_MAIL_AT);
 }
 
 function later(ep, fn, ms) {
@@ -123,7 +189,7 @@ function present(ep, beat, index, count, briefing, briefAt, fileName) {
   setTicker(beat.caption);
 }
 
-/** Floor run for SECRE. Does not call the mail relay. */
+/** Floor run for SECRE. Scene A posts one retention report. Scene B does not. */
 export function startSecreRun(scene, fileName) {
   const current = getState().demoRun;
   if (current && current.id !== "secre") return;
@@ -132,6 +198,7 @@ export function startSecreRun(scene, fileName) {
   interruptFloor();
   AGENTS.forEach((agent) => goHome(agent.id));
   const banco = scene === "banco";
+  if (!banco) armSecreMail(ep);
   const beats = banco ? BANK_BEATS : SRI_BEATS;
   const briefing = {
     role: "Retenciones",
