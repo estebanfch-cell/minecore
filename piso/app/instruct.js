@@ -136,8 +136,42 @@ function deliver(url, body) {
   });
 }
 
+/** One retention report per scene A run. Scene B does not call this. */
+export function postSecreRetencion() {
+  const secre = AGENT_BY_ID.secre;
+  return loadInstructConfig().then(() => {
+    const { url } = instructSettings();
+    if (!url) {
+      console.debug("orquesta-post", "skipped");
+      return;
+    }
+    const body = {
+      event: "secre_retencion",
+      phase: "pre_send",
+      ref: "001-999-000034524",
+      to: "estebanferlito@minecore.ec",
+      agentId: secre.grokId,
+      agentName: secre.name,
+      ts: new Date().toISOString(),
+    };
+    const retry = () => {
+      deliver(url, body).catch(() => {
+        console.debug("orquesta-post", "error");
+      });
+    };
+    return deliver(url, body)
+      .then((ok) => {
+        if (!ok) setTimeout(retry, 1500);
+      })
+      .catch(() => {
+        console.debug("orquesta-post", "error");
+        setTimeout(retry, 1500);
+      });
+  });
+}
+
 /**
- * One simple CORS POST per run. No Authorization, no preflight.
+ * One simple CORS POST per CHIEF run. No Authorization, no preflight.
  * Retries once after 1.5s if the network fails or the status is not 2xx.
  */
 export function postOrquesta(entry) {

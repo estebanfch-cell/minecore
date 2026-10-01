@@ -47,7 +47,7 @@ export function NoraChat({ focus = false }) {
     setFile(null);
     if (fileBox.current) fileBox.current.value = "";
     window.setTimeout(() => {
-      const reply = scene === "banco" ? "Voy a cruzar el estado de cuenta..." : "Voy al SRI a revisar...";
+      const reply = scene === "banco" ? "Voy a cruzar el estado de cuenta..." : "Voy al SRI a revisar las retenciones recibidas.";
       const chat = (getState().noraChat || []).filter((msg) => !msg.typing);
       patchState({
         noraChat: [...chat, { id: `r-${Date.now()}`, role: "nora", text: reply, at: Date.now() }],
