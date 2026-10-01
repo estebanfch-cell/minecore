@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ErpStage } from "./ErpStage.jsx";
+import { SecreStage } from "./SecreStage.jsx";
 import { PART_B, PO_LINES, STOCK_ROWS } from "./erpData.js";
 import { SETTLE_REVEAL_MS, demoAsset } from "./demoRun.js";
 import { renderPdfPages } from "./pdfPages.js";
@@ -118,19 +119,22 @@ export function WorkWindow({ spec, sourcePdf }) {
   if (!spec) return null;
   const fallback = spec.fallback ? demoAsset("previews", spec.fallback) : "";
   const image = frame?.preview ? demoAsset("previews", frame.preview) : fallback;
+  const sistema = !!(spec.erp || spec.system);
 
   return (
-    <section className={`work-window notranslate ${spec.minimizing ? "is-min" : ""} ${spec.erp ? "is-sistema" : ""} ${swap ? "is-swap" : ""}`} translate="no" aria-label={spec.erp ? "MINECORE · Sistema" : spec.title}>
+    <section className={`work-window notranslate ${spec.minimizing ? "is-min" : ""} ${sistema ? "is-sistema" : ""} ${swap ? "is-swap" : ""}`} translate="no" aria-label={sistema ? "MINECORE · Sistema" : spec.title}>
       <header className="work-title">
         <span className="work-dots" aria-hidden="true">
           <i />
           <i />
           <i />
         </span>
-        <strong>{spec.erp ? "MINECORE · Sistema" : spec.title}</strong>
+        <strong>{sistema ? "MINECORE · Sistema" : spec.title}</strong>
       </header>
-      <div className={`work-body ${spec.erp ? "work-body-erp" : ""}`}>
-        {spec.erp ? (
+      <div className={`work-body ${spec.erp || spec.secre ? "work-body-erp" : ""}`}>
+        {spec.secre ? (
+          <SecreStage screen={spec.secre} fileName={spec.fileName} note={spec.note} since={spec.since} />
+        ) : spec.erp ? (
           <ErpStage phase={spec.erp} />
         ) : spec.mode === "finance" ? (
           <FinanceReport log={log} shown={shown} />

@@ -3,6 +3,7 @@ import { Dossier } from "./Dossier.jsx";
 import { TaskFeed } from "./TaskFeed.jsx";
 import { AGENT_BY_ID, AGENTS, agentCallName } from "./constants.js";
 import { ChiefChat } from "./ChiefChat.jsx";
+import { NoraChat } from "./NoraChat.jsx";
 import { SplitBrief, SplitPortrait } from "./SplitBrief.jsx";
 import { WorkWindow } from "./WorkWindow.jsx";
 import { PreviewPanel } from "./DemoChrome.jsx";
@@ -99,7 +100,7 @@ export function Hud() {
         </div>
       )}
 
-      {!selected && !state.announcement && !state.chatOpen && !state.demoRun && (
+      {!selected && !state.announcement && !state.chatOpen && !state.noraOpen && !state.demoRun && (
         <div className="hint notranslate">Toca CHIEF para anunciar a la sala</div>
       )}
 
@@ -113,6 +114,8 @@ export function Hud() {
       {state.chatOpen && !state.demoRun && state.selectedId !== "chief" && (
         <ChiefChat focus={!!state.focusInstruction} />
       )}
+
+      {state.noraOpen && !state.demoRun && <NoraChat focus />}
 
       <WorkWindow spec={state.workWindow} sourcePdf={state.sourcePdf} />
 
