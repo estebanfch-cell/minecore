@@ -15,8 +15,12 @@ import {
 } from "./store.js";
 
 const STEP_MS = 7500;
-/** Mail transit after the relay POST. The notice leaves this long before Manuelito says "Enviado". */
-const EMAIL_LEAD_MS = 75000;
+/**
+ * Relay transit before the inbox. Measured at about 47s, so the single pre_send
+ * leaves 50s before Manuelito's "Enviado" and the closing summary.
+ * No manuelito_done POST: one pre_send per run, and the relay dedupes for 3 min.
+ */
+const EMAIL_LEAD_MS = 50000;
 const DESK_OPEN_MS = 1100;
 export const ENVIADO_FLIP_MS = 2400;
 /** Settle line still appears at the same moment: window opens with the step, the flip waits the old open delay too. */
@@ -517,7 +521,7 @@ function armOrquesta(serial) {
   }, plan.postDelayFromShow);
 }
 
-/** User line is already on screen. CHIEF types, then the floor run starts. The notice leads "Enviado" by EMAIL_LEAD_MS. */
+/** User line is already on screen. CHIEF types, then the floor run starts. One pre_send leads "Enviado" by EMAIL_LEAD_MS. */
 export function ackAndStartOrquesta(entry) {
   const serial = ++runSerial;
   orquestaText = entry?.text || "";
