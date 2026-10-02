@@ -9,29 +9,39 @@ export const SRI_SUMMARY =
 export const BANK_SUMMARY =
   "Apliqué 3 créditos por $14,173.21: Goldtech FAC 1122+1188 pagadas, Agrícola Cañapalm FAC 1212 pagada, Kluane FAC 1207 parcial (saldo $656.24 = retención pendiente). 4 débitos ignorados.";
 
-/** Natural length of sri-recorrido.mp4. The first beat plays it once, at 1x. */
-export const SRI_VIDEO_MS = 46700;
-const SRI_RIDE_MS = 9000;
-const SRI_SO_MS = 10000;
-const SRI_CHECKS_MS = 7000;
-const SRI_SAVE_MS = 10000;
-const SRI_SUMMARY_MS = 8000;
-const SRI_MAIL_LEAD_MS = 50000;
+/** Natural length of sri-recorrido.mp4 (20.17 s cut). The first beat plays it once, at 1x. */
+export const SRI_VIDEO_MS = 20170;
+const SRI_RIDE_MS = 5200;
+const SRI_SO_MS = 3400;
+const SRI_CHECKS_MS = 3400;
+const SRI_SAVE_MS = 2800;
+const SRI_SUMMARY_MS = 5500;
+/** Lead the summary by ~47s. Shorter runs post when the owner sends the message. */
+const SRI_MAIL_LEAD_MS = 47000;
+/** Nora types, then the reply sits before the floor run. Sum of the two chat waits. */
+export const SRI_TYPE_MS = 800;
+export const SRI_REPLY_MS = 1200;
+export const SRI_CHAT_BEFORE_RUN_MS = SRI_TYPE_MS + SRI_REPLY_MS;
 
+/** Portal beats on the 20.17 s cut. Login 0–5.3, profile/menu 5–9.3, filter 9–12.6, row and XML 12.3–16.1, RIDE PDF ~16.8 to the end. */
 export const SRI_CUES = {
-  menu: 16900,
-  filter: 31300,
-  found: 37000,
-  download: 39200,
+  menu: 5000,
+  filter: 9000,
+  found: 12300,
+  download: 16100,
 };
 
 const SRI_RIDE_AT = SRI_VIDEO_MS;
 const SRI_SO_AT = SRI_RIDE_AT + SRI_RIDE_MS;
 const SRI_CHECKS_AT = SRI_SO_AT + SRI_SO_MS;
 const SRI_SAVE_AT = SRI_CHECKS_AT + SRI_CHECKS_MS;
-/** When the closing summary screen appears, measured from the start of the run. */
+/** When the closing summary screen appears, measured from the anchored video start. */
 export const SRI_SUMMARY_AT = SRI_SAVE_AT + SRI_SAVE_MS;
-/** Single pre_send, 50s before that summary. */
+/** From the owner's Enviar to the summary, before the video's play delay. */
+export const SRI_SUMMARY_FROM_MESSAGE_MS = SRI_CHAT_BEFORE_RUN_MS + SRI_SUMMARY_AT;
+/** True when that span is shorter than the mail lead, so the POST goes out with Enviar. */
+export const SRI_MAIL_ON_SEND = SRI_SUMMARY_FROM_MESSAGE_MS < SRI_MAIL_LEAD_MS;
+/** Single pre_send. Negative when the POST belongs at Enviar instead of mid-run. */
 export const SRI_MAIL_AT = SRI_SUMMARY_AT - SRI_MAIL_LEAD_MS;
 
 const SRI_STEPS = [
@@ -82,6 +92,7 @@ let epoch = 0;
 let timers = [];
 let mailTimer = null;
 let mailedEpoch = -1;
+let ownerPosted = false;
 
 function clearBeatTimers() {
   timers.forEach((timer) => clearTimeout(timer));
@@ -95,23 +106,22 @@ export function haltSecreRun() {
   clearBeatTimers();
 }
 
-/** Line the checklist and the later beats up with the moment the recording actually starts. */
-export function anchorSecreVideo() {
+/** Line the checklist and the later beats up with the recording. The RIDE starts as the video ends. */
+export function anchorSecreVideo(mediaMs = 0) {
   const run = getState().demoRun;
   if (!run || run.id !== "secre") return;
   const ep = epoch;
   clearBeatTimers();
+  const played = Math.max(0, Math.min(SRI_VIDEO_MS, mediaMs || 0));
   const now = Date.now();
+  const briefAt = now - played;
   const fileName = getState().workWindow?.fileName || "";
-  patchState({ demoRun: { ...run, briefAt: now } });
-  let cursor = 0;
+  patchState({ demoRun: { ...run, briefAt } });
+  let cursor = SRI_VIDEO_MS - played;
   SRI_BEATS.forEach((beat, index) => {
-    if (index === 0) {
-      cursor += beat.ms;
-      return;
-    }
+    if (index === 0) return;
     const at = cursor;
-    later(ep, () => present(ep, beat, index, SRI_BEATS.length, run.briefing, now, fileName), at);
+    later(ep, () => present(ep, beat, index, SRI_BEATS.length, run.briefing, briefAt, fileName), at);
     cursor += beat.ms;
   });
   later(ep, () => settleFloor(), cursor + RESET_PAUSE_MS);
@@ -120,12 +130,22 @@ export function anchorSecreVideo() {
 
 function armSecreMail(ep) {
   if (mailTimer) clearTimeout(mailTimer);
+  mailTimer = null;
+  if (ownerPosted || SRI_MAIL_ON_SEND || SRI_MAIL_AT <= 0) return;
   mailTimer = setTimeout(() => {
     mailTimer = null;
-    if (ep !== epoch || mailedEpoch === ep) return;
+    if (ep !== epoch || mailedEpoch === ep || ownerPosted) return;
     mailedEpoch = ep;
     postSecreRetencion();
   }, SRI_MAIL_AT);
+}
+
+/** Scene A only. A short run posts with the owner's message; a longer one waits for the anchor. */
+export function onSecreOwnerMessage(scene) {
+  ownerPosted = false;
+  if (scene === "banco" || !SRI_MAIL_ON_SEND) return;
+  ownerPosted = true;
+  postSecreRetencion();
 }
 
 function later(ep, fn, ms) {

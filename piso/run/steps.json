@@ -9,7 +9,7 @@
       "phase": "analysis",
       "agent": "chief",
       "caption": "Leyendo la orden",
-      "stepMs": 30000,
+      "stepMs": 14000,
       "chat": "Leyendo OC-2026-0417…",
       "window": {
         "title": "CHIEF — OC-2026-0417 TALUVIRA.pdf",
@@ -33,9 +33,9 @@
         "purpose": "Lee la orden de Taluvira y reparte el trabajo.",
         "steps": [
           { "text": "Leyendo la orden de compra", "at": 0 },
-          { "text": "Cruzando con la cotización", "at": 7000 },
-          { "text": "Armando el plan del piso", "at": 15000 },
-          { "text": "Convocando la reunión", "at": 23000 }
+          { "text": "Cruzando con la cotización", "at": 4500 },
+          { "text": "Armando el plan del piso", "at": 9000 },
+          { "text": "Convocando la reunión", "at": 14000 }
         ]
       }
     },
@@ -58,7 +58,7 @@
       "phase": "desk",
       "agent": "devops",
       "caption": "Cotización a orden de venta",
-      "stepMs": 32800,
+      "stepMs": 30400,
       "chat": "DEVOPS abre Ventas › Cotizaciones.",
       "preview": "ORDEN DE VENTA - MCOR-SO-001209.png",
       "file": "ORDEN DE VENTA - MCOR-SO-001209.pdf",
@@ -87,7 +87,7 @@
           { "text": "Buscando cotización SQ-001011", "at": 0 },
           { "text": "Convirtiendo a orden de venta", "at": 7000 },
           { "text": "Dividiendo -1 / -2", "at": 15000 },
-          { "text": "Generando pick list", "at": 23000 }
+          { "text": "Generando pick list", "at": 24000 }
         ]
       }
     },
@@ -105,7 +105,7 @@
       "phase": "desk",
       "agent": "finance",
       "caption": "Análisis de rotación",
-      "stepMs": 17000,
+      "stepMs": 12000,
       "chat": "FINANCE cruza inventario, compras, cotizaciones, ventas y pedidos.",
       "preview": "FINANZAS - MCOR-PO-000379.png",
       "file": "ORDEN DE COMPRA - MCOR-PO-000379.pdf",
@@ -151,7 +151,7 @@
       "phase": "desk",
       "agent": "stock-pilot",
       "caption": "Orden de compra a Boyles con reposición de alta rotación",
-      "stepMs": 31000,
+      "stepMs": 24000,
       "chat": "STOCK PILOT arma la orden de compra a Boyles con la recomendación de FINANCE.",
       "preview": "ORDEN DE COMPRA - MCOR-PO-000379.png",
       "file": "ORDEN DE COMPRA - MCOR-PO-000379.pdf",
@@ -173,9 +173,9 @@
         "purpose": "Arma la orden de compra a Boyles con la reposición de alta rotación.",
         "steps": [
           { "text": "Tomando la recomendación de Finanzas", "at": 0 },
-          { "text": "Armando la orden a Boyles", "at": 8000 },
-          { "text": "Cargando la reposición de alta rotación", "at": 17000 },
-          { "text": "Cerrando el pedido", "at": 25000 }
+          { "text": "Armando la orden a Boyles", "at": 6000 },
+          { "text": "Cargando la reposición de alta rotación", "at": 14000 },
+          { "text": "Cerrando el pedido", "at": 21000 }
         ]
       }
     },
@@ -193,7 +193,7 @@
       "phase": "desk",
       "agent": "chief",
       "caption": "Resumen consolidado",
-      "stepMs": 15000,
+      "stepMs": 10800,
       "chat": "PO-000379 Boyles $8,790.74. A urgente $321.06. B $8,469.68, $9,994 en 4.5 meses.",
       "preview": "RESUMEN - OC-2026-0417.png",
       "file": "RESUMEN - OC-2026-0417.pdf",
@@ -228,7 +228,7 @@
       "agent": "manuelito",
       "caption": "Resumen completo enviado",
       "banner": "Todo ha sido enviado",
-      "stepMs": 15000,
+      "stepMs": 9200,
       "chat": "resumen listo",
       "preview": "WHATSAPP - Resumen completo enviado.png",
       "file": "RESUMEN - OC-2026-0417.pdf",

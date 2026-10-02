@@ -62,12 +62,12 @@ function useTicker() {
 }
 
 function readyFor(screen, elapsed) {
-  if (screen === "sri") return elapsed > 19000;
-  if (screen === "ride") return elapsed > 6500;
-  if (screen === "so") return elapsed > 3200;
-  if (screen === "checks") return elapsed > 5600;
-  if (screen === "pay") return elapsed > 2000;
-  if (screen === "save") return elapsed > 2500;
+  if (screen === "sri") return elapsed > 16800;
+  if (screen === "ride") return elapsed > 3500;
+  if (screen === "so") return elapsed > 1600;
+  if (screen === "checks") return elapsed > 2200;
+  if (screen === "pay") return elapsed > 1600;
+  if (screen === "save") return elapsed > 1700;
   if (screen === "bank") return elapsed > 7800;
   if (screen === "match") return elapsed > 9000;
   if (screen === "proposal") return elapsed > 400;
@@ -152,7 +152,7 @@ function SriFilm() {
     }
     const onError = () => setFailed(true);
     const onPlaying = () => {
-      if (node.currentTime < 1) anchorSecreVideo();
+      if (node.currentTime < 1) anchorSecreVideo(node.currentTime * 1000);
     };
     const onTime = () => setMediaMs(node.currentTime * 1000);
     node.addEventListener("error", onError);
@@ -197,17 +197,17 @@ function SriFilm() {
 }
 
 function Ride({ elapsed }) {
-  const scan = Math.min(1, Math.max(0, (elapsed - 200) / 8000));
+  const scan = Math.min(1, Math.max(0, (elapsed - 150) / 4200));
   const hot = {
-    num: elapsed > 800,
-    fac: elapsed > 2000,
-    renta: elapsed > 3500,
-    iva: elapsed > 5000,
-    total: elapsed > 6500,
+    num: elapsed > 450,
+    fac: elapsed > 1100,
+    renta: elapsed > 1900,
+    iva: elapsed > 2700,
+    total: elapsed > 3500,
   };
   return (
     <div className="ride-wrap">
-      {elapsed > 400 && <p className="ride-dl">XML descargado · RIDE descargado</p>}
+      {elapsed > 200 && <p className="ride-dl">XML descargado · RIDE descargado</p>}
       <article className="ride">
         <header>
           <div>
@@ -288,10 +288,10 @@ function Ride({ elapsed }) {
 }
 
 function Sale({ elapsed, phase }) {
-  const search = phase === "so" ? typed(QUERY, elapsed, 200, 2000) : QUERY;
-  const found = phase !== "so" || elapsed > 2800;
+  const search = phase === "so" ? typed(QUERY, elapsed, 120, 800) : QUERY;
+  const found = phase !== "so" || elapsed > 1400;
   const showPay = phase === "pay" || phase === "save";
-  const u = phase === "save" ? ease((elapsed - 400) / 1600) : 0;
+  const u = phase === "save" ? ease((elapsed - 250) / 1400) : 0;
   const pagado = RET_AMT * u;
   const saldo = SALE_TOTAL - pagado;
   const done = phase === "save" && u > 0.98;
@@ -299,7 +299,7 @@ function Sale({ elapsed, phase }) {
   const log = [
     elapsed >= 0 ? "Abro la orden de la factura sustento." : "",
     found ? "MCOR-SO-001205 · KLUANE DRILLING ECUADOR S.A." : "Escribo 001-001-000001223.",
-    checksOn && elapsed > 4000 ? "Sustento y bases coinciden. Sin retención previa." : "",
+    checksOn && elapsed > 2000 ? "Sustento y bases coinciden. Sin retención previa." : "",
     showPay ? `Cargo la retención ${RET_REF}.` : "",
     done ? "Registrado. Saldo $467.41 · Parcial." : "",
   ].filter(Boolean);
@@ -367,7 +367,7 @@ function Sale({ elapsed, phase }) {
             {checksOn && (
               <ul className="secre-checks">
                 {CHECKS.map((line, index) => {
-                  const on = elapsed > 700 + index * 1500;
+                  const on = elapsed > 250 + index * 650;
                   return (
                     <li key={line} className={on ? "done" : "wait"}>
                       <span className="mark" aria-hidden="true">

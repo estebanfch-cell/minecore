@@ -260,6 +260,16 @@ function showStep(index) {
   clearSubs();
   if (frameTimer) clearInterval(frameTimer);
   frameTimer = null;
+  // Arm the next beat before the heavy work so step gaps stay the written durations.
+  const worked = step.stepMs || script.stepMs || STEP_MS;
+  const last = index === steps.length - 1;
+  if (last) {
+    const epoch = runEpoch;
+    if (finishTimer) clearTimeout(finishTimer);
+    finishTimer = setTimeout(() => settleAndHome(epoch), worked + RESET_PAUSE_MS);
+  } else {
+    scheduleAdvance(index, worked);
+  }
   const zone = ZONE_BY_ID[step.agent];
   const phase = step.phase || "desk";
   const wide = phase === "meeting";
@@ -375,16 +385,7 @@ function showStep(index) {
             : { x: 0, y: 0.45, z: 0 },
   };
   patchState({ demoRun: run });
-  const last = index === steps.length - 1;
   announceRunStep(step, { last, closing: script.closing || "" });
-
-  if (last) {
-    const epoch = runEpoch;
-    const worked = step.stepMs || script.stepMs || STEP_MS;
-    finishTimer = setTimeout(() => settleAndHome(epoch), worked + RESET_PAUSE_MS);
-    return;
-  }
-  scheduleAdvance(index, step.stepMs || script.stepMs || STEP_MS);
 }
 
 export async function startDemoRun() {
