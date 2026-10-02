@@ -298,8 +298,13 @@ function Sale({ elapsed, phase }) {
   const done = phase === "file" || (phase === "save" && u > 0.98);
   const checksOn = phase === "checks";
   const filing = phase === "file" || (phase === "save" && elapsed > 4200);
-  const sending = phase === "file" && elapsed >= 3600;
-  const fileU = phase === "file" ? Math.min(1, 0.42 + (elapsed / 7400) * 0.58) : filing ? Math.min(0.42, (elapsed - 4200) / 11000) : 0;
+  const sending = phase === "file" && elapsed >= 4800;
+  const fileU =
+    phase === "file"
+      ? Math.min(1, 0.4 + Math.min(1, elapsed / 10200) * 0.6)
+      : filing
+        ? Math.min(0.4, ((elapsed - 4200) / 7500) * 0.4)
+        : 0;
   const sweep = ((elapsed % 3200) / 3200) * 72;
   const log = [
     elapsed >= 0 ? "Abro la orden de la factura sustento." : "",
@@ -312,7 +317,7 @@ function Sale({ elapsed, phase }) {
   ].filter(Boolean);
   return (
     <Sistema active={showPay ? "pay" : "orders"} search={search} typing={phase === "so" && !found} log={log}>
-      <section className={`erp-page${filing ? " is-filing" : ""}`}>
+      <section className={`erp-page${done && (phase === "save" || phase === "file") ? " is-filing" : ""}`}>
         {!found ? (
           <>
             <div className="erp-head">
@@ -446,7 +451,9 @@ function Sale({ elapsed, phase }) {
             )}
           </>
         )}
-        {filing && <div className="scan-line" style={{ animation: "none", top: `${10 + sweep}%` }} />}
+        {done && (phase === "save" || phase === "file") && (
+          <div className="scan-line" style={{ animation: "none", top: `${10 + sweep}%` }} />
+        )}
       </section>
     </Sistema>
   );

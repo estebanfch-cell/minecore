@@ -14,9 +14,9 @@ export const SRI_VIDEO_MS = 20170;
 const SRI_RIDE_MS = 5200;
 const SRI_SO_MS = 3400;
 const SRI_CHECKS_MS = 3400;
-const SRI_SAVE_MS = 9000;
+const SRI_SAVE_MS = 11700;
 /** Calm close after the balance is on screen: file the receipt, then send the report. */
-const SRI_FILE_MS = 7800;
+const SRI_FILE_MS = 10500;
 const SRI_SUMMARY_MS = 5500;
 /**
  * Inbox transit is about 50–56s. Scene A is paced so that window ends just
