@@ -68,6 +68,7 @@ function readyFor(screen, elapsed) {
   if (screen === "checks") return elapsed > 2200;
   if (screen === "pay") return elapsed > 1600;
   if (screen === "save") return elapsed > 1700;
+  if (screen === "file") return elapsed > 3600;
   if (screen === "bank") return elapsed > 7800;
   if (screen === "match") return elapsed > 9000;
   if (screen === "proposal") return elapsed > 400;
@@ -290,22 +291,28 @@ function Ride({ elapsed }) {
 function Sale({ elapsed, phase }) {
   const search = phase === "so" ? typed(QUERY, elapsed, 120, 800) : QUERY;
   const found = phase !== "so" || elapsed > 1400;
-  const showPay = phase === "pay" || phase === "save";
-  const u = phase === "save" ? ease((elapsed - 250) / 1400) : 0;
+  const showPay = phase === "pay" || phase === "save" || phase === "file";
+  const u = phase === "file" ? 1 : phase === "save" ? ease((elapsed - 250) / 1400) : 0;
   const pagado = RET_AMT * u;
   const saldo = SALE_TOTAL - pagado;
-  const done = phase === "save" && u > 0.98;
+  const done = phase === "file" || (phase === "save" && u > 0.98);
   const checksOn = phase === "checks";
+  const filing = phase === "file" || (phase === "save" && elapsed > 4200);
+  const sending = phase === "file" && elapsed >= 3600;
+  const fileU = phase === "file" ? Math.min(1, 0.42 + (elapsed / 7400) * 0.58) : filing ? Math.min(0.42, (elapsed - 4200) / 11000) : 0;
+  const sweep = ((elapsed % 3200) / 3200) * 72;
   const log = [
     elapsed >= 0 ? "Abro la orden de la factura sustento." : "",
     found ? "MCOR-SO-001205 · KLUANE DRILLING ECUADOR S.A." : "Escribo 001-001-000001223.",
     checksOn && elapsed > 2000 ? "Sustento y bases coinciden. Sin retención previa." : "",
     showPay ? `Cargo la retención ${RET_REF}.` : "",
     done ? "Registrado. Saldo $467.41 · Parcial." : "",
+    filing && !sending ? "Dejo el comprobante con la factura." : "",
+    sending ? "Enviando el informe." : "",
   ].filter(Boolean);
   return (
     <Sistema active={showPay ? "pay" : "orders"} search={search} typing={phase === "so" && !found} log={log}>
-      <section className="erp-page">
+      <section className={`erp-page${filing ? " is-filing" : ""}`}>
         {!found ? (
           <>
             <div className="erp-head">
@@ -415,8 +422,10 @@ function Sale({ elapsed, phase }) {
               <span>Subtotal {usd(430.8)}</span>
               <span>IVA 15% {usd(64.62)}</span>
               <span>Total {usd(SALE_TOTAL)}</span>
-              <span>Pagado {usd(phase === "save" ? pagado : 0)}</span>
-              <strong data-saldo={done ? money(SALE_LEFT) : money(SALE_TOTAL)}>Saldo {usd(phase === "save" ? saldo : SALE_TOTAL)}</strong>
+              <span>Pagado {usd(phase === "save" || phase === "file" ? pagado : 0)}</span>
+              <strong data-saldo={done ? money(SALE_LEFT) : money(SALE_TOTAL)}>
+                Saldo {usd(phase === "save" || phase === "file" ? saldo : SALE_TOTAL)}
+              </strong>
             </div>
             {showPay && (
               <div className="secre-pay">
@@ -427,8 +436,17 @@ function Sale({ elapsed, phase }) {
                 </p>
               </div>
             )}
+            {filing && (
+              <div className="secre-file" data-file={sending ? "informe" : "comprobante"}>
+                <p>{sending ? "Enviando el informe" : "Archivando el comprobante"}</p>
+                <span>
+                  <i style={{ width: `${Math.max(8, Math.round(fileU * 100))}%` }} />
+                </span>
+              </div>
+            )}
           </>
         )}
+        {filing && <div className="scan-line" style={{ animation: "none", top: `${10 + sweep}%` }} />}
       </section>
     </Sistema>
   );
@@ -690,7 +708,7 @@ function Summary({ note }) {
   );
 }
 
-const ERP_SCREENS = new Set(["so", "checks", "pay", "save", "match", "proposal", "collect"]);
+const ERP_SCREENS = new Set(["so", "checks", "pay", "save", "file", "match", "proposal", "collect"]);
 
 export function SecreStage({ screen, fileName, note, since }) {
   const now = useTicker();
@@ -704,7 +722,7 @@ export function SecreStage({ screen, fileName, note, since }) {
     >
       {screen === "sri" && <SriFilm />}
       {screen === "ride" && <Ride elapsed={elapsed} />}
-      {(screen === "so" || screen === "checks" || screen === "pay" || screen === "save") && (
+      {(screen === "so" || screen === "checks" || screen === "pay" || screen === "save" || screen === "file") && (
         <Sale elapsed={elapsed} phase={screen} />
       )}
       {screen === "bank" && <Bank elapsed={elapsed} fileName={fileName} />}

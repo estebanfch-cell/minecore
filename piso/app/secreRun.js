@@ -14,10 +14,16 @@ export const SRI_VIDEO_MS = 20170;
 const SRI_RIDE_MS = 5200;
 const SRI_SO_MS = 3400;
 const SRI_CHECKS_MS = 3400;
-const SRI_SAVE_MS = 2800;
+const SRI_SAVE_MS = 9000;
+/** Calm close after the balance is on screen: file the receipt, then send the report. */
+const SRI_FILE_MS = 7800;
 const SRI_SUMMARY_MS = 5500;
-/** Lead the summary by ~47s. Shorter runs post when the owner sends the message. */
-const SRI_MAIL_LEAD_MS = 47000;
+/**
+ * Inbox transit is about 50–56s. Scene A is paced so that window ends just
+ * before the summary, and the POST goes out with Enviar. A longer scene would
+ * wait and fire this many milliseconds before the summary instead.
+ */
+const SRI_MAIL_LEAD_MS = 62000;
 /** Nora types, then the reply sits before the floor run. Sum of the two chat waits. */
 export const SRI_TYPE_MS = 800;
 export const SRI_REPLY_MS = 1200;
@@ -35,8 +41,9 @@ const SRI_RIDE_AT = SRI_VIDEO_MS;
 const SRI_SO_AT = SRI_RIDE_AT + SRI_RIDE_MS;
 const SRI_CHECKS_AT = SRI_SO_AT + SRI_SO_MS;
 const SRI_SAVE_AT = SRI_CHECKS_AT + SRI_CHECKS_MS;
+const SRI_FILE_AT = SRI_SAVE_AT + SRI_SAVE_MS;
 /** When the closing summary screen appears, measured from the anchored video start. */
-export const SRI_SUMMARY_AT = SRI_SAVE_AT + SRI_SAVE_MS;
+export const SRI_SUMMARY_AT = SRI_FILE_AT + SRI_FILE_MS;
 /** From the owner's Enviar to the summary, before the video's play delay. */
 export const SRI_SUMMARY_FROM_MESSAGE_MS = SRI_CHAT_BEFORE_RUN_MS + SRI_SUMMARY_AT;
 /** True when that span is shorter than the mail lead, so the POST goes out with Enviar. */
@@ -54,6 +61,7 @@ const SRI_STEPS = [
   { text: "Buscar factura en el Sistema", at: SRI_SO_AT },
   { text: "Validar datos", at: SRI_CHECKS_AT },
   { text: "Aplicar retención", at: SRI_SAVE_AT },
+  { text: "Archivar y enviar el informe", at: SRI_FILE_AT },
   { text: "Informar a Esteban", at: SRI_SUMMARY_AT },
 ];
 
@@ -75,6 +83,7 @@ const SRI_BEATS = [
   { screen: "so", ms: SRI_SO_MS, title: "Sistema", system: true, caption: "Busca la factura en el Sistema" },
   { screen: "checks", ms: SRI_CHECKS_MS, title: "Sistema", system: true, caption: "Valida los datos" },
   { screen: "save", ms: SRI_SAVE_MS, title: "Sistema", system: true, caption: "Aplica la retención" },
+  { screen: "file", ms: SRI_FILE_MS, title: "Sistema", system: true, caption: "Archiva y envía el informe" },
   { screen: "summary", ms: SRI_SUMMARY_MS, title: "SECRE", caption: "Informa a Esteban", note: SRI_SUMMARY },
 ];
 
