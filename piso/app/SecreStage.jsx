@@ -62,7 +62,7 @@ function useTicker() {
 }
 
 function readyFor(screen, elapsed) {
-  if (screen === "sri") return elapsed > 19000;
+  if (screen === "sri") return elapsed > 16800;
   if (screen === "ride") return elapsed > 3500;
   if (screen === "so") return elapsed > 1600;
   if (screen === "checks") return elapsed > 2200;
@@ -152,7 +152,7 @@ function SriFilm() {
     }
     const onError = () => setFailed(true);
     const onPlaying = () => {
-      if (node.currentTime < 1) anchorSecreVideo();
+      if (node.currentTime < 1) anchorSecreVideo(node.currentTime * 1000);
     };
     const onTime = () => setMediaMs(node.currentTime * 1000);
     node.addEventListener("error", onError);

@@ -9,8 +9,8 @@ export const SRI_SUMMARY =
 export const BANK_SUMMARY =
   "Apliqué 3 créditos por $14,173.21: Goldtech FAC 1122+1188 pagadas, Agrícola Cañapalm FAC 1212 pagada, Kluane FAC 1207 parcial (saldo $656.24 = retención pendiente). 4 débitos ignorados.";
 
-/** Natural length of sri-recorrido.mp4. The first beat plays it once, at 1x. */
-export const SRI_VIDEO_MS = 46700;
+/** Natural length of sri-recorrido.mp4 (20.17 s cut). The first beat plays it once, at 1x. */
+export const SRI_VIDEO_MS = 20170;
 const SRI_RIDE_MS = 5200;
 const SRI_SO_MS = 3400;
 const SRI_CHECKS_MS = 3400;
@@ -23,11 +23,12 @@ export const SRI_TYPE_MS = 800;
 export const SRI_REPLY_MS = 1200;
 export const SRI_CHAT_BEFORE_RUN_MS = SRI_TYPE_MS + SRI_REPLY_MS;
 
+/** Portal beats on the 20.17 s cut. Login 0–5.3, profile/menu 5–9.3, filter 9–12.6, row and XML 12.3–16.1, RIDE PDF ~16.8 to the end. */
 export const SRI_CUES = {
-  menu: 16900,
-  filter: 31300,
-  found: 37000,
-  download: 39200,
+  menu: 5000,
+  filter: 9000,
+  found: 12300,
+  download: 16100,
 };
 
 const SRI_RIDE_AT = SRI_VIDEO_MS;
@@ -105,23 +106,22 @@ export function haltSecreRun() {
   clearBeatTimers();
 }
 
-/** Line the checklist and the later beats up with the moment the recording actually starts. */
-export function anchorSecreVideo() {
+/** Line the checklist and the later beats up with the recording. The RIDE starts as the video ends. */
+export function anchorSecreVideo(mediaMs = 0) {
   const run = getState().demoRun;
   if (!run || run.id !== "secre") return;
   const ep = epoch;
   clearBeatTimers();
+  const played = Math.max(0, Math.min(SRI_VIDEO_MS, mediaMs || 0));
   const now = Date.now();
+  const briefAt = now - played;
   const fileName = getState().workWindow?.fileName || "";
-  patchState({ demoRun: { ...run, briefAt: now } });
-  let cursor = 0;
+  patchState({ demoRun: { ...run, briefAt } });
+  let cursor = SRI_VIDEO_MS - played;
   SRI_BEATS.forEach((beat, index) => {
-    if (index === 0) {
-      cursor += beat.ms;
-      return;
-    }
+    if (index === 0) return;
     const at = cursor;
-    later(ep, () => present(ep, beat, index, SRI_BEATS.length, run.briefing, now, fileName), at);
+    later(ep, () => present(ep, beat, index, SRI_BEATS.length, run.briefing, briefAt, fileName), at);
     cursor += beat.ms;
   });
   later(ep, () => settleFloor(), cursor + RESET_PAUSE_MS);

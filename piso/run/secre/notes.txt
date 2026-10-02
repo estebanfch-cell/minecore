@@ -1,17 +1,9 @@
-sri-recorrido.mp4 - SRI en Línea, retención Kluane 001-999-000034524 (cleaned)
-Duration 46.7 s, 1280x702, 30 fps, H.264 yuv420p, no audio, natural speed.
+sri-recorrido.mp4 - SRI en Línea, retención Kluane 001-999-000034524
+Duration 20.17 s, 1280x702, H.264, no audio, natural speed.
 
 Step timestamps (m:ss.s):
-0:00.0 - 0:13.6  Login (RUC 1793194965001, clave masked, click Ingresar)
-0:13.6 - 0:16.9  Session/redirect and loading screens
-0:16.9 - 0:28.9  Menu: profile page (personal fields blurred), menu opens at 0:21.8,
-                 Facturación electrónica > Comprobantes electrónicos recibidos
-0:31.3 - 0:36.7  Filtro: Periodo 2026 / Septiembre / Todos, Tipo = Comprobante de Retención, Consultar (~0:33.9)
-0:37.0 - 0:39.2  Resultados: list with Kluane retención 001-999-000034524
-0:39.2 - 0:40.8  Descarga XML (download panel shows Comprobante de Retención (1).xml)
-0:40.8 - 0:46.7  RIDE: RIDE column available at 0:40.8, RIDE PDF open from 0:42.4 to end
-
-Edits applied: tab strip + OS taskbar cropped; address bar kept with only "srienlinea.sri.gob.ec"
-(path/query incl. session token painted out; local file path hidden in the PDF segment);
-Google Translate popup painted with header/page background; email, phone and representative
-cédula blurred on the profile screen (0:16.9 - 0:29.0).
+0:00.0 - 0:05.3  Login
+0:05.0 - 0:09.3  Profile and menu
+0:09.0 - 0:12.6  Filtro: Septiembre, Comprobante de Retención, Consultar
+0:12.3 - 0:16.1  Resultados: Kluane 001-999-000034524 and XML download
+0:16.8 - 0:20.2  RIDE PDF
