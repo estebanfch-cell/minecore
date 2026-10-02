@@ -11,12 +11,17 @@ export const BANK_SUMMARY =
 
 /** Natural length of sri-recorrido.mp4. The first beat plays it once, at 1x. */
 export const SRI_VIDEO_MS = 46700;
-const SRI_RIDE_MS = 9000;
-const SRI_SO_MS = 10000;
-const SRI_CHECKS_MS = 7000;
-const SRI_SAVE_MS = 10000;
-const SRI_SUMMARY_MS = 8000;
-const SRI_MAIL_LEAD_MS = 50000;
+const SRI_RIDE_MS = 5200;
+const SRI_SO_MS = 3400;
+const SRI_CHECKS_MS = 3400;
+const SRI_SAVE_MS = 2800;
+const SRI_SUMMARY_MS = 5500;
+/** Lead the summary by ~47s. Shorter runs post when the owner sends the message. */
+const SRI_MAIL_LEAD_MS = 47000;
+/** Nora types, then the reply sits before the floor run. Sum of the two chat waits. */
+export const SRI_TYPE_MS = 800;
+export const SRI_REPLY_MS = 1200;
+export const SRI_CHAT_BEFORE_RUN_MS = SRI_TYPE_MS + SRI_REPLY_MS;
 
 export const SRI_CUES = {
   menu: 16900,
@@ -29,9 +34,13 @@ const SRI_RIDE_AT = SRI_VIDEO_MS;
 const SRI_SO_AT = SRI_RIDE_AT + SRI_RIDE_MS;
 const SRI_CHECKS_AT = SRI_SO_AT + SRI_SO_MS;
 const SRI_SAVE_AT = SRI_CHECKS_AT + SRI_CHECKS_MS;
-/** When the closing summary screen appears, measured from the start of the run. */
+/** When the closing summary screen appears, measured from the anchored video start. */
 export const SRI_SUMMARY_AT = SRI_SAVE_AT + SRI_SAVE_MS;
-/** Single pre_send, 50s before that summary. */
+/** From the owner's Enviar to the summary, before the video's play delay. */
+export const SRI_SUMMARY_FROM_MESSAGE_MS = SRI_CHAT_BEFORE_RUN_MS + SRI_SUMMARY_AT;
+/** True when that span is shorter than the mail lead, so the POST goes out with Enviar. */
+export const SRI_MAIL_ON_SEND = SRI_SUMMARY_FROM_MESSAGE_MS < SRI_MAIL_LEAD_MS;
+/** Single pre_send. Negative when the POST belongs at Enviar instead of mid-run. */
 export const SRI_MAIL_AT = SRI_SUMMARY_AT - SRI_MAIL_LEAD_MS;
 
 const SRI_STEPS = [
@@ -82,6 +91,7 @@ let epoch = 0;
 let timers = [];
 let mailTimer = null;
 let mailedEpoch = -1;
+let ownerPosted = false;
 
 function clearBeatTimers() {
   timers.forEach((timer) => clearTimeout(timer));
@@ -120,12 +130,22 @@ export function anchorSecreVideo() {
 
 function armSecreMail(ep) {
   if (mailTimer) clearTimeout(mailTimer);
+  mailTimer = null;
+  if (ownerPosted || SRI_MAIL_ON_SEND || SRI_MAIL_AT <= 0) return;
   mailTimer = setTimeout(() => {
     mailTimer = null;
-    if (ep !== epoch || mailedEpoch === ep) return;
+    if (ep !== epoch || mailedEpoch === ep || ownerPosted) return;
     mailedEpoch = ep;
     postSecreRetencion();
   }, SRI_MAIL_AT);
+}
+
+/** Scene A only. A short run posts with the owner's message; a longer one waits for the anchor. */
+export function onSecreOwnerMessage(scene) {
+  ownerPosted = false;
+  if (scene === "banco" || !SRI_MAIL_ON_SEND) return;
+  ownerPosted = true;
+  postSecreRetencion();
 }
 
 function later(ep, fn, ms) {

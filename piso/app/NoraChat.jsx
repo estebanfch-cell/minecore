@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { sheetAttached, startSecreRun } from "./secreRun.js";
+import { onSecreOwnerMessage, SRI_REPLY_MS, SRI_TYPE_MS, sheetAttached, startSecreRun } from "./secreRun.js";
 import { getState, patchState, subscribe } from "./store.js";
 
 function FileChip({ name }) {
@@ -46,6 +46,7 @@ export function NoraChat({ focus = false }) {
     setDraft("");
     setFile(null);
     if (fileBox.current) fileBox.current.value = "";
+    onSecreOwnerMessage(scene);
     window.setTimeout(() => {
       const reply = scene === "banco" ? "Voy a cruzar el estado de cuenta..." : "Voy al SRI a revisar las retenciones recibidas.";
       const chat = (getState().noraChat || []).filter((msg) => !msg.typing);
@@ -56,8 +57,8 @@ export function NoraChat({ focus = false }) {
         sending.current = false;
         patchState({ noraOpen: false });
         startSecreRun(scene, fileName);
-      }, 1200);
-    }, 800);
+      }, SRI_REPLY_MS);
+    }, SRI_TYPE_MS);
   }
 
   return (
