@@ -1331,6 +1331,11 @@ html { translate: no; }
 }
 .erp-top em { font-style: normal; color: #6d8094; font-size: 13px; font-weight: 700; }
 .erp-page { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 12px 14px 10px; gap: 8px; }
+.erp-page.is-filing { position: relative; overflow: hidden; }
+.erp-page.is-filing .scan-line {
+  background: linear-gradient(transparent, rgba(31, 138, 76, 0.28), transparent);
+  height: 28px;
+}
 .erp-head, .erp-actions, .erp-tabs, .erp-print { display: flex; align-items: center; gap: 8px; }
 .erp-head { justify-content: space-between; }
 .erp-head h2, .erp-dialog h2 { font-size: 22px; letter-spacing: -0.02em; }
@@ -1969,6 +1974,21 @@ html { translate: no; }
   background: #e5f8ee;
   color: #0e7a45;
   font-weight: 800;
+}
+.secre-file { display: flex; flex-direction: column; gap: 6px; }
+.secre-file p { margin: 0; font-size: 13px; font-weight: 750; color: #245c38; }
+.secre-file span {
+  display: block;
+  height: 6px;
+  border-radius: 99px;
+  background: #d7e4dc;
+  overflow: hidden;
+}
+.secre-file i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #1f8a4c;
 }
 .secre-note { color: #52667a; font-size: 13px; }
 .secre-cards { display: flex; flex-direction: column; gap: 10px; padding: 8px; }

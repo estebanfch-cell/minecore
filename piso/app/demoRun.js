@@ -16,11 +16,11 @@ import {
 
 const STEP_MS = 7500;
 /**
- * Relay transit before the inbox. Measured at about 47s, so the single pre_send
- * leaves 50s before Manuelito's "Enviado" and the closing summary.
+ * Relay transit before the inbox runs about 50–56s. The single pre_send leaves
+ * 62s before Manuelito's "Enviado", so the mail arrives just before the close.
  * No manuelito_done POST: one pre_send per run, and the relay dedupes for 3 min.
  */
-const EMAIL_LEAD_MS = 50000;
+const EMAIL_LEAD_MS = 62000;
 const DESK_OPEN_MS = 1100;
 export const ENVIADO_FLIP_MS = 2400;
 /** Settle line still appears at the same moment: window opens with the step, the flip waits the old open delay too. */
